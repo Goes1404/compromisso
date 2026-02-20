@@ -43,20 +43,30 @@ export default function DirectChatPage() {
           ]);
         } else {
           // Carregar Perfil do Contato
-          const { data: profileData } = await supabase.from('profiles').select('*').eq('id', contactId).single();
-          setContact(profileData);
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', contactId)
+            .single();
+          
+          if (!profileError) {
+            setContact(profileData);
+          } else {
+            console.error("Erro ao carregar contato:", profileError);
+            setContact({ name: "Usuário Externo", institution: "Rede Compromisso" });
+          }
 
           // Carregar Mensagens Reais (Histórico entre eu e o contato)
-          const { data: msgs, error } = await supabase
+          const { data: msgs, error: msgsError } = await supabase
             .from('direct_messages')
             .select('*')
             .or(`and(sender_id.eq.${user.id},receiver_id.eq.${contactId}),and(sender_id.eq.${contactId},receiver_id.eq.${user.id})`)
             .order('created_at', { ascending: true });
           
-          if (!error) setMessages(msgs || []);
+          if (!msgsError) setMessages(msgs || []);
         }
       } catch (err) {
-        console.error("Erro ao carregar chat:", err);
+        console.error("Erro fatal ao carregar chat:", err);
       } finally {
         setLoading(false);
       }
@@ -74,9 +84,12 @@ export default function DirectChatPage() {
           table: 'direct_messages',
           filter: `receiver_id=eq.${user.id}`
         }, (payload) => {
-          // Só adiciona se for do contato atual
+          // Só adiciona se for do contato atual para este usuário
           if (payload.new.sender_id === contactId) {
-            setMessages(prev => [...prev, payload.new]);
+            setMessages(prev => {
+              const exists = prev.some(m => m.id === payload.new.id);
+              return exists ? prev : [...prev, payload.new];
+            });
           }
         })
         .subscribe();
@@ -87,7 +100,7 @@ export default function DirectChatPage() {
     }
   }, [user, contactId, isAurora]);
 
-  // Scroll automático
+  // Scroll automático para a última mensagem
   useEffect(() => {
     if (scrollRef.current) {
       const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -134,7 +147,7 @@ export default function DirectChatPage() {
           }]);
         }
       } catch (err) {
-        toast({ title: "Aurora processando...", description: "Tente novamente em instantes.", variant: "destructive" });
+        toast({ title: "Aurora processando...", description: "Houve uma oscilação. Tente reenviar sua dúvida.", variant: "destructive" });
       } finally {
         setIsAiThinking(false);
       }
@@ -149,8 +162,8 @@ export default function DirectChatPage() {
       if (!error) {
         setMessages(prev => [...prev, data]);
       } else {
-        console.error("Erro ao enviar:", error);
-        toast({ title: "Erro ao enviar", description: "Verifique se a tabela direct_messages existe.", variant: "destructive" });
+        console.error("Erro ao enviar mensagem:", error);
+        toast({ title: "Erro ao enviar", description: "Verifique as permissões de banco (RLS).", variant: "destructive" });
       }
     }
   };
@@ -158,15 +171,16 @@ export default function DirectChatPage() {
   if (loading) return (
     <div className="flex h-screen items-center justify-center flex-col gap-4">
       <Loader2 className="h-10 w-10 animate-spin text-accent" />
-      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Abrindo Canal...</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Abrindo Canal Seguro...</p>
     </div>
   );
 
   return (
     <div className="flex flex-col flex-1 min-h-0 animate-in fade-in duration-500 overflow-hidden space-y-2 md:space-y-4 w-full h-full">
+      {/* Header do Chat */}
       <div className="flex items-center justify-between px-2 py-2 shrink-0 bg-white/50 backdrop-blur-md rounded-2xl shadow-sm border border-white/20">
         <div className="flex items-center gap-2 overflow-hidden">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full h-9 w-9 md:h-10 md:w-10 shrink-0 hover:bg-primary/5 active:scale-90 transition-all">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full h-9 w-9 md:h-10 md:w-10 shrink-0 hover:bg-primary/5 transition-all">
             <ChevronLeft className="h-5 w-5 md:h-6 md:w-6 text-primary" />
           </Button>
           <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
@@ -186,7 +200,7 @@ export default function DirectChatPage() {
             <div className="min-w-0">
               <h1 className="text-sm md:text-lg font-black text-primary italic leading-none truncate">{contact?.name || "Usuário"}</h1>
               <p className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1 truncate">
-                {isAurora ? 'IA Aurora Ativa' : (contact?.institution || 'Estudante da Rede')}
+                {isAurora ? 'Engenharia Pedagógica Ativa' : (contact?.institution || 'Estudante da Rede')}
               </p>
             </div>
           </div>
@@ -202,14 +216,14 @@ export default function DirectChatPage() {
             {messages.length === 0 ? (
               <div className="text-center py-20 opacity-30 flex flex-col items-center">
                 <MessageSquare className="h-10 w-10 text-muted-foreground" />
-                <p className="text-xs font-black italic mt-4">Envie uma mensagem para iniciar!</p>
+                <p className="text-xs font-black italic mt-4">Inicie a conversa agora!</p>
               </div>
             ) : (
               messages.map((msg, i) => {
                 const isMe = msg.sender_id === user?.id;
                 const isFromAurora = msg.sender_id === "aurora-ai";
                 return (
-                  <div key={msg.id || i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                  <div key={msg.id || i} className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
                     <div className={`px-4 py-2.5 md:px-6 md:py-4 rounded-[1.25rem] md:rounded-[2rem] text-xs md:text-sm leading-relaxed font-medium shadow-sm border transition-all max-w-[90%] md:max-w-[75%] ${
                         isMe 
                           ? 'bg-primary text-white rounded-tr-none border-primary/5' 
@@ -227,7 +241,7 @@ export default function DirectChatPage() {
               <div className="flex justify-start">
                 <div className="flex items-center gap-3 bg-accent/5 px-4 py-2 rounded-[1.25rem] rounded-tl-none border border-accent/10">
                   <Loader2 className="h-3 w-3 animate-spin text-accent" />
-                  <span className="text-[8px] font-black uppercase tracking-widest text-accent italic">Analisando...</span>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-accent italic">Aurora Analisando...</span>
                 </div>
               </div>
             )}
@@ -240,11 +254,11 @@ export default function DirectChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={isAiThinking}
-              placeholder={isAurora ? "Tire uma dúvida..." : "Escreva aqui..."}
+              placeholder={isAurora ? "Tire uma dúvida técnica ou pedagógica..." : "Escreva sua mensagem..."}
               className="flex-1 h-9 md:h-10 bg-transparent border-none text-primary font-medium italic focus-visible:ring-0 px-0 text-xs md:text-sm"
             />
-            <Button type="submit" disabled={!input.trim() || isAiThinking} className="h-9 w-9 md:h-12 md:w-12 bg-primary hover:bg-primary/95 rounded-full shadow-xl shrink-0">
-              {isAiThinking ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4" />}
+            <Button type="submit" disabled={!input.trim() || isAiThinking} className="h-9 w-9 md:h-12 md:w-12 bg-primary hover:bg-primary/95 rounded-full shadow-xl shrink-0 border-none">
+              {isAiThinking ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4 text-white" />}
             </Button>
           </form>
         </div>

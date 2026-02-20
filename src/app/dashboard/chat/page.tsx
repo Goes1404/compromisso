@@ -21,13 +21,19 @@ export default function ChatListPage() {
     async function fetchData() {
       if (!user) return;
       setLoading(true);
+      
+      // Busca perfis que NÃO são o usuário atual
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .neq('id', user.id)
         .order('name');
       
-      if (!error) setContacts(data || []);
+      if (!error) {
+        setContacts(data || []);
+      } else {
+        console.error("Erro ao buscar perfis:", error);
+      }
       setLoading(false);
     }
     fetchData();
@@ -43,7 +49,7 @@ export default function ChatListPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h1 className="text-2xl md:text-4xl font-black text-primary italic leading-none">Mentoria</h1>
-          <p className="text-muted-foreground font-medium text-sm italic">Conecte-se com especialistas e colegas.</p>
+          <p className="text-muted-foreground font-medium text-sm italic">Conecte-se com especialistas e colegas da rede.</p>
         </div>
       </div>
 
@@ -57,35 +63,43 @@ export default function ChatListPage() {
         />
       </div>
 
+      {/* Card da Aurora (Fixo) */}
       <Card className="border-none shadow-[0_10px_40px_-15px_hsl(var(--accent)/0.3)] rounded-[2.5rem] bg-primary text-white overflow-hidden group transition-all duration-500">
         <CardContent className="p-6 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="h-16 w-16 md:h-24 md:w-24 rounded-[2rem] bg-accent text-accent-foreground flex items-center justify-center shadow-2xl rotate-3">
+            <div className="h-16 w-16 md:h-24 md:w-24 rounded-[2rem] bg-accent text-accent-foreground flex items-center justify-center shadow-2xl rotate-3 group-hover:rotate-0 transition-transform">
               <Bot className="h-10 w-10 md:h-14 md:w-14" />
             </div>
             <div>
               <CardTitle className="text-xl md:text-3xl font-black italic">Aurora IA</CardTitle>
-              <p className="text-white/60 font-medium text-xs md:text-base">Mentora Pedagógica 24/7 disponível agora.</p>
+              <p className="text-white/60 font-medium text-xs md:text-base italic">Mentora Pedagógica 24/7. Tire suas dúvidas agora.</p>
             </div>
           </div>
-          <Button className="bg-white text-primary hover:bg-white/90 font-black h-12 md:h-14 px-8 md:px-10 rounded-2xl shadow-xl transition-all" asChild>
+          <Button className="bg-white text-primary hover:bg-white/90 font-black h-12 md:h-14 px-8 md:px-10 rounded-2xl shadow-xl transition-all border-none" asChild>
             <Link href="/dashboard/chat/aurora-ai">Conversar com a Aurora</Link>
           </Button>
         </CardContent>
       </Card>
 
+      {/* Lista de Contatos Reais do Banco */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {loading ? (
-          <div className="col-span-full py-20 flex justify-center"><Loader2 className="h-12 w-12 animate-spin text-accent" /></div>
+          <div className="col-span-full py-20 flex flex-col items-center justify-center gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-accent" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Sintonizando Rede...</p>
+          </div>
         ) : filteredContacts.length > 0 ? (
           filteredContacts.map((contact) => (
             <Card key={contact.id} className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden group hover:shadow-2xl transition-all duration-500">
               <CardContent className="p-8">
                 <div className="flex flex-col items-center text-center space-y-4">
-                  <Avatar className="h-20 w-20 md:h-24 md:w-24 border-4 border-primary/5 shadow-2xl">
-                    <AvatarImage src={`https://picsum.photos/seed/${contact.id}/200/200`} />
-                    <AvatarFallback className="bg-primary text-white font-black text-2xl italic">{contact.name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar className="h-20 w-20 md:h-24 md:w-24 border-4 border-primary/5 shadow-2xl">
+                      <AvatarImage src={`https://picsum.photos/seed/${contact.id}/200/200`} />
+                      <AvatarFallback className="bg-primary text-white font-black text-2xl italic">{contact.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="absolute bottom-1 right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-white" />
+                  </div>
                   <div>
                     <CardTitle className="text-lg md:text-xl font-black text-primary italic truncate max-w-[220px]">{contact.name}</CardTitle>
                     <div className="flex items-center justify-center gap-2 mt-1">
@@ -93,7 +107,7 @@ export default function ChatListPage() {
                       <p className="text-[10px] font-bold text-muted-foreground uppercase">{contact.institution || (contact.profile_type === 'teacher' ? 'Mentor' : 'Estudante')}</p>
                     </div>
                   </div>
-                  <Button className="w-full bg-primary text-white hover:bg-primary/95 font-black h-12 rounded-2xl shadow-xl" asChild>
+                  <Button className="w-full bg-primary text-white hover:bg-primary/95 font-black h-12 rounded-2xl shadow-xl border-none" asChild>
                     <Link href={`/dashboard/chat/${contact.id}`}>Iniciar Mentoria</Link>
                   </Button>
                 </div>
@@ -103,7 +117,8 @@ export default function ChatListPage() {
         ) : (
           <div className="col-span-full py-20 text-center opacity-30">
             <User className="h-12 w-12 mx-auto mb-4" />
-            <p className="font-black italic">Nenhum usuário encontrado na rede.</p>
+            <p className="font-black italic">Nenhum mentor ou colega encontrado.</p>
+            <p className="text-xs font-medium mt-2">Dica: Execute o script SQL para gerar mentores demo!</p>
           </div>
         )}
       </div>
