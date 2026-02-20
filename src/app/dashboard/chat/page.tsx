@@ -1,43 +1,41 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Bot } from "lucide-react";
+import { Search, Loader2, Bot, User, BookOpen, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/AuthProvider";
+import { supabase } from "@/app/lib/supabase";
 
-// TODO: Implementar a busca de usuários e mentores com o Firebase
 export default function ChatListPage() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [students, setStudents] = useState<any[]>([]);
-  const [teachers, setTeachers] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       if (!user) return;
       setLoading(true);
-      // A lógica de busca de dados do Supabase foi removida.
-      // É necessário implementar a busca de usuários e mentores no Firebase.
-      setStudents([]); // Define como vazio por enquanto
-      setTeachers([]); // Define como vazio por enquanto
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .neq('id', user.id)
+        .order('name');
+      
+      if (!error) setContacts(data || []);
       setLoading(false);
     }
     fetchData();
   }, [user]);
 
-  const allContacts = [
-    ...(students || []).map(s => ({ ...s, type: 'student', expertise: s.course || 'Estudante' })),
-    ...(teachers || []).map(t => ({ ...t, type: 'teacher', expertise: t.subjects || 'Mentor' }))
-  ].filter(c => c.id !== user?.id);
-
-  const filteredContacts = allContacts.filter(c => 
+  const filteredContacts = contacts.filter(c => 
     c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.expertise?.toLowerCase().includes(searchTerm.toLowerCase())
+    c.institution?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -45,14 +43,14 @@ export default function ChatListPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h1 className="text-2xl md:text-4xl font-black text-primary italic leading-none">Mentoria</h1>
-          <p className="text-muted-foreground font-medium text-sm italic">Conecte-se com especialistas.</p>
+          <p className="text-muted-foreground font-medium text-sm italic">Conecte-se com especialistas e colegas.</p>
         </div>
       </div>
 
       <div className="relative max-w-xl group w-full">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors" />
         <Input 
-          placeholder="Pesquisar mentor ou matéria..." 
+          placeholder="Pesquisar colega ou mentor..." 
           className="pl-12 h-12 md:h-14 bg-white border-none shadow-xl rounded-2xl text-sm md:text-lg font-medium italic focus-visible:ring-accent transition-all"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -79,7 +77,7 @@ export default function ChatListPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {loading ? (
           <div className="col-span-full py-20 flex justify-center"><Loader2 className="h-12 w-12 animate-spin text-accent" /></div>
-        ) : (
+        ) : filteredContacts.length > 0 ? (
           filteredContacts.map((contact) => (
             <Card key={contact.id} className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden group hover:shadow-2xl transition-all duration-500">
               <CardContent className="p-8">
@@ -90,7 +88,10 @@ export default function ChatListPage() {
                   </Avatar>
                   <div>
                     <CardTitle className="text-lg md:text-xl font-black text-primary italic truncate max-w-[220px]">{contact.name}</CardTitle>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase mt-1">{contact.expertise}</p>
+                    <div className="flex items-center justify-center gap-2 mt-1">
+                      {contact.profile_type === 'teacher' ? <BookOpen className="h-3 w-3 text-accent" /> : <GraduationCap className="h-3 w-3 text-primary" />}
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase">{contact.institution || (contact.profile_type === 'teacher' ? 'Mentor' : 'Estudante')}</p>
+                    </div>
                   </div>
                   <Button className="w-full bg-primary text-white hover:bg-primary/95 font-black h-12 rounded-2xl shadow-xl" asChild>
                     <Link href={`/dashboard/chat/${contact.id}`}>Iniciar Mentoria</Link>
@@ -99,6 +100,11 @@ export default function ChatListPage() {
               </CardContent>
             </Card>
           ))
+        ) : (
+          <div className="col-span-full py-20 text-center opacity-30">
+            <User className="h-12 w-12 mx-auto mb-4" />
+            <p className="font-black italic">Nenhum usuário encontrado na rede.</p>
+          </div>
         )}
       </div>
     </div>

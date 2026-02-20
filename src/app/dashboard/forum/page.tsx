@@ -6,31 +6,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Plus, 
   Search, 
   ArrowRight, 
   Loader2, 
-  Filter, 
   Hash,
   Calculator,
   Atom,
   FlaskConical,
-  Dna,
-  Languages,
-  History,
-  Globe,
-  HelpCircle,
-  Zap,
-  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthProvider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/app/lib/supabase";
 
 const FORUM_CATEGORIES = [
   "Todos", 
@@ -46,54 +37,56 @@ const FORUM_CATEGORIES = [
   "Off-Topic"
 ];
 
-const initialForums = [
-    { 
-      id: '1',
-      name: "Qual a melhor forma de estudar para a prova de Matemática do ENEM?", 
-      description: "Estou com dificuldade em matemática e queria saber como vocês organizam os estudos para o ENEM. Quais assuntos focam mais?", 
-      category: "Matemática", 
-      author_id: 'user1', 
-      author_name: "Estudante Curioso"
-    },
-    { 
-      id: '2',
-      name: "Dicas para a redação: como fazer uma boa proposta de intervenção?", 
-      description: "Sempre perco pontos na competência 5. Alguém tem um passo a passo ou algum modelo que ajude a detalhar a proposta de intervenção?", 
-      category: "Linguagens", 
-      author_id: 'user2', 
-      author_name: "Futuro Calouro"
-    }
-];
-
 export default function ForumPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newForum, setNewForum] = useState({ name: "", description: "", category: "Dúvidas" });
-  const [forums, setForums] = useState<any[]>(initialForums);
-  const [loading, setLoading] = useState(false);
+  const [forums, setForums] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchForums = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('forums')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (!error) setForums(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchForums();
+  }, []);
 
   const handleCreateForum = async () => {
     if (!newForum.name.trim() || !user) return;
 
     setIsSubmitting(true);
-    const newForumData = {
-        id: new Date().toISOString(),
+    const { data, error } = await supabase
+      .from('forums')
+      .insert([{
         name: newForum.name,
         description: newForum.description,
         category: newForum.category,
         author_id: user.id,
-        author_name: user.user_metadata?.full_name || "Você",
-        created_at: new Date().toISOString()
-    };
+        author_name: profile?.name || user.email?.split('@')[0],
+      }])
+      .select()
+      .single();
     
-    setForums(prev => [newForumData, ...prev]);
-    toast({ title: "Discussão Iniciada!", description: "Sua pergunta já está na rede (simulação)." });
-    setIsCreateOpen(false);
-    setNewForum({ name: "", description: "", category: "Dúvidas" });
+    if (!error) {
+      setForums(prev => [data, ...prev]);
+      toast({ title: "Discussão Iniciada!", description: "Sua pergunta agora está visível para toda a rede." });
+      setIsCreateOpen(false);
+      setNewForum({ name: "", description: "", category: "Dúvidas" });
+    } else {
+      toast({ title: "Erro ao publicar", description: error.message, variant: "destructive" });
+    }
     setIsSubmitting(false);
   };
 
@@ -149,23 +142,48 @@ export default function ForumPage() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 pt-2 px-1">
-        {filteredForums?.map((forum, index) => (
-            <Card key={forum.id} className="group relative overflow-hidden flex flex-col">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div className="h-12 w-12 rounded-2xl bg-primary/5 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white">{getCategoryIcon(forum.category)}</div>
-                        <Badge variant="secondary">{forum.category}</Badge>
-                    </div>
-                    <CardTitle className="pt-4">{forum.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                    <CardDescription>"{forum.description}"</CardDescription>
-                    <Button asChild className="mt-4 w-full"><Link href={`/dashboard/forum/${forum.id}`}>Debater <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
-                </CardContent>
-            </Card>
+      <div className="flex items-center gap-4 overflow-x-auto pb-4 scrollbar-hide">
+        {FORUM_CATEGORIES.map(cat => (
+          <Button 
+            key={cat} 
+            variant={activeCategory === cat ? "default" : "outline"}
+            onClick={() => setActiveCategory(cat)}
+            className="rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-widest shrink-0"
+          >
+            {cat}
+          </Button>
         ))}
       </div>
+
+      {loading ? (
+        <div className="py-20 flex justify-center"><Loader2 className="h-12 w-12 animate-spin text-accent" /></div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 pt-2 px-1">
+          {filteredForums?.map((forum) => (
+              <Card key={forum.id} className="group relative overflow-hidden flex flex-col border-none shadow-xl rounded-[2rem] bg-white hover:shadow-2xl transition-all duration-500">
+                  <CardHeader className="p-8">
+                      <div className="flex items-center justify-between">
+                          <div className="h-12 w-12 rounded-2xl bg-primary/5 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-inner">{getCategoryIcon(forum.category)}</div>
+                          <Badge className="bg-accent/10 text-accent border-none font-black text-[8px] uppercase px-3">{forum.category}</Badge>
+                      </div>
+                      <CardTitle className="pt-6 text-xl font-black italic text-primary leading-tight group-hover:text-accent transition-colors">{forum.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-8 pt-0 flex-grow">
+                      <CardDescription className="font-medium italic line-clamp-2">"{forum.description}"</CardDescription>
+                      <div className="flex items-center justify-between mt-8">
+                        <div className="flex flex-col">
+                          <span className="text-[8px] font-black uppercase text-muted-foreground">Autor</span>
+                          <span className="text-[10px] font-bold text-primary">{forum.author_name}</span>
+                        </div>
+                        <Button asChild variant="ghost" className="text-accent font-black text-[10px] uppercase hover:bg-accent/10">
+                          <Link href={`/dashboard/forum/${forum.id}`}>Debater <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                        </Button>
+                      </div>
+                  </CardContent>
+              </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

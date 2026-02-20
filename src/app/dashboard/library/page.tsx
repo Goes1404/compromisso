@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Search, 
   FileText, 
@@ -14,90 +14,40 @@ import {
   Download, 
   ExternalLink, 
   Filter, 
-  CheckCircle2, 
-  X, 
   Loader2,
-  Eye,
-  Sparkles,
-  Bot,
-  Send,
-  ChevronLeft,
-  Layout
 } from "lucide-react";
 import Image from "next/image";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger
-} from "@/components/ui/dialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuLabel, 
-  DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/lib/AuthProvider";
-
-// TODO: Refatorar para usar o Firebase
-// A lógica de busca de materiais da biblioteca foi removida e substituída por dados mocados.
+import { supabase } from "@/app/lib/supabase";
 
 const categories = ["Todos", "Matemática", "Física", "Tecnologia", "Linguagens", "História", "Saúde"];
 const types = ["Todos", "PDF", "Video", "E-book", "Artigo"];
 
-const mockResources = [
-  {
-    id: '1',
-    title: 'Guia Definitivo de Redação para o ENEM',
-    description: 'Um guia completo com técnicas e exemplos para você alcançar a nota 1000 na redação do ENEM.',
-    category: 'Linguagens',
-    type: 'PDF',
-    url: '#',
-    image_url: 'https://picsum.photos/seed/lib1/400/250'
-  },
-  {
-    id: '2',
-    title: 'Videoaula: Cinemática Essencial para Vestibulares',
-    description: 'Entenda os conceitos de velocidade, aceleração e movimento uniforme de forma clara e objetiva.',
-    category: 'Física',
-    type: 'Video',
-    url: '#',
-    image_url: 'https://picsum.photos/seed/lib2/400/250'
-  },
-  {
-    id: '3',
-    title: 'E-book de Biologia Celular',
-    description: 'Mergulhe no mundo das células, suas organelas e funções. Material rico em ilustrações.',
-    category: 'Saúde',
-    type: 'E-book',
-    url: '#',
-    image_url: 'https://picsum.photos/seed/lib3/400/250'
-  },
-    {
-    id: '4',
-    title: 'Artigo: A Revolução Digital e seus Impactos',
-    description: 'Análise sobre como a tecnologia está moldando a sociedade e o mercado de trabalho.',
-    category: 'Tecnologia',
-    type: 'Artigo',
-    url: '#',
-    image_url: 'https://picsum.photos/seed/lib4/400/250'
-  }
-];
-
 export default function LibraryPage() {
-  const { user } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [activeType, setActiveType] = useState("Todos");
-  const [resources, setResources] = useState<any[]>(mockResources);
-  const [loading, setLoading] = useState(false);
+  const [resources, setResources] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadResources() {
+      setLoading(true);
+      const { data, error } = await supabase.from('library_resources').select('*');
+      if (!error) setResources(data || []);
+      setLoading(false);
+    }
+    loadResources();
+  }, []);
 
   const filteredResources = resources.filter(resource => {
     const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -110,7 +60,6 @@ export default function LibraryPage() {
     setIsDownloading(resource.id);
     toast({ title: "Processando download...", description: `Aguarde enquanto preparamos ${resource.title}` });
     setTimeout(() => {
-      // Simula a abertura do link, já que a URL é um placeholder
       toast({ title: "Download iniciado!", description: `O arquivo ${resource.title} deve começar a ser baixado.` });
       setIsDownloading(null);
     }, 1000);
@@ -175,7 +124,7 @@ export default function LibraryPage() {
             <Loader2 className="h-12 w-12 animate-spin text-accent" />
             <p className="font-black text-muted-foreground uppercase text-xs tracking-widest animate-pulse">Consultando Acervo...</p>
           </div>
-        ) : (
+        ) : resources.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredResources.map((item, index) => (
               <Card key={item.id} className="overflow-hidden border-none shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group bg-white rounded-[2.5rem] flex flex-col animate-in fade-in" style={{ animationDelay: `${index * 100}ms` }}>
@@ -217,12 +166,16 @@ export default function LibraryPage() {
                       Download
                     </Button>
                     <Button asChild variant="outline" className="h-12 w-12 rounded-xl border-2 border-muted/20">
-                      <a href={item.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-5 w-5 text-primary/60" /></a>
+                      <a href={item.url || '#'} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-5 w-5 text-primary/60" /></a>
                     </Button>
                   </div>
                 </CardFooter>
               </Card>
             ))}
+          </div>
+        ) : (
+          <div className="py-20 text-center border-4 border-dashed border-muted/20 rounded-[2rem] opacity-30">
+            <p className="font-black italic text-xl">Acervo Vazio</p>
           </div>
         )}
       </Tabs>

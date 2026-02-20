@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -10,20 +11,15 @@ import {
   ChevronLeft, 
   Send, 
   Loader2, 
-  Sparkles
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-// TODO: Refatorar para usar o Firebase
-// A lógica de carregamento de posts e criação de novas postagens foi removida.
-// É preciso reimplementar usando o Firestore, possivelmente com listeners em tempo real.
+import { supabase } from "@/app/lib/supabase";
 
 export default function ForumDetailPage() {
   const params = useParams();
   const forumId = params.id as string;
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const router = useRouter();
   const [newPost, setNewPost] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -33,37 +29,53 @@ export default function ForumDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Lógica de carregar dados e inscrição em canal foi removida e substituída por mock
-    setLoading(true);
-    setForum({
-        id: forumId,
-        name: "Qual a melhor forma de estudar para a prova de Matemática?",
-        description: "Estou com dificuldade em matemática e queria saber como vocês organizam os estudos para o ENEM. Quais assuntos focam mais?",
-        category: "Matemática",
-        author_id: "mock-author-id",
-        author_name: "Estudante Curioso"
-    });
-    setPosts([
-        { id: '1', author_id: 'mock-author-id', author_name: 'Estudante Curioso', content: 'Alguém tem alguma dica?' },
-        { id: '2', author_id: user?.id, author_name: 'Você', content: 'Eu costumo focar em geometria e probabilidade!' },
-    ]);
-    setLoading(false);
-  }, [user, forumId]);
+    async function loadData() {
+      setLoading(true);
+      const { data: forumData } = await supabase.from('forums').select('*').eq('id', forumId).single();
+      if (forumData) setForum(forumData);
+
+      const { data: postsData } = await supabase
+        .from('forum_posts')
+        .select('*')
+        .eq('forum_id', forumId)
+        .order('created_at', { ascending: true });
+      
+      setPosts(postsData || []);
+      setLoading(false);
+    }
+    loadData();
+
+    // Inscrição Real-time
+    const channel = supabase
+      .channel(`forum:${forumId}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'forum_posts', 
+        filter: `forum_id=eq.${forumId}` 
+      }, (payload) => {
+        setPosts(prev => [...prev, payload.new]);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [forumId]);
 
   const handleSendPost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPost.trim() || !user) return;
 
-    const newPostData = {
-        id: new Date().toISOString(),
-        author_id: user.id,
-        author_name: user.user_metadata?.full_name || "Você",
-        content: newPost,
-        created_at: new Date().toISOString(),
-    };
-
-    setPosts(prev => [...prev, newPostData]);
+    const content = newPost;
     setNewPost("");
+
+    await supabase.from('forum_posts').insert({
+      forum_id: forumId,
+      author_id: user.id,
+      author_name: profile?.name || user.email?.split('@')[0],
+      content: content
+    });
   };
 
   useEffect(() => {
@@ -79,7 +91,7 @@ export default function ForumDetailPage() {
     return (
       <div className="h-96 flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-10 animate-spin text-accent" />
-        <p className="text-muted-foreground font-black uppercase text-[10px] tracking-widest animate-pulse">Sincronizando...</p>
+        <p className="text-muted-foreground font-black uppercase text-[10px] tracking-widest animate-pulse">Sincronizando Debate...</p>
       </div>
     );
   }
@@ -105,14 +117,19 @@ export default function ForumDetailPage() {
 
       <Card className="flex-1 min-h-0 border-none shadow-2xl shadow-accent/10 rounded-2xl md:rounded-[3rem] bg-white overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-700">
         <ScrollArea className="flex-1" ref={scrollRef}>
-           <div className="flex flex-col gap-4 py-6 md:py-10 px-4 md:px-12">
+           <div className="flex flex-col gap-6 py-6 md:py-10 px-4 md:px-12">
+                <div className="p-6 bg-muted/10 rounded-[2rem] border-2 border-dashed border-primary/5 mb-6">
+                  <p className="text-xs font-black uppercase text-primary/40 mb-2">Pauta Inicial</p>
+                  <p className="text-sm font-medium italic text-primary/80">{forum?.description}</p>
+                </div>
+
                 {posts.map((post) => {
                     const isMe = post.author_id === user?.id;
                     return (
-                        <div key={post.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`px-4 py-3 rounded-2xl ${isMe ? 'bg-primary text-white' : 'bg-muted'}`}>
-                                <p className="font-bold">{post.author_name}</p>
-                                <p>{post.content}</p>
+                        <div key={post.id} className={`flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
+                            <span className="text-[8px] font-black uppercase text-primary/40 px-2">{post.author_name}</span>
+                            <div className={`px-5 py-3 rounded-[1.5rem] shadow-sm max-w-[85%] text-sm font-medium ${isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-muted/30 text-primary rounded-tl-none border border-muted/20'}`}>
+                                {post.content}
                             </div>
                         </div>
                     );

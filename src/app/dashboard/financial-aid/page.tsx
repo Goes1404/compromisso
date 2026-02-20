@@ -11,10 +11,7 @@ import { ShieldCheck, Sparkles, CheckCircle2, AlertCircle, Wallet2, Users2, Arro
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthProvider";
-
-// TODO: Refatorar para usar o Firebase
-// A lógica de salvar a elegibilidade do usuário no Supabase foi removida.
-// É preciso reimplementar essa funcionalidade usando o Firestore.
+import { supabase } from "@/app/lib/supabase";
 
 export default function FinancialAidPage() {
   const { user } = useAuth();
@@ -48,8 +45,8 @@ export default function FinancialAidPage() {
     setLoading(true);
 
     const perCapita = income / size;
-    const minWage = 1621; // Salário Mínimo R$ 1.621,00
-    const threshold = minWage * 1.5; // Teto de 1,5 SM = R$ 2.431,50
+    const minWage = 1621; 
+    const threshold = minWage * 1.5; 
     const eligible = perCapita <= threshold;
 
     setResult({
@@ -59,14 +56,16 @@ export default function FinancialAidPage() {
     });
 
     if (user) {
-      // Lógica de salvar elegibilidade removida.
-      console.log("Simulando salvamento de elegibilidade para o usuário:", user.id);
+      await supabase
+        .from('profiles')
+        .update({ is_financial_aid_eligible: eligible })
+        .eq('id', user.id);
     }
 
     setLoading(false);
     toast({
       title: "Cálculo Concluído",
-      description: "Seu perfil foi atualizado para acompanhamento pedagógico (simulação).",
+      description: "Seu perfil foi atualizado para acompanhamento pedagógico real.",
     });
   };
 
@@ -78,7 +77,7 @@ export default function FinancialAidPage() {
           <Sparkles className="h-7 w-7 text-accent" />
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl font-medium">
-          Descubra se você atende aos critérios para isenção de taxas em vestibulares e concursos.
+          Descubra se você atende aos critérios para isenção de taxas em vestibulares.
         </p>
       </div>
 
@@ -91,14 +90,14 @@ export default function FinancialAidPage() {
               </div>
               <CardTitle className="text-2xl font-black italic">Regra de 1,5 SM</CardTitle>
               <CardDescription className="text-primary-foreground/70 font-medium">
-                Critério padrão do Governo Federal para isenção total.
+                Critério real para isenção total.
               </CardDescription>
             </CardHeader>
             <CardContent className="px-8 pb-8 space-y-4">
               <div className="p-5 rounded-[1.5rem] bg-white/10 border border-white/10">
                 <p className="font-black flex items-center gap-2 mb-2 text-sm uppercase tracking-widest text-accent">
                   <CheckCircle2 className="h-4 w-4" />
-                  Teto de Isenção
+                  Teto Atualizado
                 </p>
                 <p className="text-sm opacity-90 leading-relaxed font-medium">
                   Sua renda dividida por cada morador da casa deve ser de até <strong>R$ 2.431,50</strong>.
@@ -106,24 +105,6 @@ export default function FinancialAidPage() {
               </div>
             </CardContent>
           </Card>
-
-          <div className="p-8 bg-white rounded-[2.5rem] shadow-xl border-none space-y-6 relative overflow-hidden group">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-accent flex items-center justify-center text-accent-foreground shrink-0 shadow-lg">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="font-black text-primary italic leading-none mb-1">Dúvida na Papelada?</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-primary/40">Fale com a Aurora</p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed font-medium italic">
-              "Não sabe onde conseguir o comprovante de renda? Me pergunte sobre ID Jovem ou CadÚnico!"
-            </p>
-            <Button asChild variant="outline" className="w-full font-black h-12 rounded-xl border-dashed border-primary/20 hover:bg-primary hover:text-white transition-all">
-              <Link href="/dashboard/support">Consultar a Aurora</Link>
-            </Button>
-          </div>
         </div>
 
         <div className="lg:col-span-3 space-y-8">
@@ -179,7 +160,7 @@ export default function FinancialAidPage() {
                   disabled={loading} 
                   className="w-full bg-primary hover:bg-primary/95 text-white h-16 rounded-2xl font-black text-lg shadow-2xl shadow-primary/20 transition-all active:scale-95"
                 >
-                  {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "Calcular Elegibilidade"}
+                  {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "Gravar Elegibilidade"}
                 </Button>
               </form>
             </CardContent>
@@ -209,22 +190,6 @@ export default function FinancialAidPage() {
                   <div className="p-6 bg-white rounded-3xl border-2 border-muted/20 flex flex-col gap-1">
                     <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Limite do Programa</span>
                     <span className="text-2xl font-black text-primary">R$ {result.threshold.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                <div className="p-8 bg-white rounded-3xl border-2 border-dashed border-primary/10 space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-primary/5 rounded-xl">
-                      <Info className="h-6 w-6 text-primary shrink-0" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-base font-black text-primary italic">Relatório da Aurora:</p>
-                      <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                        {result.eligible 
-                          ? "Boas notícias! Sua renda familiar permite solicitar a isenção de taxas. Já atualizei seu perfil para que seus professores possam te orientar sobre os próximos passos."
-                          : "Atenção: sua renda por pessoa ultrapassa o limite de 1,5 salário mínimo. No entanto, você ainda pode buscar isenções por outros critérios (como alunos de escola pública). Fale comigo para saber mais!"}
-                      </p>
-                    </div>
                   </div>
                 </div>
                 

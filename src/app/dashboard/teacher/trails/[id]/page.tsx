@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -17,13 +18,11 @@ import {
   Layout, 
   Youtube, 
   Sparkles,
-  ExternalLink,
   BookOpen,
   Eye,
   CheckCircle2,
   Globe,
   BrainCircuit,
-  Info
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -31,30 +30,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateQuiz, type QuizGeneratorOutput } from "@/ai/flows/quiz-generator";
 import Link from "next/link";
-
-// TODO: Refatorar para usar o Firebase.
-// A lógica de gerenciamento de trilhas (módulos, conteúdos) foi mocada.
-
-const mockTrail = {
-    id: 'trail1',
-    title: 'Guia Definitivo de Redação',
-    status: 'draft'
-};
-
-const mockModules = [
-    { id: 'mod1', trail_id: 'trail1', title: 'Estrutura da Dissertação', order_index: 0 },
-    { id: 'mod2', trail_id: 'trail1', title: 'Competências do ENEM', order_index: 1 }
-];
-
-const mockContents = {
-    mod1: [
-        { id: 'cont1', module_id: 'mod1', title: 'Introdução à Redação Nota 1000', type: 'video', url: 'https://youtube.com/watch?v=example', description: '...' },
-        { id: 'cont2', module_id: 'mod1', title: 'Desenvolvendo Argumentos Sólidos', type: 'pdf', url: '...', description: '...' },
-    ],
-    mod2: [
-        { id: 'cont3', module_id: 'mod2', title: 'Análise da Competência IV', type: 'video', url: '...', description: '...' }
-    ]
-};
+import { supabase } from "@/app/lib/supabase";
 
 export default function TrailManagementPage() {
   const params = useParams();
@@ -86,131 +62,110 @@ export default function TrailManagementPage() {
   const [aiQuizData, setAiQuizData] = useState<QuizGeneratorOutput | null>(null);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
 
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
     setLoading(true);
-    setTimeout(() => {
-      setTrail(mockTrail);
-      setModules(mockModules);
-      setContents(mockContents);
+    try {
+      const { data: trailData } = await supabase.from('trails').select('*').eq('id', trailId).single();
+      setTrail(trailData);
+
+      const { data: modulesData } = await supabase.from('modules').select('*').eq('trail_id', trailId).order('order_index');
+      setModules(modulesData || []);
+
+      const { data: contentsData } = await supabase.from('learning_contents').select('*').in('module_id', modulesData?.map(m => m.id) || []);
+      
+      const contentMap: Record<string, any[]> = {};
+      contentsData?.forEach(c => {
+        if (!contentMap[c.module_id]) contentMap[c.module_id] = [];
+        contentMap[c.module_id].push(c);
+      });
+      setContents(contentMap);
+    } catch (e) {
+      console.error(e);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   }, [trailId]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     setIsPublishing(true);
-    setTimeout(() => {
-        setTrail((prev: any) => ({ ...prev, status: 'active' }));
-        toast({ title: "Trilha Publicada! (Simulação)" });
-        setIsPublishing(false);
-    }, 1000);
+    const { error } = await supabase.from('trails').update({ status: 'active' }).eq('id', trailId);
+    if (!error) {
+      setTrail({ ...trail, status: 'active' });
+      toast({ title: "Trilha Publicada!", description: "Os alunos já podem iniciar os estudos." });
+    }
+    setIsPublishing(false);
   };
 
-  const handleAddModule = () => {
+  const handleAddModule = async () => {
     if (!moduleForm.title.trim()) return;
     setIsSubmitting(true);
-    const newModule = {
-        id: `mod_${Date.now()}`,
-        trail_id: trailId,
-        title: moduleForm.title,
-        order_index: modules.length
-    };
-    setTimeout(() => {
-        setModules(prev => [...prev, newModule]);
-        setContents(prev => ({...prev, [newModule.id]: []}));
-        toast({ title: "Capítulo Criado! (Simulação)" });
-        setModuleForm({ title: "" });
-        setIsModuleDialogOpen(false);
-        setIsSubmitting(false);
-    }, 500);
+    const { data, error } = await supabase.from('modules').insert({
+      trail_id: trailId,
+      title: moduleForm.title,
+      order_index: modules.length
+    }).select().single();
+
+    if (!error) {
+      setModules(prev => [...prev, data]);
+      setContents(prev => ({...prev, [data.id]: []}));
+      toast({ title: "Capítulo Criado!" });
+      setModuleForm({ title: "" });
+      setIsModuleDialogOpen(false);
+    }
+    setIsSubmitting(false);
   };
 
-  const handleAddContent = () => {
+  const handleAddContent = async () => {
     if (!activeModuleId || !contentForm.title) return;
     setIsSubmitting(true);
-    const newContent = {
-        id: `cont_${Date.now()}`,
-        module_id: activeModuleId,
-        ...contentForm
-    };
-    setTimeout(() => {
-        setContents(prev => ({
-            ...prev,
-            [activeModuleId]: [...(prev[activeModuleId] || []), newContent]
-        }));
-        toast({ title: "Aula Anexada! (Simulação)" });
-        setContentForm({ title: "", type: "video", url: "", description: "" });
-        setIsContentDialogOpen(false);
-        setActiveModuleId(null);
-        setIsSubmitting(false);
-    }, 500);
+    const { data, error } = await supabase.from('learning_contents').insert({
+      module_id: activeModuleId,
+      ...contentForm,
+      order_index: contents[activeModuleId]?.length || 0
+    }).select().single();
+
+    if (!error) {
+      setContents(prev => ({
+        ...prev,
+        [activeModuleId]: [...(prev[activeModuleId] || []), data]
+      }));
+      toast({ title: "Aula Anexada!" });
+      setContentForm({ title: "", type: "video", url: "", description: "" });
+      setIsContentDialogOpen(false);
+    }
+    setIsSubmitting(false);
   };
 
-  const handleGenerateAiQuiz = async (modId: string, modTitle: string) => {
-    setActiveModuleId(modId);
-    setIsAiQuizDialogOpen(true);
-    setIsGeneratingQuiz(true);
-    setAiQuizData(null);
-
-    try {
-      const contextText = contents[modId]?.map(c => c.title).join(", ") || "";
-      const result = await generateQuiz({ 
-        topic: modTitle, 
-        description: `Unidade: ${modTitle}. Tópicos: ${contextText}` 
-      });
-      setAiQuizData(result);
-    } catch (err) {
-      toast({ title: "Erro Aurora IA", variant: "destructive" });
-      setIsAiQuizDialogOpen(false);
-    } finally {
-      setIsGeneratingQuiz(false);
+  const handleDeleteModule = async (id: string) => {
+    const { error } = await supabase.from('modules').delete().eq('id', id);
+    if (!error) {
+      setModules(prev => prev.filter(m => m.id !== id));
+      toast({ title: "Capítulo removido" });
     }
   };
 
-  const handleSaveAiQuiz = () => {
-    if (!activeModuleId || !aiQuizData) return;
-    setIsSubmitting(true);
-    const newQuiz = {
-        id: `quiz_${Date.now()}`,
-        module_id: activeModuleId,
-        title: "Quiz IA: " + modules.find(m => m.id === activeModuleId)?.title,
-        type: "quiz",
-        description: JSON.stringify(aiQuizData.questions)
-    };
-    setTimeout(() => {
-        setContents(prev => ({
-            ...prev,
-            [activeModuleId]: [...(prev[activeModuleId] || []), newQuiz]
-        }));
-        toast({ title: "Avaliação IA Publicada! (Simulação)" });
-        setIsAiQuizDialogOpen(false);
-        setIsSubmitting(false);
-    }, 500);
-  };
-
-  const handleDeleteModule = (id: string) => {
-    setModules(prev => prev.filter(m => m.id !== id));
-    toast({ title: "Capítulo removido" });
-  };
-
-  const handleDeleteContent = (id: string) => {
-    setContents(prev => {
-        const newContents = {...prev};
-        for(const modId in newContents) {
-            newContents[modId] = newContents[modId].filter(c => c.id !== id);
-        }
-        return newContents;
-    });
-    toast({ title: "Aula removida" });
+  const handleDeleteContent = async (id: string) => {
+    const { error } = await supabase.from('learning_contents').delete().eq('id', id);
+    if (!error) {
+      setContents(prev => {
+          const newContents = {...prev};
+          for(const modId in newContents) {
+              newContents[modId] = newContents[modId].filter(c => c.id !== id);
+          }
+          return newContents;
+      });
+      toast({ title: "Aula removida" });
+    }
   };
 
   if (loading) return (
     <div className="flex flex-col h-96 items-center justify-center gap-4">
       <Loader2 className="animate-spin h-12 w-12 text-accent" />
-      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Sincronizando...</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Sincronizando Banco Master...</p>
     </div>
   );
 
@@ -220,7 +175,7 @@ export default function TrailManagementPage() {
         <div className="flex items-center gap-6">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full h-12 w-12 bg-white shadow-sm border hover:scale-110 transition-transform"><ChevronLeft className="h-6 w-6" /></Button>
           <div className="space-y-1">
-            <h1 className="text-3xl font-black text-primary italic leading-none">{trail?.title || "Gestão"}</h1>
+            <h1 className="text-3xl font-black text-primary italic leading-none">{trail?.title}</h1>
             <div className="flex items-center gap-2">
               <Badge variant={trail?.status === 'active' ? 'default' : 'outline'} className={`text-[10px] font-black uppercase tracking-widest ${trail?.status === 'active' ? 'bg-green-600 border-none' : 'border-orange-500 text-orange-500'}`}>
                 {trail?.status === 'active' ? 'PÚBLICA' : 'RASCUNHO'}
@@ -249,9 +204,6 @@ export default function TrailManagementPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button variant="ghost" size="icon" onClick={() => handleDeleteModule(mod.id)} className="text-muted-foreground hover:text-red-500 rounded-full"><Trash2 className="h-4 w-4" /></Button>
-                  <Button onClick={() => handleGenerateAiQuiz(mod.id, mod.title)} className="bg-accent text-accent-foreground hover:bg-accent/90 font-black text-[9px] uppercase rounded-xl h-10 px-4 shadow-md gap-2">
-                    <Sparkles className="h-3 w-3" /> Quiz IA
-                  </Button>
                   <Button onClick={() => { setActiveModuleId(mod.id); setIsContentDialogOpen(true); }} className="bg-primary text-white hover:bg-primary/90 font-black text-[9px] uppercase rounded-xl h-10 px-4 shadow-md gap-2">
                     <Plus className="h-3 w-3" /> Aula
                   </Button>
@@ -267,16 +219,15 @@ export default function TrailManagementPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="font-black text-sm text-primary truncate">{content.title}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-[7px] font-black uppercase bg-white border-none px-2">{content.type}</Badge>
-                          </div>
+                          <Badge variant="outline" className="text-[7px] font-black uppercase bg-white border-none px-2 mt-1">{content.type}</Badge>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-red-500 hover:text-white" onClick={() => handleDeleteContent(content.id)}><Trash2 className="h-4 w-4" /></Button>
-                      </div>
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-red-500 hover:text-white opacity-0 group-hover:opacity-100 transition-all" onClick={() => handleDeleteContent(content.id)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   ))}
+                  {(!contents[mod.id] || contents[mod.id].length === 0) && (
+                    <p className="text-center py-6 text-xs font-bold text-muted-foreground italic uppercase opacity-40">Nenhum material neste capítulo</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -335,52 +286,12 @@ export default function TrailManagementPage() {
               </SelectContent>
             </Select>
             <Input placeholder="Título da Aula" value={contentForm.title} onChange={(e) => setContentForm({...contentForm, title: e.target.value})} className="h-14 rounded-xl bg-muted/30 border-none font-bold" />
-            <Input placeholder="Link (se houver)" value={contentForm.url} onChange={(e) => setContentForm({...contentForm, url: e.target.value})} className="h-14 rounded-xl bg-muted/30 border-none font-medium" />
-            <Textarea placeholder="Descrição..." value={contentForm.description} onChange={(e) => setContentForm({...contentForm, description: e.target.value})} className="min-h-[150px] rounded-xl bg-muted/30 border-none resize-none p-4" />
+            <Input placeholder="Link (YouTube ou PDF)" value={contentForm.url} onChange={(e) => setContentForm({...contentForm, url: e.target.value})} className="h-14 rounded-xl bg-muted/30 border-none font-medium" />
+            <Textarea placeholder="Breve descrição pedagógica..." value={contentForm.description} onChange={(e) => setContentForm({...contentForm, description: e.target.value})} className="min-h-[150px] rounded-xl bg-muted/30 border-none resize-none p-4" />
           </div>
           <Button onClick={handleAddContent} disabled={isSubmitting} className="w-full h-16 bg-primary text-white font-black rounded-2xl shadow-xl">
             {isSubmitting ? <Loader2 className="animate-spin h-6 w-6" /> : "Publicar"}
           </Button>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isAiQuizDialogOpen} onOpenChange={setIsAiQuizDialogOpen}>
-        <DialogContent className="rounded-[2.5rem] p-10 max-w-2xl bg-white border-none shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black italic text-primary flex items-center gap-3">
-              <Sparkles className="h-6 w-6 text-accent" /> Curadoria Aurora IA
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-6 space-y-6 max-h-[60vh] overflow-y-auto scrollbar-hide">
-            {isGeneratingQuiz ? (
-              <div className="py-20 flex flex-col items-center justify-center gap-4">
-                <Loader2 className="h-12 w-12 animate-spin text-accent" />
-                <p className="font-black text-primary italic animate-pulse">Aurora formulando...</p>
-              </div>
-            ) : aiQuizData ? (
-              <div className="space-y-8">
-                {aiQuizData.questions.map((q, qIdx) => (
-                  <Card key={qIdx} className="border-2 border-muted bg-slate-50 rounded-2xl overflow-hidden">
-                    <CardHeader className="bg-primary text-white p-4">
-                      <span className="text-[10px] font-black uppercase">Questão {qIdx + 1} - {q.sourceStyle}</span>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-4">
-                      <p className="font-bold text-sm text-slate-800">{q.question}</p>
-                      <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
-                        <p className="text-[10px] font-medium text-amber-800"><strong>Explicação:</strong> {q.explanation}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={() => setIsAiQuizDialogOpen(false)} className="flex-1 h-14 rounded-2xl font-black uppercase text-xs">Descartar</Button>
-            <Button onClick={handleSaveAiQuiz} disabled={isSubmitting || isGeneratingQuiz || !aiQuizData} className="flex-1 h-14 bg-primary text-white rounded-2xl font-black uppercase text-xs shadow-xl">
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />} Aprovar
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </div>
