@@ -12,38 +12,76 @@ import { Badge } from "@/components/ui/badge";
 import { Send, ChevronLeft, Loader2, MessageSquare, Bot, BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
-
-interface ChatContact {
-  name: string;
-  expertise: string;
-  type: 'teacher' | 'student';
-}
+import { supabase } from "@/app/lib/supabase";
 
 export default function DirectChatPage() {
   const params = useParams();
   const contactId = params.id as string;
   const isAurora = contactId === "aurora-ai";
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   
   const [input, setInput] = useState("");
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
+  const [contact, setContact] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const contact: ChatContact = isAurora 
-    ? { name: "Aurora IA", expertise: "Mentoria Geral & IA", type: 'teacher' } 
-    : { name: "Estudante da Rede", expertise: "Dúvidas Gerais", type: 'student' };
-
+  // Carregar dados iniciais
   useEffect(() => {
-    if (isAurora) {
-      setMessages([
-        { id: '1', sender_id: 'aurora-ai', message: 'Olá! Como posso te ajudar a acelerar seus estudos hoje?', created_at: new Date().toISOString() }
-      ]);
-    }
-  }, [isAurora]);
+    async function loadChatData() {
+      if (!user || !contactId) return;
+      setLoading(true);
 
+      if (isAurora) {
+        setContact({ name: "Aurora IA", profile_type: "teacher", institution: "Mentoria Geral" });
+        setMessages([
+          { id: 'initial', sender_id: 'aurora-ai', content: 'Olá! Como posso te ajudar a acelerar seus estudos hoje?', created_at: new Date().toISOString() }
+        ]);
+      } else {
+        // Carregar Perfil do Contato
+        const { data: profileData } = await supabase.from('profiles').select('*').eq('id', contactId).single();
+        setContact(profileData);
+
+        // Carregar Mensagens Reais
+        const { data: msgs, error } = await supabase
+          .from('direct_messages')
+          .select('*')
+          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${contactId}),and(sender_id.eq.${contactId},receiver_id.eq.${user.id})`)
+          .order('created_at', { ascending: true });
+        
+        if (!error) setMessages(msgs || []);
+      }
+      setLoading(false);
+    }
+
+    loadChatData();
+
+    // Inscrição Real-time para chats entre humanos
+    if (!isAurora && user) {
+      const channel = supabase
+        .channel(`chat:${user.id}-${contactId}`)
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'direct_messages',
+          filter: `receiver_id=eq.${user.id}`
+        }, (payload) => {
+          if (payload.new.sender_id === contactId) {
+            setMessages(prev => [...prev, payload.new]);
+          }
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user, contactId, isAurora]);
+
+  // Scroll automático
   useEffect(() => {
     if (scrollRef.current) {
       const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -58,23 +96,18 @@ export default function DirectChatPage() {
     if (!input.trim() || !user || !contactId) return;
 
     const userText = input;
-    const newUserMessage = {
-      id: new Date().toISOString(),
-      sender_id: user.id,
-      message: userText,
-      created_at: new Date().toISOString(),
-    };
-
-    const currentMessages = [...messages, newUserMessage];
-    setMessages(currentMessages);
     setInput("");
 
     if (isAurora) {
+      const newUserMessage = { id: Date.now().toString(), sender_id: user.id, content: userText, created_at: new Date().toISOString() };
+      const currentMessages = [...messages, newUserMessage];
+      setMessages(currentMessages);
+      
       setIsAiThinking(true);
       try {
         const history = currentMessages.slice(-6).map(m => ({
           role: (m.sender_id === "aurora-ai" ? 'model' : 'user') as 'user' | 'model',
-          content: m.message
+          content: m.content
         }));
 
         const response = await fetch('/api/genkit', {
@@ -86,34 +119,46 @@ export default function DirectChatPage() {
           }),
         });
 
-        if (!response.ok) {
-          throw new Error('Falha na comunicação com o servidor.');
-        }
-
         const text = await response.text();
-        if (!text) throw new Error("Resposta da IA está vazia.");
-        
+        if (!text) throw new Error("Sem resposta");
         const result = JSON.parse(text);
 
         if (result.success && result.result.response) {
-          const aiResponseMessage = {
-            id: new Date().toISOString() + '-ai',
+          setMessages(prev => [...prev, {
+            id: Date.now().toString() + '-ai',
             sender_id: "aurora-ai",
-            message: result.result.response,
+            content: result.result.response,
             created_at: new Date().toISOString(),
-          };
-          setMessages(prev => [...prev, aiResponseMessage]);
-        } else {
-          throw new Error('Falha na resposta estruturada da IA.');
+          }]);
         }
-      } catch (err: any) {
-        toast({ title: "Aurora está ocupada", description: err.message || "Tente novamente em instantes.", variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Aurora está analisando...", description: "Tente novamente em instantes.", variant: "destructive" });
       } finally {
         setIsAiThinking(false);
+      }
+    } else {
+      // Chat Real entre humanos
+      const { data, error } = await supabase.from('direct_messages').insert({
+        sender_id: user.id,
+        receiver_id: contactId,
+        content: userText
+      }).select().single();
+
+      if (!error) {
+        setMessages(prev => [...prev, data]);
+      } else {
+        toast({ title: "Erro ao enviar", variant: "destructive" });
       }
     }
   };
   
+  if (loading) return (
+    <div className="flex h-screen items-center justify-center flex-col gap-4">
+      <Loader2 className="h-10 w-10 animate-spin text-accent" />
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Abrindo Canal...</p>
+    </div>
+  );
+
   return (
     <div className="flex flex-col flex-1 min-h-0 animate-in fade-in duration-500 overflow-hidden space-y-2 md:space-y-4 w-full h-full">
       <div className="flex items-center justify-between px-2 py-2 shrink-0 bg-white/50 backdrop-blur-md rounded-2xl shadow-sm border border-white/20">
@@ -123,9 +168,9 @@ export default function DirectChatPage() {
           </Button>
           <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
             <div className="relative shrink-0">
-              <Avatar className={`h-9 w-9 md:h-12 md:w-12 border-2 shadow-lg transition-transform duration-500 hover:scale-110 ${isAurora ? 'bg-accent border-white' : 'border-primary/10'}`}>
+              <Avatar className={`h-9 w-9 md:h-12 md:w-12 border-2 shadow-lg ${isAurora ? 'bg-accent border-white' : 'border-primary/10'}`}>
                 {isAurora ? (
-                  <div className="h-full w-full flex items-center justify-center text-accent-foreground animate-in zoom-in duration-500"><Bot className="h-5 w-5 md:h-6 md:w-6" /></div>
+                  <div className="h-full w-full flex items-center justify-center text-accent-foreground"><Bot className="h-5 w-5 md:h-6 md:w-6" /></div>
                 ) : (
                   <>
                     <AvatarImage src={`https://picsum.photos/seed/${contactId}/100/100`} />
@@ -136,18 +181,15 @@ export default function DirectChatPage() {
               <div className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm md:text-lg font-black text-primary italic leading-none truncate">{contact?.name || "Carregando..."}</h1>
-              <div className="flex items-center gap-1.5 mt-1 truncate">
-                {contact?.type === 'teacher' && <BookOpen className="h-2.5 w-2.5 text-accent shrink-0" />}
-                <p className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase tracking-widest truncate">
-                  {isAurora ? 'Tutor IA Integrado' : 'Estudante da Rede'}
-                </p>
-              </div>
+              <h1 className="text-sm md:text-lg font-black text-primary italic leading-none truncate">{contact?.name || "Usuário"}</h1>
+              <p className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1 truncate">
+                {isAurora ? 'IA Aurora Ativa' : (contact?.institution || 'Estudante da Rede')}
+              </p>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 pr-2">
-          <Badge className="bg-green-100 text-green-700 border-none px-2 font-black text-[7px] md:text-[8px] uppercase tracking-tighter">Ativo</Badge>
+          <Badge className="bg-green-100 text-green-700 border-none px-2 font-black text-[7px] md:text-[8px] uppercase tracking-tighter">Conectado</Badge>
         </div>
       </div>
 
@@ -157,7 +199,7 @@ export default function DirectChatPage() {
             {messages.length === 0 ? (
               <div className="text-center py-20 opacity-30 flex flex-col items-center">
                 <MessageSquare className="h-10 w-10 text-muted-foreground" />
-                <p className="text-xs font-black italic mt-4">Inicie esta conexão!</p>
+                <p className="text-xs font-black italic mt-4">Envie uma mensagem para iniciar!</p>
               </div>
             ) : (
               messages.map((msg, i) => {
@@ -172,17 +214,17 @@ export default function DirectChatPage() {
                             ? 'bg-accent/10 text-primary rounded-tl-none border-accent/20'
                             : 'bg-muted/30 text-primary rounded-tl-none border-muted/20'
                       }`}>
-                       {msg.message}
+                       {msg.content}
                     </div>
                   </div>
                 );
               })
             )}
             {isAiThinking && (
-              <div className="flex justify-start animate-in slide-in-from-bottom-2">
+              <div className="flex justify-start">
                 <div className="flex items-center gap-3 bg-accent/5 px-4 py-2 rounded-[1.25rem] rounded-tl-none border border-accent/10">
                   <Loader2 className="h-3 w-3 animate-spin text-accent" />
-                  <span className="text-[8px] font-black uppercase tracking-widest text-accent italic">Aurora analisando...</span>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-accent italic">Analisando...</span>
                 </div>
               </div>
             )}
