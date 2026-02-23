@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,7 +23,7 @@ export default function TeacherTrailsPage() {
   const [trails, setTrails] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newTrail, setNewTrail] = useState({ title: "", category: "Dúvidas", description: "" });
+  const [newTrail, setNewTrail] = useState({ title: "", category: "Geral", description: "" });
 
   const fetchTrails = async () => {
     if (!user) return;
@@ -79,14 +78,12 @@ export default function TeacherTrailsPage() {
       toast({ title: "Trilha Criada!", description: "Continue editando os módulos para publicar." });
       setTrails(prev => [data, ...prev]);
       setIsCreateDialogOpen(false);
-      setNewTrail({ title: "", category: "Dúvidas", description: "" });
+      setNewTrail({ title: "", category: "Geral", description: "" });
     } catch (e: any) {
       console.error("Falha ao criar trilha:", e);
       toast({ 
         title: "Erro de Persistência", 
-        description: e.message.includes('teacher_id') 
-          ? "A coluna 'teacher_id' não foi encontrada. Por favor, execute o script SQL de reparo." 
-          : e.message, 
+        description: e.message, 
         variant: "destructive" 
       });
     } finally {
@@ -97,6 +94,11 @@ export default function TeacherTrailsPage() {
   const handleGenerateTopics = () => {
     toast({ title: "Aurora analisando...", description: "A IA está processando sugestões para sua nova trilha." });
   };
+
+  const filteredTrails = trails.filter(t => 
+    t.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    t.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
@@ -159,13 +161,13 @@ export default function TeacherTrailsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {trails.filter(t => t.title.toLowerCase().includes(searchTerm.toLowerCase())).map((trail) => {
+          {filteredTrails.map((trail) => {
             const isActive = trail.status === 'active' || trail.status === 'published';
             
             return (
               <Card key={trail.id} className="border-none shadow-xl overflow-hidden group bg-white rounded-[2.5rem] flex flex-col hover:shadow-2xl transition-all duration-500">
                 <div className="relative aspect-video bg-muted overflow-hidden">
-                  <Image src={trail.image_url || `https://picsum.photos/seed/trail-${trail.id}/600/400`} alt={trail.title} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" />
+                  <Image src={trail.image_url || `https://picsum.photos/seed/trail-${trail.id}/600/400`} alt={trail.title || "Trilha"} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" />
                   <div className="absolute top-4 left-4">
                     <Badge className={`${isActive ? 'bg-green-600' : 'bg-orange-500'} text-white border-none px-4 py-1 font-black text-[10px] uppercase shadow-lg flex items-center gap-2`}>
                       {isActive ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
@@ -174,7 +176,7 @@ export default function TeacherTrailsPage() {
                   </div>
                 </div>
                 <CardHeader className="p-8 pb-4">
-                  <span className="text-[10px] font-black text-accent uppercase tracking-[0.2em]">{trail.category}</span>
+                  <span className="text-[10px] font-black text-accent uppercase tracking-[0.2em]">{trail.category || "Geral"}</span>
                   <CardTitle className="text-xl font-black italic truncate mt-2 group-hover:text-accent transition-colors">{trail.title}</CardTitle>
                 </CardHeader>
                 <CardFooter className="p-8 pt-4 border-t border-muted/10 mt-auto flex justify-between items-center">
@@ -192,11 +194,11 @@ export default function TeacherTrailsPage() {
               </Card>
             );
           })}
-          {trails.length === 0 && !loading && (
+          {filteredTrails.length === 0 && !loading && (
             <div className="col-span-full py-20 text-center border-4 border-dashed border-muted/20 rounded-[3rem] bg-muted/5 animate-in fade-in duration-1000">
               <Database className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
               <p className="font-black text-primary italic text-xl">Nenhuma trilha encontrada</p>
-              <p className="text-muted-foreground font-medium mt-2">Inicie uma nova trilha ou publique seus rascunhos.</p>
+              <p className="text-muted-foreground font-medium mt-2">Inicie uma nova trilha ou ajuste seus filtros.</p>
             </div>
           )}
         </div>

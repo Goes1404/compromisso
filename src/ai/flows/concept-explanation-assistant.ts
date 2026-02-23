@@ -73,7 +73,7 @@ export async function conceptExplanationAssistant(input: ConceptExplanationAssis
 
 const conceptExplanationAssistantFlow = ai.defineFlow(
   {
-    name: 'conceptExplanationAssistantFlow',
+    name: 'conceptExplanationAssistant', // Corrigido para corresponder às chamadas do front-end
     inputSchema: ConceptExplanationAssistantInputSchema,
     outputSchema: ConceptExplanationAssistantOutputSchema,
   },

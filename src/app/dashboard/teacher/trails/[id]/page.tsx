@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -40,7 +39,7 @@ import { supabase } from "@/app/lib/supabase";
 
 export default function TrailManagementPage() {
   const params = useParams();
-  const trailId = params.id as string;
+  const trailId = params?.id as string;
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -58,8 +57,6 @@ export default function TrailManagementPage() {
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
   
   const [moduleForm, setModuleForm] = useState({ title: "" });
-  
-  // Lista temporária para múltiplos itens no formulário
   const [pendingItems, setPendingItems] = useState<any[]>([]);
   const [contentForm, setContentForm] = useState({ 
     title: "", 
@@ -161,7 +158,6 @@ export default function TrailManagementPage() {
     setIsSubmitting(false);
   };
 
-  // Adiciona item à fila local antes de salvar no banco
   const addToQueue = () => {
     if (!contentForm.title.trim()) {
       toast({ title: "Título Obrigatório", variant: "destructive" });
@@ -394,7 +390,6 @@ export default function TrailManagementPage() {
         </div>
       </div>
 
-      {/* Dialog: Novo Capítulo */}
       <Dialog open={isModuleDialogOpen} onOpenChange={setIsModuleDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-8 bg-white border-none shadow-2xl max-w-sm">
           <DialogHeader>
@@ -418,7 +413,6 @@ export default function TrailManagementPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Anexar Materiais (Cadastro em Lote) */}
       <Dialog open={isContentDialogOpen} onOpenChange={setIsContentDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-8 md:p-10 max-w-2xl bg-white border-none shadow-2xl">
           <DialogHeader>
