@@ -71,7 +71,10 @@ export default function TeacherTrailsPage() {
         .select()
         .single();
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error("Erro Supabase:", error.message);
+        throw new Error(error.message);
+      }
 
       toast({ title: "Trilha Criada!", description: "Continue editando os módulos para publicar." });
       setTrails(prev => [data, ...prev]);
@@ -79,7 +82,13 @@ export default function TeacherTrailsPage() {
       setNewTrail({ title: "", category: "Dúvidas", description: "" });
     } catch (e: any) {
       console.error("Falha ao criar trilha:", e);
-      toast({ title: "Erro de Persistência", description: e.message, variant: "destructive" });
+      toast({ 
+        title: "Erro de Persistência", 
+        description: e.message.includes('teacher_id') 
+          ? "A coluna 'teacher_id' não foi encontrada. Por favor, execute o script SQL de reparo." 
+          : e.message, 
+        variant: "destructive" 
+      });
     } finally {
       setIsSubmitting(false);
     }
