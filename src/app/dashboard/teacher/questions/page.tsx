@@ -86,6 +86,11 @@ export default function QuestionBankPage() {
             const { error } = await supabase.from('questions').insert([payload]);
 
             if (error) {
+                // Erro específico de cache de esquema ou coluna não encontrada
+                if (error.message.includes("cache de esquema") || error.message.includes("column") || error.message.includes("not found")) {
+                    throw new Error("Sincronização Necessária: O banco de dados não encontrou a coluna 'correct_answer'. Por favor, execute o script SQL de reparo no painel do Supabase.");
+                }
+                
                 // Erro específico de RLS
                 if (error.message.includes("row-level security")) {
                     throw new Error("Erro de Permissão (RLS): Certifique-se de executar o script SQL de políticas no Supabase.");
@@ -102,7 +107,7 @@ export default function QuestionBankPage() {
         } catch (e: any) {
             console.error("Erro Supabase Insert:", e);
             toast({ 
-                title: "Falha ao Gravar", 
+                title: "Falha na Persistência", 
                 description: e.message || "Verifique a conexão ou as permissões do banco.", 
                 variant: "destructive" 
             });
@@ -139,7 +144,7 @@ export default function QuestionBankPage() {
                 <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
                     <CardContent className="p-8 md:p-12">
                         <div className="flex bg-muted/10 p-1.5 rounded-2xl mb-10 w-fit mx-auto md:mx-0">
-                            <Button variant={entryMode === 'bulk' ? 'default' : 'ghost'} onClick={() => setEntryMode('bulk')} className="rounded-xl font-bold h-11 px-6">
+                            <Button variant={entryMode === 'bulk' ? 'default' : 'ghost'} onClick={() => setEntryMode('bulk'} className="rounded-xl font-bold h-11 px-6">
                                 <ListChecks className="h-4 w-4 mr-2"/> Carga em Massa
                             </Button>
                             <Button variant={entryMode === 'manual' ? 'default' : 'ghost'} onClick={() => setEntryMode('manual')} className="rounded-xl font-bold h-11 px-6">
