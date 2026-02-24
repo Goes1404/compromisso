@@ -35,7 +35,7 @@ import { supabase } from "@/app/lib/supabase";
 export default function TeacherLiveStudioPage() {
   const params = useParams();
   const liveId = params?.id as string;
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -87,7 +87,18 @@ export default function TeacherLiveStudioPage() {
         table: 'live_messages', 
         filter: `live_id=eq.${liveId}` 
       }, (payload) => {
-        setMessages(prev => [...prev, payload.new]);
+        setMessages(prev => {
+          const exists = prev.some(m => m.id === payload.new.id);
+          return exists ? prev : [...prev, payload.new];
+        });
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'live_messages',
+        filter: `live_id=eq.${liveId}`
+      }, (payload) => {
+        setMessages(prev => prev.map(m => m.id === payload.new.id ? payload.new : m));
       })
       .on('postgres_changes', {
         event: 'UPDATE',
@@ -182,9 +193,9 @@ export default function TeacherLiveStudioPage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-4">
-          {live?.meeting_url && (
+          {live?.meet_link && (
             <Button asChild variant="outline" className="h-12 rounded-2xl border-white/20 hover:bg-white/10 text-white font-black px-6 gap-2">
-              <a href={live.meeting_url} target="_blank" rel="noopener noreferrer">
+              <a href={live.meet_link} target="_blank" rel="noopener noreferrer">
                 ABRIR MEU GOOGLE MEET <ExternalLink className="h-4 w-4" />
               </a>
             </Button>
@@ -291,7 +302,7 @@ export default function TeacherLiveStudioPage() {
             <form onSubmit={handleSendMessage} className="flex items-center gap-3 bg-white p-2 pl-6 rounded-full shadow-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-slate-900 transition-all">
               <Input value={input} onChange={(e) => setInput(e.target.value)} disabled={isSending} placeholder="Orientação do Mentor..." className="border-none shadow-none text-xs font-bold italic h-10 bg-transparent focus-visible:ring-0 px-0" />
               <Button type="submit" disabled={isSending || !input.trim()} size="icon" className="h-10 w-10 bg-slate-900 text-white rounded-full shrink-0 shadow-lg flex items-center justify-center">
-                <Send className="h-4 w-4" />
+                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </form>
           </div>

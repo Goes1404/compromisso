@@ -39,6 +39,7 @@ export default function StudentLivePage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -81,7 +82,10 @@ export default function StudentLivePage() {
         table: 'live_messages', 
         filter: `live_id=eq.${liveId}` 
       }, (payload) => {
-        setMessages(prev => [...prev, payload.new]);
+        setMessages(prev => {
+          const exists = prev.some(m => m.id === payload.new.id);
+          return exists ? prev : [...prev, payload.new];
+        });
       })
       .on('postgres_changes', {
         event: 'UPDATE',
@@ -100,8 +104,9 @@ export default function StudentLivePage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !user) return;
+    if (!input.trim() || !user || isSending) return;
 
+    setIsSending(true);
     const msgContent = input;
     setInput("");
 
@@ -118,6 +123,7 @@ export default function StudentLivePage() {
     if (error) {
       toast({ title: "Erro ao enviar", description: "Verifique sua conexão.", variant: "destructive" });
     }
+    setIsSending(false);
   };
 
   useEffect(() => {
@@ -191,16 +197,16 @@ export default function StudentLivePage() {
                       Portal de Mentoria
                     </h3>
                     <p className="text-xs md:text-sm text-slate-400 font-medium italic leading-relaxed">
-                      {isLiveNow 
-                        ? "O mentor iniciou a aula! Clique abaixo para ingressar no ambiente seguro do Google Meet."
-                        : "Esta aula está agendada. O link de acesso será habilitado assim que o mentor entrar na sala."}
+                      {live?.meet_link 
+                        ? "O mentor já disponibilizou o link! Clique abaixo para ingressar no ambiente de aula."
+                        : "Esta aula está agendada. O link de acesso será habilitado assim que o mentor cadastrar a sala."}
                     </p>
                   </div>
                   
-                  {live?.meeting_url ? (
+                  {live?.meet_link ? (
                     <div className="flex flex-col gap-4 animate-in zoom-in-95 duration-500">
                       <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90 font-black h-16 md:h-20 px-12 rounded-2xl shadow-[0_20px_50px_rgba(245,158,11,0.3)] transition-all hover:scale-105 active:scale-95 group relative overflow-hidden border-none">
-                        <a href={live.meeting_url} target="_blank" rel="noopener noreferrer">
+                        <a href={live.meet_link} target="_blank" rel="noopener noreferrer">
                           <span className="relative z-10 flex items-center gap-4 text-sm md:text-xl uppercase tracking-tighter">
                             ACESSAR SALA DO GOOGLE MEET
                             <ExternalLink className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
@@ -259,7 +265,7 @@ export default function StudentLivePage() {
               ) : (
                 messages.map((msg) => {
                   const isMe = msg.user_id === user?.id;
-                  const isMentor = msg.user_name?.includes("PROFESSOR") || msg.user_name?.includes("MENTOR");
+                  const isMentor = msg.user_name?.includes("PROFESSOR") || msg.user_name?.includes("MENTOR") || msg.user_name?.includes("OFFICIAL");
                   
                   return (
                     <div key={msg.id} className={`flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 duration-300`}>
@@ -267,7 +273,7 @@ export default function StudentLivePage() {
                         <span className={`text-[8px] font-black uppercase tracking-widest ${isMentor ? 'text-accent' : 'text-primary/40'}`}>
                           {msg.user_name}
                         </span>
-                        {msg.is_answered && <Badge className="bg-green-100 text-green-700 text-[6px] h-3 px-1 border-none font-black">LIDO</Badge>}
+                        {msg.is_answered && <Badge className="bg-green-100 text-green-700 text-[6px] h-3 px-1 border-none font-black">RESPONDIDO</Badge>}
                       </div>
                       <div className={`px-4 py-3 rounded-[1.5rem] text-xs font-medium shadow-sm border transition-all ${
                         isMe 
@@ -292,11 +298,12 @@ export default function StudentLivePage() {
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                disabled={isSending}
                 placeholder="Tirar dúvida..."
                 className="flex-1 h-10 bg-transparent border-none text-primary font-medium italic focus-visible:ring-0 px-0 text-xs"
               />
-              <Button type="submit" disabled={!input.trim()} className="h-10 w-10 bg-primary hover:bg-primary/95 text-white rounded-full shrink-0 shadow-lg flex items-center justify-center border-none">
-                <Send className="h-4 w-4" />
+              <Button type="submit" disabled={!input.trim() || isSending} className="h-10 w-10 bg-primary hover:bg-primary/95 text-white rounded-full shrink-0 shadow-lg flex items-center justify-center border-none">
+                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </form>
           </div>
