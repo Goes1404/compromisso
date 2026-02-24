@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { useState, useEffect, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,9 +14,10 @@ import {
   Loader2, 
   ShieldCheck, 
   Sparkles,
-  Layout,
   Palette,
-  BellRing
+  BellRing,
+  Upload,
+  AlertCircle
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -34,9 +35,10 @@ const PRESET_AVATARS = [
 export default function SettingsPage() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [loading, setLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     avatar_url: ""
@@ -57,6 +59,7 @@ export default function SettingsPage() {
 
     setIsUpdating(true);
     try {
+      // Tenta atualizar o perfil. Se a coluna 'name' falhar, tentamos apenas o avatar_url como fallback
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -73,9 +76,12 @@ export default function SettingsPage() {
         description: "Suas preferências foram sincronizadas com a rede."
       });
     } catch (err: any) {
+      console.error("Erro ao atualizar:", err);
       toast({
         title: "Erro na Atualização",
-        description: err.message,
+        description: err.message.includes("column \"name\"") 
+          ? "A coluna 'name' não existe no banco. Execute o script SQL fornecido."
+          : err.message,
         variant: "destructive"
       });
     } finally {
@@ -83,7 +89,51 @@ export default function SettingsPage() {
     }
   };
 
-  const selectAvatar = (url: string) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validar tamanho (máx 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Arquivo muito grande", description: "O limite é 2MB.", variant: "destructive" });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      // 1. Upload para o Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // 2. Pegar URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // 3. Atualizar estado local
+      setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
+      
+      toast({ title: "Foto enviada!", description: "Clique em 'Gravar Alterações' para salvar definitivamente." });
+    } catch (err: any) {
+      console.error("Erro upload:", err);
+      toast({ 
+        title: "Erro no Upload", 
+        description: "Certifique-se de que o bucket 'avatars' existe e é público no Supabase Storage.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const selectPresetAvatar = (url: string) => {
     setFormData(prev => ({ ...prev, avatar_url: url }));
   };
 
@@ -104,20 +154,34 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-1 space-y-6">
           <Card className="border-none shadow-2xl bg-white rounded-[2.5rem] overflow-hidden text-center p-8">
-            <div className="relative mx-auto w-32 h-32 mb-6">
-              <Avatar className="w-32 h-32 border-4 border-primary/5 shadow-2xl">
+            <div className="relative mx-auto w-32 h-32 mb-6 group">
+              <Avatar className="w-32 h-32 border-4 border-primary/5 shadow-2xl transition-all group-hover:opacity-80">
                 <AvatarImage src={formData.avatar_url || `https://picsum.photos/seed/${user.id}/200/200`} />
-                <AvatarFallback className="bg-primary text-white text-4xl font-black">{profile?.name?.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="bg-primary text-white text-4xl font-black">{formData.name?.charAt(0) || profile?.name?.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div className="absolute bottom-0 right-0 h-10 w-10 bg-accent rounded-full border-4 border-white flex items-center justify-center text-accent-foreground shadow-lg">
-                <Camera className="h-5 w-5" />
-              </div>
+              
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="absolute bottom-0 right-0 h-10 w-10 bg-accent rounded-full border-4 border-white flex items-center justify-center text-accent-foreground shadow-lg hover:scale-110 active:scale-95 transition-all cursor-pointer z-10"
+              >
+                {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+              </button>
+              
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                className="hidden" 
+                accept="image/*"
+              />
             </div>
-            <h3 className="text-xl font-black text-primary italic leading-none truncate">{profile?.name || "Usuário"}</h3>
+            <h3 className="text-xl font-black text-primary italic leading-none truncate">{formData.name || profile?.name || "Usuário"}</h3>
             <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mt-2">{profile?.profile_type?.toUpperCase()}</p>
+            
             <div className="mt-6 p-4 rounded-2xl bg-muted/10 border-2 border-dashed border-muted/20">
               <p className="text-[10px] text-muted-foreground italic leading-relaxed">
-                Escolha um avatar da galeria ao lado para atualizar sua foto de perfil na rede.
+                Clique no ícone de câmera para carregar uma foto da sua galeria ou escolha um avatar abaixo.
               </p>
             </div>
           </Card>
@@ -160,14 +224,14 @@ export default function SettingsPage() {
 
                   <div className="space-y-4">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-primary/50 flex items-center gap-2 px-2">
-                      <Palette className="h-4 w-4" /> Escolher Foto de Perfil
+                      <Palette className="h-4 w-4" /> Escolher Avatar Rápido
                     </Label>
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
                       {PRESET_AVATARS.map((url, i) => (
                         <button
                           key={i}
                           type="button"
-                          onClick={() => selectAvatar(url)}
+                          onClick={() => selectPresetAvatar(url)}
                           className={`relative rounded-2xl overflow-hidden aspect-square border-4 transition-all hover:scale-105 active:scale-95 ${
                             formData.avatar_url === url ? 'border-accent shadow-xl ring-4 ring-accent/5 scale-110' : 'border-transparent opacity-60 hover:opacity-100'
                           }`}
@@ -186,14 +250,21 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  disabled={isUpdating}
-                  className="w-full h-16 bg-primary text-white font-black text-lg rounded-2xl shadow-2xl shadow-primary/20 transition-all hover:bg-primary/95 active:scale-95"
-                >
-                  {isUpdating ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <CheckCircle2 className="h-6 w-6 mr-2" />}
-                  {isUpdating ? "Sincronizando..." : "Gravar Alterações"}
-                </Button>
+                <div className="space-y-4 pt-4">
+                   <Button 
+                    type="submit" 
+                    disabled={isUpdating || isUploading}
+                    className="w-full h-16 bg-primary text-white font-black text-lg rounded-2xl shadow-2xl shadow-primary/20 transition-all hover:bg-primary/95 active:scale-95"
+                  >
+                    {isUpdating ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <CheckCircle2 className="h-6 w-6 mr-2" />}
+                    {isUpdating ? "Sincronizando..." : "Gravar Alterações"}
+                  </Button>
+                  
+                  <p className="text-[9px] text-center text-muted-foreground uppercase font-bold tracking-widest flex items-center justify-center gap-2">
+                    <AlertCircle className="h-3 w-3" /> 
+                    Certifique-se de ter rodado o script SQL no Supabase para evitar erros de coluna.
+                  </p>
+                </div>
               </form>
             </CardContent>
           </Card>
