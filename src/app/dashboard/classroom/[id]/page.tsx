@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useCallback, use } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -21,16 +21,17 @@ import {
   HelpCircle,
   FileSearch,
   Layout,
-  Layers,
-  AlertCircle
+  Layers
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/app/lib/supabase";
 
-export default function ClassroomPage() {
-  const params = useParams();
-  const trailId = params?.id as string;
+/**
+ * Sala de Aula Digital - Resiliente para Next.js 15
+ */
+export default function ClassroomPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: trailId } = use(params);
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -62,7 +63,6 @@ export default function ClassroomPage() {
       }
       setTrail(trailData);
 
-      // 1. Carregar Módulos
       const { data: modulesData, error: modError } = await supabase
         .from('modules')
         .select('*')
@@ -79,7 +79,6 @@ export default function ClassroomPage() {
       setModules(modulesData);
       setActiveModuleId(modulesData[0].id);
       
-      // 2. Carregar Conteúdos de todos os módulos
       const moduleIds = modulesData.map(m => m.id);
       const { data: contentsData, error: contError } = await supabase
         .from('learning_contents')
@@ -225,10 +224,9 @@ export default function ClassroomPage() {
     <div className="flex flex-col h-screen items-center justify-center gap-6 bg-background p-10 text-center">
       <Layers className="h-20 w-20 text-muted-foreground/20" />
       <h2 className="text-2xl font-black text-primary italic">Trilha Vazia</h2>
-      <p className="text-muted-foreground max-w-sm">Esta jornada ainda não possui conteúdos cadastrados. Verifique se as tabelas foram criadas no Supabase.</p>
+      <p className="text-muted-foreground max-w-sm">Esta jornada ainda não possui conteúdos cadastrados.</p>
       <div className="flex flex-col gap-2">
         <Button onClick={() => router.back()} variant="outline" className="rounded-xl px-8 h-12 border-primary/20">Voltar para Trilhas</Button>
-        <p className="text-[8px] font-black uppercase text-accent mt-4">Dica: Rode o script SQL de módulos e conteúdos.</p>
       </div>
     </div>
   );

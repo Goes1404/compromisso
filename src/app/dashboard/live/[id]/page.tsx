@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +22,10 @@ import { useToast } from "@/hooks/use-toast";
 
 /**
  * Portal de Acesso à Mentoria - Visão do Aluno (Educori 360)
- * Chat removido a pedido do usuário.
+ * Atualizado para Next.js 15.
  */
-export default function StudentLivePage() {
-  const params = useParams();
-  const liveId = params?.id as string;
+export default function StudentLivePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: liveId } = use(params);
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -112,7 +111,7 @@ export default function StudentLivePage() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden space-y-4">
-        {/* Portal de Transmissão - Agora ocupando largura total */}
+        {/* Portal de Transmissão */}
         <Card className="flex-1 h-[65%] bg-slate-950 rounded-[2.5rem] overflow-hidden shadow-2xl border-none relative flex items-center justify-center group">
           <div className="w-full h-full relative flex flex-col items-center justify-center p-8 text-center gap-8 bg-gradient-to-br from-slate-900 via-black to-slate-900">
              <div className="absolute top-6 left-6 flex items-center gap-2">

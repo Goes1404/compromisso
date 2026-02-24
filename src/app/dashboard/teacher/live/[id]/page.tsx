@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,11 +25,10 @@ import { supabase } from "@/app/lib/supabase";
 
 /**
  * Studio Master - Visão do Mentor/Professor (Educori 360)
- * Chat removido a pedido do usuário.
+ * Atualizado para Next.js 15.
  */
-export default function TeacherLiveStudioPage() {
-  const params = useParams();
-  const liveId = params?.id as string;
+export default function TeacherLiveStudioPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: liveId } = use(params);
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -143,7 +142,7 @@ export default function TeacherLiveStudioPage() {
       </div>
 
       <div className="flex-1 flex flex-col space-y-6 overflow-hidden">
-        {/* Painel Central - Agora ocupando toda a largura */}
+        {/* Painel Central */}
         <Card className="flex-1 bg-slate-900 rounded-[3rem] overflow-hidden shadow-2xl border-4 border-slate-800 relative flex items-center justify-center">
            <div className="w-full h-full relative flex flex-col items-center justify-center gap-8 bg-gradient-to-br from-slate-900 via-black to-slate-900">
               <div className="absolute top-8 left-8 flex items-center gap-3">

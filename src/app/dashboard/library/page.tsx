@@ -41,9 +41,18 @@ export default function LibraryPage() {
   useEffect(() => {
     async function loadResources() {
       setLoading(true);
-      const { data, error } = await supabase.from('library_resources').select('*');
-      if (!error) setResources(data || []);
-      setLoading(false);
+      try {
+        const { data, error } = await supabase
+          .from('library_resources')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (!error) setResources(data || []);
+      } catch (err) {
+        console.error("Erro ao carregar acervo:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     loadResources();
   }, []);
@@ -58,12 +67,33 @@ export default function LibraryPage() {
   });
 
   const handleDownload = async (resource: any) => {
+    if (!resource.url) {
+      toast({ title: "Link indisponível", variant: "destructive" });
+      return;
+    }
+
     setIsDownloading(resource.id);
-    toast({ title: "Processando download...", description: `Aguarde enquanto preparamos ${resource.title}` });
+    toast({ title: "Iniciando transferência...", description: `Preparando ${resource.title} para o seu dispositivo.` });
+    
+    // Simular delay industrial de processamento
     setTimeout(() => {
-      toast({ title: "Download iniciado!", description: `O arquivo ${resource.title} deve começar a ser baixado.` });
-      setIsDownloading(null);
-    }, 1000);
+      try {
+        // Cria um link oculto e clica nele para forçar o download/abertura
+        const link = document.createElement('a');
+        link.href = resource.url;
+        link.target = '_blank'; // Abre em nova aba para PDFs ou inicia download direto
+        link.setAttribute('download', resource.title);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setIsDownloading(null);
+        toast({ title: "Download Iniciado!", description: "Verifique sua pasta de downloads ou a nova aba." });
+      } catch (e) {
+        toast({ title: "Erro ao baixar", description: "Houve um problema ao acessar o arquivo remoto.", variant: "destructive" });
+        setIsDownloading(null);
+      }
+    }, 1500);
   };
 
   return (
@@ -125,7 +155,7 @@ export default function LibraryPage() {
             <Loader2 className="h-12 w-12 animate-spin text-accent" />
             <p className="font-black text-muted-foreground uppercase text-xs tracking-widest animate-pulse">Consultando Acervo...</p>
           </div>
-        ) : resources.length > 0 ? (
+        ) : filteredResources.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredResources.map((item, index) => (
               <Card key={item.id} className="overflow-hidden border-none shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group bg-white rounded-[2.5rem] flex flex-col animate-in fade-in" style={{ animationDelay: `${index * 100}ms` }}>
@@ -135,6 +165,7 @@ export default function LibraryPage() {
                     alt={item.title || "Material"} 
                     fill 
                     className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                    data-ai-hint="educational cover"
                   />
                   <div className="absolute top-4 left-4 flex gap-2">
                     <Badge className="bg-white/80 backdrop-blur-md text-primary border-none shadow-lg flex items-center gap-2 px-4 py-1.5 rounded-xl">
@@ -152,7 +183,7 @@ export default function LibraryPage() {
                     {item.title}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground font-medium leading-relaxed line-clamp-3 italic opacity-80">
-                    {item.description || "Material de apoio técnico pedagógico."}
+                    {item.description || "Material de apoio técnico pedagógico para aceleração do seu aprendizado."}
                   </p>
                 </CardHeader>
                 
@@ -164,10 +195,10 @@ export default function LibraryPage() {
                       className="flex-1 bg-primary text-white h-12 rounded-xl font-black text-[10px] uppercase shadow-lg active:scale-95 transition-all"
                     >
                       {isDownloading === item.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
-                      Download
+                      Baixar Agora
                     </Button>
-                    <Button asChild variant="outline" className="h-12 w-12 rounded-xl border-2 border-muted/20">
-                      <a href={item.url || '#'} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-5 w-5 text-primary/60" /></a>
+                    <Button asChild variant="outline" className="h-12 w-12 rounded-xl border-2 border-muted/20 hover:border-accent hover:text-accent transition-all">
+                      <a href={item.url || '#'} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-5 w-5" /></a>
                     </Button>
                   </div>
                 </CardFooter>
@@ -175,8 +206,10 @@ export default function LibraryPage() {
             ))}
           </div>
         ) : (
-          <div className="py-20 text-center border-4 border-dashed border-muted/20 rounded-[2rem] opacity-30">
-            <p className="font-black italic text-xl">Acervo Vazio</p>
+          <div className="py-20 text-center border-4 border-dashed border-muted/20 rounded-[3rem] bg-white/50 animate-in zoom-in-95 duration-500">
+            <FileText className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
+            <p className="font-black italic text-xl text-primary/40">Acervo em Sincronização</p>
+            <p className="text-sm text-muted-foreground mt-2">Nenhum material encontrado para os filtros atuais.</p>
           </div>
         )}
       </Tabs>
