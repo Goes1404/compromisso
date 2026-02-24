@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -60,11 +59,6 @@ export default function QuestionBankPage() {
             return;
         }
 
-        if (!isSupabaseConfigured) {
-            toast({ title: "Configuração Pendente", description: "As chaves do Supabase não foram configuradas.", variant: "destructive" });
-            return;
-        }
-
         if (!manualQuestion.question_text.trim() || !manualQuestion.subject_id || isSaving) {
             toast({ title: "Dados Incompletos", description: "Preencha o enunciado e selecione a matéria.", variant: "destructive" });
             return;
@@ -95,14 +89,13 @@ export default function QuestionBankPage() {
             const { error } = await supabase.from('questions').insert([payload]);
 
             if (error) {
-                if (error.message.includes("correct_answer")) {
-                    throw new Error("Erro de Coluna: Vá ao SQL Editor do Supabase e rode o script de atualização de cache.");
+                if (error.message.includes('correct_answer')) {
+                    throw new Error("Erro de Coluna: Rode o script SQL no Supabase para criar a coluna 'correct_answer'.");
                 }
                 throw error;
             }
 
             toast({ title: "Questão Salva! ✅", description: "Item adicionado ao banco oficial." });
-            
             setManualQuestion(prev => ({ ...prev, question_text: '', correct_answer: 'A' }));
             setManualOptions({ A: '', B: '', C: '', D: '', E: '' });
 
@@ -110,7 +103,7 @@ export default function QuestionBankPage() {
             console.error("Erro Supabase Insert:", e);
             toast({ 
                 title: "Falha na Persistência", 
-                description: e.message || "Tente novamente ou verifique as políticas RLS.", 
+                description: e.message || "Tente novamente ou verifique a conexão.", 
                 variant: "destructive" 
             });
         } finally {
@@ -120,7 +113,7 @@ export default function QuestionBankPage() {
 
     const handleSeedExample = async () => {
         if (!user || subjects.length === 0) {
-            toast({ title: "Aguarde...", description: "As matérias ainda estão sendo carregadas." });
+            toast({ title: "Aguarde", description: "Sincronizando matérias do banco..." });
             return;
         }
 
@@ -146,7 +139,7 @@ export default function QuestionBankPage() {
             if (error) throw error;
 
             toast({ title: "Exemplo Adicionado! 🧬", description: "Uma questão de biologia foi criada para teste." });
-            setTimeout(() => window.location.reload(), 800);
+            window.location.reload();
         } catch (e: any) {
             toast({ title: "Erro no Teste", description: e.message, variant: "destructive" });
         } finally {

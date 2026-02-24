@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, use } from "react";
@@ -22,10 +21,6 @@ import { useAuth } from "@/lib/AuthProvider";
 import { supabase } from "@/app/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
-/**
- * Portal de Acesso à Mentoria - Visão do Aluno (Educori 360)
- * Layout industrial refinado para Next.js 15.
- */
 export default function StudentLivePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: liveId } = use(params);
   const { user } = useAuth();
@@ -78,7 +73,7 @@ export default function StudentLivePage({ params }: { params: Promise<{ id: stri
   }, [liveId, user, router, toast]);
 
   if (loading) return (
-    <div className="h-screen flex flex-col items-center justify-center gap-4 bg-background">
+    <div className="h-[80vh] flex flex-col items-center justify-center gap-4">
       <Loader2 className="animate-spin h-12 w-12 text-accent" />
       <p className="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse text-primary">Sintonizando Satélite...</p>
     </div>
@@ -87,8 +82,7 @@ export default function StudentLivePage({ params }: { params: Promise<{ id: stri
   const isLiveNow = live?.status === 'live';
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] space-y-6 animate-in fade-in duration-700 overflow-hidden pb-4">
-      {/* Header do Portal com Alinhamento de Pixels */}
+    <div className="flex flex-col h-full space-y-6 animate-in fade-in duration-700 overflow-hidden pb-4">
       <div className="flex items-center justify-between bg-white/80 backdrop-blur-md p-5 rounded-[1.5rem] shadow-sm border border-white/20 shrink-0">
         <div className="flex items-center gap-5 overflow-hidden">
           <Button 
@@ -120,8 +114,7 @@ export default function StudentLivePage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden flex flex-col gap-6">
-        {/* Portal de Transmissão de Alta Fidelidade */}
+      <div className="flex-1 min-h-0 flex flex-col gap-6">
         <Card className="flex-1 bg-slate-950 rounded-[2.5rem] overflow-hidden shadow-2xl border-none relative flex items-center justify-center group ring-1 ring-white/10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(30,41,59,1)_0%,rgba(2,6,23,1)_100%)] opacity-100" />
           
@@ -181,7 +174,6 @@ export default function StudentLivePage({ params }: { params: Promise<{ id: stri
           </div>
         </Card>
         
-        {/* Painel de Pauta Pedagógica */}
         <Card className="bg-white rounded-[2.5rem] shadow-2xl p-10 border-none shrink-0 relative overflow-hidden group">
           <div className="absolute top-[-20%] right-[-5%] p-6 opacity-[0.03] transition-transform duration-700 group-hover:scale-110 group-hover:-rotate-12">
             <Sparkles className="h-40 w-40 text-primary" />
@@ -197,7 +189,7 @@ export default function StudentLivePage({ params }: { params: Promise<{ id: stri
           </div>
           <div className="bg-muted/10 p-6 rounded-2xl border border-muted/20">
             <p className="text-sm md:text-lg font-medium italic text-primary/80 leading-relaxed max-w-5xl">
-              {live?.description || "Esta sessão de apoio pedagógico é focada na resolução de dúvidas críticas e aprofundamento técnico. Certifique-se de estar em um ambiente silencioso ao entrar no Meet."}
+              {live?.description || "Esta sessão de apoio pedagógico é focada na resolução de dúvidas críticas e aprofundamento técnico."}
             </p>
           </div>
         </Card>
