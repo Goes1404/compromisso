@@ -71,7 +71,6 @@ export default function SimuladoPage() {
 
         if (error) throw error;
 
-        // Mapeia o retorno da RPC para o formato esperado pelo frontend
         const formattedQuestions = data.map((q: any) => ({
             ...q,
             subjects: typeof q.subjects === 'string' ? JSON.parse(q.subjects) : q.subjects,

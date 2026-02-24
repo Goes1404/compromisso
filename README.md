@@ -4,35 +4,35 @@
 
 ---
 
-## ✨ Status Atual (Consolidação Master)
+## ✨ Status Atual (CONSOLIDAÇÃO MASTER)
 
-O projeto está **estável, sincronizado e compatível com Next.js 15 / React 19**. Todas as funcionalidades críticas (Banco de Questões, Simulados IA, Trilhas e Chat Real-time) foram validadas.
+O projeto está **ESTÁVEL e SINCRONIZADO**. Todas as correções de sintaxe, lógica de simulados e permissões de banco de dados foram consolidadas.
 
 ---
 
 ## 🎯 Configuração do Banco de Dados (Supabase)
 
-Para garantir que todas as tabelas e funções RPC funcionem corretamente, **é obrigatório** executar o script SQL master:
+Para garantir que o sistema funcione 100%, é **obrigatório** executar o script SQL oficial:
 
-1.  Acesse o seu painel do **Supabase**.
+1.  Acesse o painel do **Supabase**.
 2.  Vá em **SQL Editor**.
 3.  Abra o arquivo `docs/database.sql` do projeto.
-4.  Copie o conteúdo e clique em **"Run"**.
+4.  Copie o conteúdo, cole no editor e clique em **"Run"**.
 
-Isso resolverá erros de "coluna não encontrada" ou "permissão negada" (RLS).
+Isso ativará as funções de simulado, criará as tabelas de questões e resolverá erros de "coluna não encontrada".
 
 ---
 
-## 🛠️ Arquitetura e Padrões
-- **Next.js 15**: Utilização de `React.use()` para rotas dinâmicas.
-- **Supabase**: Auth, PostgreSQL e Realtime para mensagens.
-- **Genkit**: Inteligência pedagógica da Aurora IA.
-- **Shadcn UI**: Design de alta fidelidade com foco em pixels e UX industrial.
+## 🛠️ Arquitetura
+- **Next.js 15**: Rotas dinâmicas resilientes.
+- **Supabase**: Auth, PostgreSQL e RPCs para inteligência de dados.
+- **Genkit**: Suporte pedagógico via Aurora IA.
+- **Shadcn UI**: Interface industrial de alta fidelidade.
 
 ---
 
 ## 🚀 Funcionalidades Principais
-- **Banco de Questões**: Cadastro manual e exemplo de teste automatizado.
-- **Simulados Inteligentes**: Sorteio aleatório via RPC PostgreSQL.
-- **Sala de Aula Digital**: Transmissão integrada e materiais de apoio.
-- **Studio Master**: Controle de lives em tempo real para mentores.
+- **Banco de Questões**: Cadastro manual e exemplo de teste rápido.
+- **Simulados IA**: Sorteio randômico via funções nativas do banco.
+- **Gestão de Trilhas**: Estúdio master para mentores.
+- **Biblioteca Digital**: Download automático de materiais pedagógicos.

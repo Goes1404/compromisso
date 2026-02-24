@@ -89,8 +89,8 @@ export default function QuestionBankPage() {
             const { error } = await supabase.from('questions').insert([payload]);
 
             if (error) {
-                if (error.message.includes('correct_answer')) {
-                    throw new Error("Erro de Coluna: Rode o script SQL no Supabase para criar a coluna 'correct_answer'.");
+                if (error.message.includes('schema cache')) {
+                    throw new Error("Erro de Cache: Rode o comando 'NOTIFY pgrst, ''reload schema'';' no SQL Editor do Supabase.");
                 }
                 throw error;
             }
