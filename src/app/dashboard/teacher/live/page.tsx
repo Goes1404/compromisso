@@ -29,7 +29,7 @@ export default function ManageLivePage() {
     description: "",
     date: "",
     time: "",
-    meeting_url: "",
+    meet_link: "", // CORRIGIDO: de meeting_url para meet_link
   });
 
   async function fetchLives() {
@@ -71,7 +71,7 @@ export default function ManageLivePage() {
           title: formData.title,
           description: formData.description,
           start_time,
-          meeting_url: formData.meeting_url,
+          meet_link: formData.meet_link, // CORRIGIDO: de meeting_url para meet_link
           teacher_id: user.id,
           teacher_name: user.user_metadata?.full_name || "Mentor da Rede",
           status: "scheduled"
@@ -84,7 +84,7 @@ export default function ManageLivePage() {
 
       toast({ title: "Sala Criada!", description: "A reunião externa já está na agenda." });
       setIsCreateOpen(false);
-      setFormData({ title: "", description: "", date: "", time: "", meeting_url: "" });
+      setFormData({ title: "", description: "", date: "", time: "", meet_link: "" }); // CORRIGIDO
       fetchLives();
     } catch (error: any) {
       toast({ 
@@ -145,7 +145,7 @@ export default function ManageLivePage() {
                 <Label className="text-[9px] font-black uppercase opacity-40">Link da Reunião (Google Meet / Zoom)</Label>
                 <div className="relative">
                   <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/30" />
-                  <input placeholder="https://meet.google.com/..." value={formData.meeting_url} onChange={(e) => setFormData({...formData, meeting_url: e.target.value})} disabled={isSubmitting} className="flex h-11 w-full rounded-xl bg-muted/30 border-none pl-10 pr-3 text-sm font-bold focus:ring-2 focus:ring-accent" />
+                  <input placeholder="https://meet.google.com/..." value={formData.meet_link} onChange={(e) => setFormData({...formData, meet_link: e.target.value})} disabled={isSubmitting} className="flex h-11 w-full rounded-xl bg-muted/30 border-none pl-10 pr-3 text-sm font-bold focus:ring-2 focus:ring-accent" />
                 </div>
               </div>
               <div className="space-y-2">
@@ -188,7 +188,7 @@ export default function ManageLivePage() {
                       <Badge variant="secondary" className="text-[7px] md:text-[8px] font-black uppercase px-2 bg-muted/50 border-none">{live.status}</Badge>
                     </div>
                     <CardTitle className="text-base md:text-2xl font-black text-primary italic leading-none truncate">{live.title}</CardTitle>
-                    {live.meeting_url && <p className="text-[10px] text-accent font-bold truncate">Meet: {live.meeting_url}</p>}
+                    {live.meet_link && <p className="text-[10px] text-accent font-bold truncate">Meet: {live.meet_link}</p>} // CORRIGIDO
                   </div>
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto">

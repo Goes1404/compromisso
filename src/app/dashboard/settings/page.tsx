@@ -15,8 +15,6 @@ import {
   ShieldCheck, 
   Sparkles,
   Palette,
-  BellRing,
-  Upload,
   AlertCircle
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
@@ -59,6 +57,7 @@ export default function SettingsPage() {
 
     setIsUpdating(true);
     try {
+      // Tenta atualizar o perfil no banco de dados
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -68,17 +67,23 @@ export default function SettingsPage() {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        // Tratamento específico para erro de RLS no Banco de Dados
+        if (error.message.includes("row-level security")) {
+          throw new Error("Erro de Permissão (RLS): Você precisa ativar a política de 'UPDATE' para a tabela 'profiles' no SQL Editor do Supabase.");
+        }
+        throw error;
+      }
 
       toast({
         title: "Perfil Atualizado! ✅",
         description: "Suas preferências foram sincronizadas com a rede."
       });
     } catch (err: any) {
-      console.error("Erro ao atualizar:", err);
+      console.error("Erro ao atualizar perfil:", err);
       toast({
         title: "Erro na Atualização",
-        description: err.message,
+        description: err.message || "Verifique sua conexão ou as políticas de segurança do banco.",
         variant: "destructive"
       });
     } finally {
@@ -90,12 +95,11 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // LIMITE DE 10MB PARA FLEXIBILIDADE
-    const MAX_SIZE = 10 * 1024 * 1024; 
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
     if (file.size > MAX_SIZE) {
       toast({ 
         title: "Arquivo muito grande", 
-        description: "O limite é de 10MB. Reduza a imagem e tente novamente.", 
+        description: "O limite é de 10MB.", 
         variant: "destructive" 
       });
       return;
@@ -107,7 +111,6 @@ export default function SettingsPage() {
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // 1. Enviar para o Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { 
@@ -116,36 +119,29 @@ export default function SettingsPage() {
         });
 
       if (uploadError) {
-        // Tratamento específico para erro de RLS (Policies)
         if (uploadError.message.includes("row-level security")) {
-          throw new Error("Erro de Permissão (RLS): Você precisa ativar as 'Policies' de INSERT e UPDATE para o bucket 'avatars' no console do Supabase.");
-        }
-        
-        if (uploadError.message.includes("not found")) {
-          throw new Error("O bucket 'avatars' não existe. Crie-o na aba Storage do Supabase.");
+          throw new Error("Erro de Permissão no Storage: Ative as Políticas de RLS para o bucket 'avatars' no console do Supabase.");
         }
         throw uploadError;
       }
 
-      // 2. Pegar a URL pública
       const { data } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      if (!data?.publicUrl) throw new Error("Falha ao gerar URL pública.");
+      if (!data?.publicUrl) throw new Error("Falha ao gerar URL da imagem.");
 
-      // 3. Atualizar estado local
       setFormData(prev => ({ ...prev, avatar_url: data.publicUrl }));
       
       toast({ 
-        title: "Foto processada! 📸", 
-        description: "Agora clique em 'Gravar Alterações' para salvar permanentemente." 
+        title: "Foto carregada! 📸", 
+        description: "Clique em 'Gravar Alterações' para salvar seu novo visual." 
       });
     } catch (err: any) {
       console.error("Erro upload:", err);
       toast({ 
         title: "Falha no Upload", 
-        description: err.message || "Verifique a configuração do Storage no Supabase.", 
+        description: err.message, 
         variant: "destructive" 
       });
     } finally {
@@ -202,7 +198,7 @@ export default function SettingsPage() {
             
             <div className="mt-6 p-4 rounded-2xl bg-muted/10 border-2 border-dashed border-muted/20">
               <p className="text-[10px] text-muted-foreground italic leading-relaxed">
-                Clique na câmera para enviar da galeria (10MB) ou escolha um avatar abaixo.
+                Envie fotos de até 10MB para seu perfil.
               </p>
             </div>
           </Card>
@@ -214,7 +210,7 @@ export default function SettingsPage() {
                 Dica da Aurora
               </h4>
               <p className="text-xs font-medium italic opacity-80 leading-relaxed">
-                "Fotos reais aumentam a credibilidade em fóruns e mentorias. Escolha sua melhor versão!"
+                "Manter seu nome atualizado facilita o reconhecimento pelos mentores durante as aulas ao vivo."
               </p>
             </div>
             <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-accent/20 rounded-full blur-2xl" />
@@ -225,7 +221,7 @@ export default function SettingsPage() {
           <Card className="border-none shadow-2xl bg-white rounded-[2.5rem] overflow-hidden">
             <CardHeader className="bg-muted/5 p-10">
               <CardTitle className="text-2xl font-black text-primary italic">Dados da Identidade</CardTitle>
-              <CardDescription className="font-medium">Atualize seu nome público na rede.</CardDescription>
+              <CardDescription className="font-medium">Atualize suas informações públicas.</CardDescription>
             </CardHeader>
             <CardContent className="p-10 space-y-10">
               <form onSubmit={handleUpdateProfile} className="space-y-8">
@@ -282,9 +278,9 @@ export default function SettingsPage() {
                   </Button>
                   
                   <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                    <p className="text-[9px] text-amber-800 uppercase font-black tracking-widest flex items-center gap-2">
-                      <AlertCircle className="h-3.5 w-3.5" /> 
-                      Aviso Técnico: Se o upload falhar com "RLS Policy", rode o script SQL fornecido no painel do Supabase.
+                    <p className="text-[9px] text-amber-800 uppercase font-black tracking-widest flex items-center gap-2 leading-relaxed">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" /> 
+                      Nota: Se o salvamento falhar, execute o script SQL de permissões (RLS) no seu painel do Supabase.
                     </p>
                   </div>
                 </div>
