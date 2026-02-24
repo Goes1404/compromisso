@@ -96,10 +96,10 @@ export function QuestionsList() {
     useEffect(() => {
         if (questionToEdit) {
             setEditForm({
-                question_text: questionToEdit.question_text,
-                year: questionToEdit.year.toString(),
-                subject_id: questionToEdit.subject_id,
-                correct_answer: questionToEdit.correct_answer,
+                question_text: questionToEdit.question_text || '',
+                year: (questionToEdit.year || '').toString(),
+                subject_id: questionToEdit.subject_id || '',
+                correct_answer: questionToEdit.correct_answer || 'A',
                 options: questionToEdit.options || []
             });
         }
@@ -107,7 +107,9 @@ export function QuestionsList() {
 
     const filteredQuestions = useMemo(() => {
         return questions.filter(q => {
-            const matchesSearch = q.question_text.toLowerCase().includes(searchTerm.toLowerCase());
+            const text = (q.question_text || '').toLowerCase();
+            const search = searchTerm.toLowerCase();
+            const matchesSearch = text.includes(search);
             const matchesSubject = subjectFilter === 'all' || q.subject_id === subjectFilter;
             return matchesSearch && matchesSubject;
         });
@@ -137,7 +139,7 @@ export function QuestionsList() {
                 .from('questions')
                 .update({
                     question_text: editForm.question_text,
-                    year: parseInt(editForm.year),
+                    year: parseInt(editForm.year) || null,
                     subject_id: editForm.subject_id,
                     correct_answer: editForm.correct_answer,
                     options: editForm.options
@@ -202,7 +204,7 @@ export function QuestionsList() {
                                             <span className="text-[10px] font-bold text-muted-foreground italic">PROVA {question.year}</span>
                                         </div>
                                         <p className="font-bold text-primary leading-relaxed text-sm line-clamp-2 italic">
-                                            "{question.question_text}"
+                                            "{question.question_text || 'Sem enunciado'}"
                                         </p>
                                     </div>
                                     <DropdownMenu>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -50,7 +49,9 @@ export default function LibraryPage() {
   }, []);
 
   const filteredResources = resources.filter(resource => {
-    const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const title = (resource.title || '').toLowerCase();
+    const search = searchTerm.toLowerCase();
+    const matchesSearch = title.includes(search);
     const matchesCategory = activeCategory === "Todos" || resource.category === activeCategory;
     const matchesType = activeType === "Todos" || resource.type === activeType;
     return matchesSearch && matchesCategory && matchesType;
@@ -131,7 +132,7 @@ export default function LibraryPage() {
                 <div className="relative aspect-[16/10] overflow-hidden">
                   <Image 
                     src={item.image_url || `https://picsum.photos/seed/${item.id}/400/250`} 
-                    alt={item.title} 
+                    alt={item.title || "Material"} 
                     fill 
                     className="object-cover transition-transform duration-1000 group-hover:scale-110"
                   />

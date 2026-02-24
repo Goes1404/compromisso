@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -91,8 +90,11 @@ export default function ForumPage() {
   };
 
   const filteredForums = forums?.filter(f => {
-    const matchesSearch = f.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (f.description && f.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    const title = (f.name || '').toLowerCase();
+    const desc = (f.description || '').toLowerCase();
+    const search = searchTerm.toLowerCase();
+    
+    const matchesSearch = title.includes(search) || desc.includes(search);
     const matchesCategory = activeCategory === "Todos" || f.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
