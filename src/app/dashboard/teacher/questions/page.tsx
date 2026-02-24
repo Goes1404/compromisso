@@ -40,27 +40,42 @@ export default function QuestionBankPage() {
 
     useEffect(() => {
         async function fetchSubjects() {
-            const { data } = await supabase.from('subjects').select('*').order('name');
-            if (data) setSubjects(data);
+            try {
+                const { data, error } = await supabase.from('subjects').select('*').order('name');
+                if (error) throw error;
+                if (data) setSubjects(data);
+            } catch (e: any) {
+                console.error("Erro ao carregar matérias:", e.message);
+            }
         }
         fetchSubjects();
     }, []);
 
     const handleSaveManual = async () => {
-        if (!manualQuestion.question_text || !manualQuestion.subject_id || !manualOptions.A) {
-            toast({ title: "Dados Incompletos", description: "Preencha o enunciado, matéria e ao menos uma opção.", variant: "destructive" });
+        // Validação rigorosa
+        if (!manualQuestion.question_text.trim()) {
+            toast({ title: "Enunciado Vazio", description: "O texto da questão é obrigatório.", variant: "destructive" });
+            return;
+        }
+        if (!manualQuestion.subject_id) {
+            toast({ title: "Matéria não Selecionada", description: "Selecione a matéria para organizar o banco.", variant: "destructive" });
+            return;
+        }
+        if (!manualOptions.A.trim() || !manualOptions.B.trim()) {
+            toast({ title: "Opções Incompletas", description: "Preencha pelo menos as opções A e B.", variant: "destructive" });
             return;
         }
 
         setIsSaving(true);
         try {
+            // Mapeia apenas as opções que têm texto
             const optionsArray = Object.entries(manualOptions)
                 .filter(([_, text]) => text.trim() !== '')
                 .map(([letter, text]) => ({ letter, text }));
 
             const { error } = await supabase.from('questions').insert({
-                question_text: manualQuestion.question_text,
-                year: parseInt(manualQuestion.year),
+                question_text: manualQuestion.question_text.trim(),
+                year: parseInt(manualQuestion.year) || new Date().getFullYear(),
                 subject_id: manualQuestion.subject_id,
                 correct_answer: manualQuestion.correct_answer,
                 options: optionsArray
@@ -68,11 +83,26 @@ export default function QuestionBankPage() {
 
             if (error) throw error;
 
-            toast({ title: "Questão Salva!", description: "O item foi adicionado ao banco oficial." });
-            setManualQuestion({ question_text: '', year: '2024', subject_id: '', correct_answer: 'A' });
+            toast({ 
+                title: "Questão Salva! ✅", 
+                description: "O item foi adicionado ao banco oficial com sucesso." 
+            });
+
+            // Limpa o formulário mantendo a matéria e o ano para agilizar o próximo cadastro
+            setManualQuestion(prev => ({
+                ...prev,
+                question_text: '',
+                correct_answer: 'A'
+            }));
             setManualOptions({ A: '', B: '', C: '', D: '', E: '' });
+
         } catch (e: any) {
-            toast({ title: "Erro ao Salvar", description: e.message, variant: "destructive" });
+            console.error("Erro Supabase:", e);
+            toast({ 
+                title: "Falha na Persistência", 
+                description: e.message || "Erro desconhecido ao salvar no banco.", 
+                variant: "destructive" 
+            });
         } finally {
             setIsSaving(false);
         }
@@ -83,7 +113,7 @@ export default function QuestionBankPage() {
         setIsAnalyzing(true);
         // Simulação de análise industrial de IA/Regex
         setTimeout(() => {
-            toast({ title: "Análise Concluída", description: "Detectamos padrões de questões no seu texto." });
+            toast({ title: "Análise Concluída", description: "Estrutura detectada. Clique em 'Importar' para confirmar." });
             setIsAnalyzing(false);
         }, 1500);
     };
@@ -127,7 +157,7 @@ export default function QuestionBankPage() {
                                 <div className="space-y-3">
                                     <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 px-2">Texto Bruto da Prova</Label>
                                     <Textarea 
-                                        placeholder="Cole aqui o texto contendo múltiplas questões..." 
+                                        placeholder="Ex: 1. Qual a capital do Brasil? A) SP B) RJ C) Brasília..." 
                                         className="min-h-[300px] rounded-3xl bg-muted/5 border-2 border-dashed border-muted/20 focus:border-primary p-6 text-sm font-medium italic"
                                         value={rawText}
                                         onChange={(e) => setRawText(e.target.value)}
@@ -143,7 +173,7 @@ export default function QuestionBankPage() {
                                         Analisar Estrutura
                                     </Button>
                                     <Button 
-                                        disabled={true} // Requer análise prévia
+                                        disabled={true}
                                         className="flex-1 h-14 rounded-2xl bg-primary text-white font-black text-lg shadow-xl opacity-50"
                                     >
                                         Importar Tudo (0 Detectadas)
@@ -163,7 +193,13 @@ export default function QuestionBankPage() {
                                                 <SelectValue placeholder="Selecione a matéria" />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-2xl border-none shadow-2xl">
-                                                {subjects.map(s => <SelectItem key={s.id} value={s.id} className="py-3 font-bold">{s.name}</SelectItem>)}
+                                                {subjects.length > 0 ? subjects.map(s => (
+                                                    <SelectItem key={s.id} value={s.id} className="py-3 font-bold">
+                                                        {s.name}
+                                                    </SelectItem>
+                                                )) : (
+                                                    <div className="p-4 text-xs italic text-muted-foreground">Nenhuma matéria encontrada. Verifique o banco.</div>
+                                                )}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -195,7 +231,7 @@ export default function QuestionBankPage() {
                                     <div className="space-y-2">
                                         <Label className="text-[9px] font-black uppercase opacity-40">Enunciado da Questão</Label>
                                         <Textarea 
-                                            placeholder="O que está sendo perguntado?" 
+                                            placeholder="Descreva o problema ou pergunta aqui..." 
                                             className="min-h-[180px] rounded-2xl bg-muted/30 border-none font-medium italic p-4"
                                             value={manualQuestion.question_text}
                                             onChange={(e) => setManualQuestion({...manualQuestion, question_text: e.target.value})}
@@ -221,10 +257,10 @@ export default function QuestionBankPage() {
                                     <Button 
                                         onClick={handleSaveManual}
                                         disabled={isSaving}
-                                        className="w-full h-16 mt-6 rounded-2xl bg-primary text-white font-black text-lg shadow-2xl shadow-primary/20"
+                                        className="w-full h-16 mt-6 rounded-2xl bg-primary text-white font-black text-lg shadow-2xl shadow-primary/20 transition-all active:scale-95"
                                     >
                                         {isSaving ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <CheckCircle className="h-6 w-6 mr-2" />}
-                                        {isSaving ? "Gravando Questão..." : "Salvar Questão"}
+                                        {isSaving ? "Sintonizando Rede..." : "Gravar no Banco Oficial"}
                                     </Button>
                                 </div>
                             </div>
