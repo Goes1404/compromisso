@@ -15,7 +15,8 @@ import {
   ShieldCheck, 
   Sparkles,
   Palette,
-  AlertCircle
+  AlertCircle,
+  Lock
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -51,39 +52,51 @@ export default function SettingsPage() {
     }
   }, [profile]);
 
+  // Regra: Nome só pode ser alterado uma vez (count >= 1 bloqueia)
+  const isNameDisabled = (profile?.name_changes_count ?? 0) >= 1;
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || isUpdating) return;
 
     setIsUpdating(true);
     try {
-      // Tenta atualizar o perfil no banco de dados
+      const isNameChanged = formData.name !== profile?.name;
+      
+      const updateData: any = {
+        avatar_url: formData.avatar_url,
+        updated_at: new Date().toISOString()
+      };
+
+      // Só atualiza o nome se não estiver bloqueado e se houve mudança
+      if (isNameChanged && !isNameDisabled) {
+        updateData.name = formData.name;
+        updateData.name_changes_count = (profile?.name_changes_count ?? 0) + 1;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          name: formData.name,
-          avatar_url: formData.avatar_url,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', user.id);
 
       if (error) {
-        // Tratamento específico para erro de RLS no Banco de Dados
         if (error.message.includes("row-level security")) {
-          throw new Error("Erro de Permissão (RLS): Você precisa ativar a política de 'UPDATE' para a tabela 'profiles' no SQL Editor do Supabase.");
+          throw new Error("Erro de Permissão (RLS): Você precisa ativar a política de 'UPDATE' no SQL Editor do Supabase.");
         }
         throw error;
       }
 
       toast({
         title: "Perfil Atualizado! ✅",
-        description: "Suas preferências foram sincronizadas com a rede."
+        description: isNameChanged && !isNameDisabled 
+          ? "Seu nome foi alterado e agora está bloqueado para novas edições." 
+          : "Suas preferências foram sincronizadas com a rede."
       });
     } catch (err: any) {
       console.error("Erro ao atualizar perfil:", err);
       toast({
         title: "Erro na Atualização",
-        description: err.message || "Verifique sua conexão ou as políticas de segurança do banco.",
+        description: err.message || "Verifique sua conexão ou as políticas do banco.",
         variant: "destructive"
       });
     } finally {
@@ -120,7 +133,7 @@ export default function SettingsPage() {
 
       if (uploadError) {
         if (uploadError.message.includes("row-level security")) {
-          throw new Error("Erro de Permissão no Storage: Ative as Políticas de RLS para o bucket 'avatars' no console do Supabase.");
+          throw new Error("Erro de Permissão no Storage: Ative as Políticas de RLS para o bucket 'avatars'.");
         }
         throw uploadError;
       }
@@ -210,7 +223,7 @@ export default function SettingsPage() {
                 Dica da Aurora
               </h4>
               <p className="text-xs font-medium italic opacity-80 leading-relaxed">
-                "Manter seu nome atualizado facilita o reconhecimento pelos mentores durante as aulas ao vivo."
+                "O nome oficial é usado para a emissão de certificados. Por isso, permitimos apenas uma correção após o cadastro."
               </p>
             </div>
             <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-accent/20 rounded-full blur-2xl" />
@@ -220,28 +233,48 @@ export default function SettingsPage() {
         <div className="lg:col-span-2 space-y-8">
           <Card className="border-none shadow-2xl bg-white rounded-[2.5rem] overflow-hidden">
             <CardHeader className="bg-muted/5 p-10">
-              <CardTitle className="text-2xl font-black text-primary italic">Dados da Identidade</CardTitle>
-              <CardDescription className="font-medium">Atualize suas informações públicas.</CardDescription>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl font-black text-primary italic">Dados da Identidade</CardTitle>
+                {isNameDisabled && (
+                  <Badge variant="outline" className="border-red-200 text-red-600 bg-red-50 font-black gap-1.5 uppercase text-[8px]">
+                    <Lock className="h-2.5 w-2.5" /> Edição Bloqueada
+                  </Badge>
+                )}
+              </div>
+              <CardDescription className="font-medium">
+                {isNameDisabled 
+                  ? "Você já utilizou sua única chance de alterar o nome." 
+                  : "Você pode corrigir seu nome apenas uma vez."}
+              </CardDescription>
             </CardHeader>
             <CardContent className="p-10 space-y-10">
               <form onSubmit={handleUpdateProfile} className="space-y-8">
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-primary/50 flex items-center gap-2 px-2">
+                    <Label htmlFor="name" className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 px-2 ${isNameDisabled ? 'text-red-400' : 'text-primary/50'}`}>
                       <User className="h-4 w-4" /> Nome Completo
                     </Label>
-                    <Input 
-                      id="name" 
-                      value={formData.name} 
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="h-14 rounded-2xl bg-muted/30 border-none font-bold text-primary focus:ring-accent transition-all" 
-                      placeholder="Seu nome oficial"
-                    />
+                    <div className="relative group">
+                      <Input 
+                        id="name" 
+                        value={formData.name} 
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        disabled={isNameDisabled}
+                        className={`h-14 rounded-2xl border-none font-bold transition-all ${isNameDisabled ? 'bg-red-50/50 text-red-900/40 cursor-not-allowed' : 'bg-muted/30 text-primary focus:ring-accent'}`} 
+                        placeholder="Seu nome oficial"
+                      />
+                      {isNameDisabled && <Lock className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-red-200" />}
+                    </div>
+                    {isNameDisabled && (
+                      <p className="text-[9px] font-black text-red-400 uppercase italic px-2">
+                        Limite de 1 alteração atingido. Entre em contato com o suporte para mudanças críticas.
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-4">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-primary/50 flex items-center gap-2 px-2">
-                      <Palette className="h-4 w-4" /> Avatares Rápidos
+                      <Palette className="h-4 w-4" /> Avatares Rápidos (Ilimitado)
                     </Label>
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
                       {PRESET_AVATARS.map((url, i) => (
@@ -280,7 +313,7 @@ export default function SettingsPage() {
                   <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl">
                     <p className="text-[9px] text-amber-800 uppercase font-black tracking-widest flex items-center gap-2 leading-relaxed">
                       <AlertCircle className="h-3.5 w-3.5 shrink-0" /> 
-                      Nota: Se o salvamento falhar, execute o script SQL de permissões (RLS) no seu painel do Supabase.
+                      Nota: A foto de perfil pode ser alterada livremente, mas o nome é definitivo após o salvamento.
                     </p>
                   </div>
                 </div>
