@@ -47,36 +47,61 @@ const adminItems = [
 
 function SwipeHandler({ children }: { children: React.ReactNode }) {
   const { setOpenMobile, isMobile, openMobile } = useSidebar();
-  const touchStart = useRef<number>(0);
-  const touchEnd = useRef<number>(0);
+  const touchStart = useRef({ x: 0, y: 0 });
+  const touchEnd = useRef({ x: 0, y: 0 });
 
   const handleTouchStart = (e: React.TouchEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest('.no-swipe, input, textarea, select, [role="slider"], button, audio, video, #youtube-player')) return;
-    touchStart.current = e.targetTouches[0].clientX;
-    touchEnd.current = e.targetTouches[0].clientX;
+    // Ignorar elementos de interação direta
+    if (target.closest('.no-swipe, input, textarea, select, [role="slider"], button, audio, video, #youtube-player, .scrollable-content')) return;
+    
+    touchStart.current = {
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    };
+    touchEnd.current = {
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    };
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    touchEnd.current = e.targetTouches[0].clientX;
+    touchEnd.current = {
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    };
   };
 
   const handleTouchEnd = () => {
     if (!isMobile) return;
-    const distanceX = touchEnd.current - touchStart.current;
-    const absX = Math.abs(distanceX);
 
-    // Menu na ESQUERDA (puxar da esquerda para direita abre)
-    if (!openMobile && distanceX > 45 && absX > 25) {
-      setOpenMobile(true);
-    } 
-    else if (openMobile && distanceX < -45) {
-      setOpenMobile(false);
+    const deltaX = touchEnd.current.x - touchStart.current.x;
+    const deltaY = touchEnd.current.y - touchStart.current.y;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    // REGRAS DE OURO PARA SWIPE INDUSTRIAL:
+    // 1. O movimento horizontal deve ser pelo menos 1.5x maior que o vertical (evita trigger no scroll)
+    // 2. A distância horizontal deve ser maior que 50px (evita toques acidentais)
+    if (absX > absY * 1.5 && absX > 50) {
+      // Swipe para Direita (Abre)
+      if (!openMobile && deltaX > 50) {
+        setOpenMobile(true);
+      } 
+      // Swipe para Esquerda (Fecha)
+      else if (openMobile && deltaX < -50) {
+        setOpenMobile(false);
+      }
     }
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 touch-pan-y overflow-hidden" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+    <div 
+      className="flex-1 flex flex-col min-h-0 touch-pan-y overflow-hidden" 
+      onTouchStart={handleTouchStart} 
+      onTouchMove={handleTouchMove} 
+      onTouchEnd={handleTouchEnd}
+    >
       {children}
     </div>
   );
