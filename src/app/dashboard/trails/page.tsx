@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -26,6 +26,8 @@ import {
   ChevronRight,
   Zap,
   Star,
+  BookOpen,
+  Clock
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -55,7 +57,6 @@ export default function LearningTrailsPage() {
       if (!user) return;
       setLoading(true);
       try {
-        // Busca trilhas publicadas ou ativas
         const { data: trails, error: trailsError } = await supabase
           .from('trails')
           .select('*')
@@ -97,183 +98,183 @@ export default function LearningTrailsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 className="h-12 w-12 animate-spin text-accent" />
-        <p className="mt-4 text-muted-foreground font-bold italic animate-pulse uppercase tracking-widest text-[10px]">Sincronizando portal de conhecimento...</p>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-16 w-16 animate-spin text-accent" />
+        <p className="mt-6 text-primary font-black italic uppercase tracking-[0.3em] text-xs animate-pulse">Sincronizando Portal...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
+    <div className="space-y-10 animate-in fade-in duration-700 pb-20 px-1">
+      {/* Hero Section Modernizada */}
+      <section className="relative overflow-hidden bg-primary rounded-[2.5rem] p-8 md:p-16 text-white shadow-2xl">
+        <div className="absolute top-[-20%] right-[-10%] w-96 h-96 bg-accent/20 rounded-full blur-[100px]" />
+        <div className="relative z-10 space-y-6 max-w-3xl">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-black tracking-tight text-primary italic leading-none">Trilhas de Aprendizado</h1>
-            {userProfile && (
-              <Badge className="bg-accent text-accent-foreground font-black text-[9px] uppercase px-3 shadow-lg border-none h-6 tracking-widest animate-pulse">
-                {userProfile.profile_type === 'etec' ? 'PERFIL ETEC' : 'PERFIL VESTIBULAR'}
-              </Badge>
-            )}
+            <Badge className="bg-accent text-accent-foreground border-none font-black text-[10px] px-4 py-1.5 rounded-full shadow-lg">JORNADA 2024</Badge>
+            <span className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em]">Rede Compromisso</span>
           </div>
-          <p className="text-muted-foreground font-medium text-lg">Caminhos pedagógicos estruturados para sua evolução.</p>
+          <h1 className="text-4xl md:text-6xl font-black italic tracking-tighter leading-tight">
+            Seu Futuro em <span className="text-accent underline underline-offset-8 decoration-4">Alta Performance</span>
+          </h1>
+          <p className="text-lg text-white/70 font-medium italic leading-relaxed">
+            Escolha uma das trilhas curadas pelos nossos mentores e inicie sua transformação técnica e acadêmica hoje mesmo.
+          </p>
         </div>
-        <div className="relative w-full md:w-80 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
+      </section>
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative w-full md:w-[450px] group">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
           <Input 
-            placeholder="Buscar trilha..." 
-            className="pl-12 h-14 bg-white border-none shadow-xl rounded-[1.25rem] text-lg font-medium italic focus-visible:ring-accent transition-all duration-300"
+            placeholder="O que você quer aprender?" 
+            className="pl-14 h-16 bg-white border-none shadow-xl rounded-[1.5rem] text-lg font-medium italic focus-visible:ring-2 focus-visible:ring-accent/50 transition-all duration-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-      </div>
-
-      <Tabs defaultValue="Todos" className="w-full">
-        <div className="flex items-center justify-between mb-6 overflow-x-auto pb-2 scrollbar-hide gap-4">
-          <TabsList className="bg-white/50 backdrop-blur-md p-1.5 h-14 rounded-2xl border-none shadow-sm shrink-0">
-            {TRAIL_CATEGORIES.map(cat => (
-              <TabsTrigger 
-                key={cat} 
-                value={cat} 
-                onClick={() => setActiveCategory(cat)}
-                className="rounded-xl px-6 data-[state=active]:bg-primary data-[state=active]:text-white font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 duration-300"
-              >
-                {cat}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          
+        
+        <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="shrink-0 h-14 w-14 rounded-2xl bg-white border-none shadow-xl hover:bg-accent hover:text-white transition-all group active:scale-95 duration-300">
-                <Filter className={`h-6 w-6 ${activeAudience !== 'all' ? 'text-accent group-hover:text-white' : ''}`} />
+              <Button variant="outline" className="h-16 px-8 rounded-[1.5rem] bg-white border-none shadow-xl hover:bg-muted transition-all font-black text-xs uppercase tracking-widest gap-3">
+                <Filter className={`h-5 w-5 ${activeAudience !== 'all' ? 'text-accent' : ''}`} />
+                Público
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 border-none shadow-2xl animate-in zoom-in-95 duration-200">
-              <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-3 py-3">Público Alvo</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-muted/50 mx-2" />
+            <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 border-none shadow-2xl">
+              <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 px-3 py-3">Filtrar Categoria</DropdownMenuLabel>
               {AUDIENCE_FILTERS.map(filter => (
                 <DropdownMenuItem 
                   key={filter.id} 
                   onClick={() => setActiveAudience(filter.id)}
-                  className={`rounded-xl px-3 py-2.5 font-bold text-sm cursor-pointer mb-1 last:mb-0 transition-colors ${activeAudience === filter.id ? 'bg-primary text-white' : 'hover:bg-muted'}`}
+                  className={`rounded-xl px-3 py-3 font-bold text-sm cursor-pointer mb-1 transition-colors ${activeAudience === filter.id ? 'bg-primary text-white' : 'hover:bg-muted'}`}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    {filter.label}
-                    {activeAudience === filter.id && <CheckCircle2 className="h-4 w-4" />}
-                  </div>
+                  {filter.label}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {filteredTrails.length > 0 ? (
-            filteredTrails.map((trail, index) => {
-              const userProgress = allProgress?.find(p => p.trail_id === trail.id);
-              const percentage = userProgress?.percentage || 0;
-              const isCompleted = percentage === 100;
+      {/* Categorias Deslizantes no Mobile */}
+      <div className="overflow-x-auto pb-4 scrollbar-hide -mx-1 px-1">
+        <div className="flex items-center gap-3 min-w-max">
+          {TRAIL_CATEGORIES.map(cat => (
+            <Button 
+              key={cat} 
+              variant={activeCategory === cat ? "default" : "outline"}
+              onClick={() => setActiveCategory(cat)}
+              className={`rounded-full px-8 h-12 text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-md ${activeCategory === cat ? 'bg-primary text-white scale-105 shadow-primary/20' : 'bg-white text-primary hover:bg-muted'}`}
+            >
+              {cat}
+            </Button>
+          ))}
+        </div>
+      </div>
 
-              return (
-                <Card key={trail.id} className={`overflow-hidden border-none shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group bg-white rounded-[2.5rem] flex flex-col relative group/card ${isCompleted ? 'ring-4 ring-green-500/10' : ''} animate-in fade-in slide-in-from-bottom-4 duration-700`} style={{ animationDelay: `${index * 100}ms` }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+        {filteredTrails.length > 0 ? (
+          filteredTrails.map((trail, index) => {
+            const userProgress = allProgress?.find(p => p.trail_id === trail.id);
+            const percentage = userProgress?.percentage || 0;
+            const isCompleted = percentage === 100;
+
+            return (
+              <Card key={trail.id} className="group overflow-hidden border-none shadow-xl hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 bg-white rounded-[3rem] flex flex-col relative animate-in fade-in slide-in-from-bottom-8" style={{ animationDelay: `${index * 100}ms` }}>
+                
+                <div className="relative aspect-[16/11] overflow-hidden cursor-pointer">
+                  <Image 
+                    src={trail.image_url || `https://picsum.photos/seed/${trail.id}/800/600`} 
+                    alt={trail.title} 
+                    fill 
+                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                    priority={index < 3}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
                   
-                  <div className="relative aspect-[16/10] overflow-hidden cursor-pointer">
-                    <Link href={`/dashboard/classroom/${trail.id}`}>
-                      <Image 
-                        src={trail.image_url || `https://picsum.photos/seed/trail-${trail.id}/600/400`} 
-                        alt={trail.title || "Trilha"} 
-                        fill 
-                        className="object-cover transition-transform duration-1000 group-hover/card:scale-110"
-                        priority={index < 3}
-                      />
-                      <div className="absolute top-4 left-4 flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          <Badge className="bg-white/80 backdrop-blur-md text-primary border-none shadow-lg flex items-center gap-2 px-4 py-1.5 rounded-xl">
-                            <Layers className="h-4 w-4 text-accent" />
-                            <span className="text-[10px] font-black uppercase tracking-wider">Acessar Jornada</span>
-                          </Badge>
-                        </div>
+                  <div className="absolute top-6 left-6">
+                    <Badge className="bg-white/90 backdrop-blur-md text-primary border-none shadow-xl flex items-center gap-2 px-4 py-2 rounded-2xl">
+                      <Zap className="h-4 w-4 text-accent fill-accent" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">{trail.category}</span>
+                    </Badge>
+                  </div>
+
+                  <div className="absolute bottom-6 left-6 right-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                    <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-black h-14 rounded-2xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 border-none">
+                      <Link href={`/dashboard/classroom/${trail.id}`}>
+                        <PlayCircle className="h-5 w-5 mr-2" />
+                        {percentage > 0 ? 'CONTINUAR' : 'INICIAR TRILHA'}
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+                
+                <CardHeader className="p-8 space-y-4 flex-1">
+                  <div className="space-y-3">
+                    <CardTitle className="text-2xl font-black text-primary italic leading-tight group-hover:text-accent transition-colors duration-300 line-clamp-2">
+                      {trail.title}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground font-medium leading-relaxed line-clamp-2 italic opacity-80">
+                      {trail.description || "Jornada estratégica com materiais técnicos e simulados para sua aprovação."}
+                    </p>
+                  </div>
+
+                  <div className="pt-4 space-y-3">
+                    <div className="flex justify-between items-center text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                      <span className="flex items-center gap-2">
+                        {isCompleted ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <TrendingUp className="h-4 w-4 text-accent" />
+                        )}
+                        {isCompleted ? 'Concluída' : `${percentage}% Completo`}
+                      </span>
+                      <span className="flex items-center gap-1 opacity-40"><Clock className="h-3 w-3"/> Ativo</span>
+                    </div>
+                    <Progress value={percentage} className="h-2 rounded-full bg-muted overflow-hidden">
+                       <div className="h-full bg-accent transition-all duration-1000" style={{ width: `${percentage}%` }} />
+                    </Progress>
+                  </div>
+                </CardHeader>
+                
+                <CardFooter className="px-8 pb-8 pt-0 mt-auto">
+                  <div className="flex items-center justify-between w-full pt-6 border-t border-muted/10">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/5 flex items-center justify-center border-2 border-white shadow-lg overflow-hidden shrink-0">
+                        <Image 
+                          src={`https://picsum.photos/seed/prof-${trail.id}/100/100`} 
+                          alt="Mentor" 
+                          width={40} 
+                          height={40} 
+                          className="object-cover"
+                        />
                       </div>
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center gap-3 p-8 backdrop-blur-sm">
-                        <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-black h-12 rounded-xl shadow-2xl scale-90 group-hover/card:scale-100 transition-transform duration-500">
-                          <PlayCircle className="h-4 w-4 mr-2" />
-                          {percentage > 0 ? 'Continuar Jornada' : 'Iniciar Aprendizado'}
-                        </Button>
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-black text-primary italic truncate max-w-[140px]">
+                          {trail.teacher_name || "Mentor Compromisso"}
+                        </span>
+                        <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Curador Técnico</span>
                       </div>
+                    </div>
+                    <Link href={`/dashboard/classroom/${trail.id}`} className="text-accent group/link flex items-center gap-1 font-black text-[10px] uppercase transition-all">
+                      Acessar <ChevronRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
                     </Link>
                   </div>
-                  
-                  <CardHeader className="p-8 space-y-4 flex-1">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-[9px] border-accent/20 text-accent font-black uppercase px-2 py-0.5 bg-accent/5 transition-all group-hover/card:bg-accent group-hover/card:text-white">
-                        {trail.category}
-                      </Badge>
-                      <div className="flex items-center gap-1.5">
-                        <Star className="h-3 w-3 text-accent fill-accent animate-pulse" />
-                        <span className="text-[9px] text-muted-foreground font-black uppercase tracking-tighter opacity-60 italic">Curadoria Docente</span>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <CardTitle className="text-xl font-black text-primary italic leading-tight group-hover/card:text-accent transition-colors duration-300 line-clamp-2">
-                        {trail.title}
-                      </CardTitle>
-                      <p className="text-xs text-muted-foreground font-medium leading-relaxed line-clamp-3 italic opacity-80">
-                        {trail.description || "Jornada estruturada com materiais digitais e simulados IA para sua aprovação."}
-                      </p>
-                    </div>
-
-                    {percentage > 0 && (
-                      <div className="pt-4 space-y-2 animate-in fade-in duration-1000">
-                        <div className="flex justify-between items-center text-[9px] font-black text-muted-foreground uppercase tracking-widest">
-                          <span className="flex items-center gap-1.5">
-                            <TrendingUp className="h-3 w-3 text-accent" />
-                            Progresso: {percentage}%
-                          </span>
-                        </div>
-                        <Progress value={percentage} className="h-1.5 rounded-full bg-muted overflow-hidden" />
-                      </div>
-                    )}
-                  </CardHeader>
-                  
-                  <CardFooter className="p-8 pt-0 mt-auto">
-                    <div className="flex items-center justify-between w-full pt-6 border-t border-muted/10">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-primary/5 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden shrink-0 transition-transform duration-500 group-hover/card:scale-110">
-                          <Image 
-                            src={`https://picsum.photos/seed/prof-${trail.id}/100/100`} 
-                            alt="Professor" 
-                            width={36} 
-                            height={36} 
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="flex flex-col overflow-hidden">
-                          <span className="text-[10px] font-black text-primary italic truncate max-w-[120px]">
-                            {trail.teacher_name || "Mentor da Rede"}
-                          </span>
-                          <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Docente</span>
-                        </div>
-                      </div>
-                      <Link href={`/dashboard/classroom/${trail.id}`} className="text-accent hover:underline text-[9px] font-black uppercase flex items-center gap-1 group/btn active:translate-x-1 transition-all duration-300">
-                        Estudar <ChevronRight className="h-3 w-3 group-hover/btn:translate-x-1 transition-transform" />
-                      </Link>
-                    </div>
-                  </CardFooter>
-                </Card>
-              );
-            })
-          ) : (
-            <div className="col-span-full py-32 text-center border-4 border-dashed border-muted/20 rounded-[3rem] bg-muted/5 animate-in fade-in duration-1000">
-              <Layers className="h-20 w-20 text-muted-foreground/20 mx-auto mb-4" />
-              <p className="font-black text-primary italic text-2xl">Nenhuma trilha encontrada</p>
-              <p className="text-muted-foreground font-medium mt-2">Tente ajustar seus filtros ou pesquisar por outro termo.</p>
-            </div>
-          )}
-        </div>
-      </Tabs>
+                </CardFooter>
+              </Card>
+            );
+          })
+        ) : (
+          <div className="col-span-full py-32 text-center border-4 border-dashed border-muted/20 rounded-[4rem] bg-muted/5 animate-in zoom-in-95 duration-700">
+            <Layers className="h-24 w-24 text-muted-foreground/20 mx-auto mb-6" />
+            <p className="font-black text-primary italic text-3xl">Nenhuma trilha ativa</p>
+            <p className="text-muted-foreground font-medium mt-3 max-w-sm mx-auto">Tente ajustar seus filtros ou verifique novamente mais tarde.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

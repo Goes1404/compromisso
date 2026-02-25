@@ -21,15 +21,16 @@ import {
   HelpCircle,
   FileSearch,
   Layout,
-  Layers
+  Layers,
+  Sparkles,
+  ArrowRight,
+  Menu,
+  X
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/app/lib/supabase";
 
-/**
- * Sala de Aula Digital - Resiliente para Next.js 15
- */
 export default function ClassroomPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: trailId } = use(params);
   const { user } = useAuth();
@@ -42,6 +43,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
   const [activeContentId, setActiveContentId] = useState<string | null>(null);
   const [contents, setContents] = useState<Record<string, any[]>>({});
+  const [showSidebar, setShowSidebar] = useState(false);
   
   const [videoProgress, setVideoProgress] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -63,14 +65,12 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
       }
       setTrail(trailData);
 
-      const { data: modulesData, error: modError } = await supabase
+      const { data: modulesData } = await supabase
         .from('modules')
         .select('*')
         .eq('trail_id', trailId)
         .order('order_index');
       
-      if (modError) throw modError;
-
       if (!modulesData || modulesData.length === 0) {
         setModules([]);
         setLoading(false);
@@ -80,14 +80,12 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
       setActiveModuleId(modulesData[0].id);
       
       const moduleIds = modulesData.map(m => m.id);
-      const { data: contentsData, error: contError } = await supabase
+      const { data: contentsData } = await supabase
         .from('learning_contents')
         .select('*')
         .in('module_id', moduleIds)
         .order('order_index');
       
-      if (contError) throw contError;
-
       const contentMap: Record<string, any[]> = {};
       contentsData?.forEach(c => {
         if (!contentMap[c.module_id]) contentMap[c.module_id] = [];
@@ -100,11 +98,6 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
       }
     } catch (e: any) {
       console.error("Erro ao carregar aula:", e);
-      toast({ 
-        title: "Erro de Sincronização", 
-        description: "Certifique-se de que as tabelas 'modules' e 'learning_contents' existem.",
-        variant: "destructive" 
-      });
     } finally {
       setLoading(false);
     }
@@ -124,10 +117,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
         percentage: Math.round(percentage),
         last_accessed: new Date().toISOString()
       });
-      toast({ 
-        title: "Progresso Registrado!", 
-        description: "Continue assim para concluir a jornada." 
-      });
+      toast({ title: "Progresso Registrado! ✅", description: "Sua dedicação está sendo mapeada." });
     }
   }, [isCompleted, toast, user, trailId]);
 
@@ -144,36 +134,24 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
           }
         }
       }, 5000); 
-    } else {
-      if (progressInterval.current) {
-        clearInterval(progressInterval.current);
-      }
+    } else if (progressInterval.current) {
+      clearInterval(progressInterval.current);
     }
   }, [updateServerProgress]);
 
   useEffect(() => {
-    const loadYoutubeApi = () => {
-      if (typeof window !== "undefined" && !(window as any).YT) {
-        const tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        const firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-        
-        (window as any).onYouTubeIframeAPIReady = () => {
-          setIsApiReady(true);
-        };
-      } else if (typeof window !== "undefined" && (window as any).YT && (window as any).YT.Player) {
-        setIsApiReady(true);
-      }
-    };
-
-    loadYoutubeApi();
-
+    if (typeof window !== "undefined" && !(window as any).YT) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      (window as any).onYouTubeIframeAPIReady = () => setIsApiReady(true);
+    } else if (typeof window !== "undefined" && (window as any).YT) {
+      setIsApiReady(true);
+    }
     return () => {
       if (progressInterval.current) clearInterval(progressInterval.current);
-      if (playerRef.current) {
-        try { playerRef.current.destroy(); } catch (e) {}
-      }
+      if (playerRef.current) playerRef.current.destroy();
     };
   }, []);
 
@@ -181,226 +159,227 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     if (activeContent?.type === 'video' && isApiReady) {
-      const playerElement = document.getElementById('youtube-player');
-      if (!playerElement) return;
-
-      if (playerRef.current) {
-        try { playerRef.current.destroy(); } catch (e) {}
-      }
+      if (playerRef.current) playerRef.current.destroy();
       
       const vidUrl = activeContent.url || '';
       let vidId = '';
-      
       if (vidUrl.includes('v=')) vidId = vidUrl.split('v=')[1].split('&')[0];
       else if (vidUrl.includes('youtu.be/')) vidId = vidUrl.split('youtu.be/')[1].split('?')[0];
       else vidId = vidUrl;
 
       if (vidId) {
-        try {
-          playerRef.current = new (window as any).YT.Player('youtube-player', {
-            videoId: vidId,
-            playerVars: { 'autoplay': 0, 'modestbranding': 1, 'rel': 0 },
-            events: {
-              'onStateChange': onPlayerStateChange
-            }
-          });
-        } catch (e) {
-          console.error("Falha ao instanciar player:", e);
-        }
+        playerRef.current = new (window as any).YT.Player('youtube-player', {
+          videoId: vidId,
+          playerVars: { 'autoplay': 0, 'modestbranding': 1, 'rel': 0, 'showinfo': 0 },
+          events: { 'onStateChange': onPlayerStateChange }
+        });
       }
-    } else {
-      if (activeContent && activeContent.type !== 'video') setVideoProgress(100);
+    } else if (activeContent && activeContent.type !== 'video') {
+      setVideoProgress(100);
     }
   }, [activeContentId, activeContent, isApiReady, onPlayerStateChange]);
 
   if (loading) return (
-    <div className="flex flex-col h-screen items-center justify-center gap-4 bg-background">
-      <Loader2 className="animate-spin h-12 w-12 text-accent" />
-      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Carregando Material Pedagógico...</p>
-    </div>
-  );
-
-  if (modules.length === 0) return (
-    <div className="flex flex-col h-screen items-center justify-center gap-6 bg-background p-10 text-center">
-      <Layers className="h-20 w-20 text-muted-foreground/20" />
-      <h2 className="text-2xl font-black text-primary italic">Trilha Vazia</h2>
-      <p className="text-muted-foreground max-w-sm">Esta jornada ainda não possui conteúdos cadastrados.</p>
-      <div className="flex flex-col gap-2">
-        <Button onClick={() => router.back()} variant="outline" className="rounded-xl px-8 h-12 border-primary/20">Voltar para Trilhas</Button>
+    <div className="flex flex-col h-screen items-center justify-center gap-6 bg-background">
+      <div className="relative">
+        <Loader2 className="animate-spin h-20 w-20 text-accent opacity-20" />
+        <Loader2 className="animate-spin h-20 w-20 text-accent absolute top-0 left-0" style={{ animationDuration: '3s' }} />
       </div>
+      <p className="text-[10px] font-black uppercase tracking-[0.5em] text-primary animate-pulse">Sintonizando Estúdio Pedagógico</p>
     </div>
   );
 
   return (
-    <div className="app-container animate-in fade-in duration-500 space-y-6">
-        <header className="bg-white rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 shrink-0">
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <button onClick={() => router.back()} className="rounded-full h-10 w-10 hover:bg-primary/5 flex items-center justify-center transition-colors">
+    <div className="flex flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-6rem)] animate-in fade-in duration-500">
+      
+      {/* Header Premium */}
+      <header className="bg-white/80 backdrop-blur-xl border-b px-4 md:px-8 py-4 flex items-center justify-between shrink-0 z-20">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-primary/5">
             <ChevronLeft className="h-6 w-6 text-primary" />
-          </button>
+          </Button>
           <div className="min-w-0">
-            <h1 className="text-lg font-black text-primary italic leading-none truncate max-w-[300px]">{trail?.title}</h1>
-            <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1">Capítulo: {modules.find(m => m.id === activeModuleId)?.title}</p>
+            <h1 className="text-base md:text-xl font-black text-primary italic leading-none truncate max-w-[200px] md:max-w-[400px]">{trail?.title}</h1>
+            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Capítulo Atual: {modules.find(m => m.id === activeModuleId)?.title}</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 w-full max-w-xs ml-auto">
-          <div className="flex-1">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-[8px] font-black text-primary/40 uppercase tracking-widest">Seu Progresso</span>
-              <span className="text-[10px] font-black text-accent italic">{Math.round(videoProgress)}%</span>
+        
+        <div className="flex items-center gap-6">
+          <div className="hidden lg:flex flex-col items-end gap-1 w-40">
+            <div className="flex justify-between w-full text-[9px] font-black uppercase text-primary/40">
+              <span>Progresso</span>
+              <span className="text-accent italic">{Math.round(videoProgress)}%</span>
             </div>
-            <Progress value={videoProgress} className="h-1.5 bg-muted rounded-full" />
+            <Progress value={videoProgress} className="h-1.5 bg-muted rounded-full overflow-hidden">
+               <div className="h-full bg-accent" style={{ width: `${videoProgress}%` }} />
+            </Progress>
           </div>
-          {videoProgress >= 80 && <Badge className="bg-green-100 text-green-700 border-none font-black h-8 px-3 text-[10px]">CONCLUÍDO</Badge>}
+          <Button variant="outline" size="icon" className="lg:hidden rounded-xl border-2" onClick={() => setShowSidebar(!showSidebar)}>
+            {showSidebar ? <X /> : <Menu />}
+          </Button>
         </div>
       </header>
 
-      <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
-        <div className="col-span-12 lg:col-span-8 flex flex-col bg-white rounded-[2rem] shadow-xl overflow-hidden border relative">
-          <div className="w-full aspect-video bg-slate-950 shrink-0">
-            {activeContent?.type === 'video' ? (
-              <div id="youtube-player" className="w-full h-full" />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 text-white p-10 text-center">
-                <Layout className="h-16 w-16 text-accent/20 mb-4" />
-                <h3 className="text-xl font-black italic uppercase tracking-widest">{activeContent?.title || "Selecione um Material"}</h3>
-                <p className="text-sm text-slate-400 mt-2">Use as abas abaixo para acessar as instruções do mentor.</p>
-              </div>
-            )}
-          </div>
-
-          <Tabs defaultValue="summary" className="flex-1 flex flex-col min-h-0">
-            <TabsList className="grid w-full grid-cols-4 bg-muted/30 p-1 h-14 rounded-none border-b shrink-0">
-              <TabsTrigger value="summary" className="gap-2 font-black text-[9px] uppercase tracking-widest"><BookOpen className="h-4 w-4 text-accent"/>Resumo</TabsTrigger>
-              <TabsTrigger value="quiz" className="gap-2 font-black text-[9px] uppercase tracking-widest"><BrainCircuit className="h-4 w-4 text-accent"/>Atividade</TabsTrigger>
-              <TabsTrigger value="live" className="gap-2 font-black text-[9px] uppercase tracking-widest"><Video className="h-4 w-4 text-red-500"/>Suporte</TabsTrigger>
-              <TabsTrigger value="materials" className="gap-2 font-black text-[9px] uppercase tracking-widest"><Paperclip className="h-4 w-4 text-blue-500"/>Anexo</TabsTrigger>
-            </TabsList>
-            
-            <div className="flex-1 overflow-y-auto p-6 md:p-10 scrollable-content" ref={scrollRef}>
-               <TabsContent value="summary" className="mt-0 outline-none">
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
-                        <FileText className="h-5 w-5" />
-                      </div>
-                      <h2 className="text-xl font-black text-primary italic">Orientações do Mentor</h2>
-                    </div>
-                    <Card className="border-none shadow-sm bg-muted/5 p-6 rounded-2xl">
-                      <p className="text-sm md:text-base leading-relaxed text-primary/80 font-medium italic whitespace-pre-line">
-                        {activeContent?.description || "Este conteúdo é fundamental para o seu desenvolvimento técnico. Analise os pontos principais e aplique nos simulados."}
-                      </p>
-                    </Card>
-                  </div>
-               </TabsContent>
-               <TabsContent value="quiz" className="mt-0 outline-none">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
-                          <BrainCircuit className="h-5 w-5" />
-                        </div>
-                        <h2 className="text-xl font-black text-primary italic">Prática & Simulado</h2>
-                      </div>
-                      <Badge className="bg-primary text-white border-none font-black text-[8px] px-3 uppercase tracking-widest">IA Aurora</Badge>
-                    </div>
-                    {activeContent?.type === 'quiz' || activeContent?.url?.includes('quiz') || activeContent?.url?.includes('form') ? (
-                      <div className="grid gap-6">
-                        <div className="p-8 bg-muted/5 border-2 border-dashed rounded-[2.5rem] text-center">
-                           <p className="text-sm font-bold text-primary italic mb-6">Este recurso requer interação em janela externa segura.</p>
-                           <Button asChild className="w-full md:w-auto bg-primary h-14 rounded-2xl font-black shadow-xl px-10">
-                             <a href={activeContent?.url} target="_blank" rel="noopener noreferrer">Abrir Atividade Prática</a>
-                           </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 bg-muted/5 rounded-[2.5rem] border-2 border-dashed border-muted/20">
-                        <HelpCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
-                        <p className="text-sm font-bold text-muted-foreground italic">Nenhum quiz vinculado a este item.</p>
-                      </div>
-                    )}
-                  </div>
-               </TabsContent>
-               <TabsContent value="live" className="mt-0 outline-none">
-                  <div className="text-center py-20 bg-muted/5 rounded-[2.5rem]">
-                    <Video className="h-12 w-12 mx-auto mb-4 text-red-500 opacity-30" />
-                    <p className="font-black italic text-primary">Dúvidas?</p>
-                    <p className="text-[10px] text-muted-foreground mt-2 uppercase font-black tracking-widest">Use o chat da Aurora ou consulte a agenda de mentoria no menu.</p>
-                  </div>
-               </TabsContent>
-               <TabsContent value="materials" className="mt-0 outline-none">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {activeContent?.type === 'pdf' || activeContent?.url?.includes('.pdf') || activeContent?.type === 'file' ? (
-                      <Card className="p-6 border-none shadow-md bg-white rounded-2xl flex items-center gap-4 group cursor-pointer hover:bg-primary transition-all">
-                        <div className="h-12 w-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-white/10 group-hover:text-white"><FileText className="h-6 w-6" /></div>
-                        <div>
-                          <p className="font-black text-xs text-primary group-hover:text-white uppercase tracking-widest">Apoio Técnico</p>
-                          <p className="text-[10px] text-muted-foreground group-hover:text-white/60">Acessar Anexo</p>
-                        </div>
-                        <Button asChild variant="ghost" size="icon" className="ml-auto text-primary group-hover:text-white">
-                          <a href={activeContent?.url} target="_blank" rel="noopener noreferrer"><Paperclip className="h-4 w-4" /></a>
-                        </Button>
-                      </Card>
-                    ) : (
-                      <div className="col-span-full py-10 text-center opacity-30 italic font-medium text-sm">Nenhum anexo disponível.</div>
-                    )}
-                  </div>
-               </TabsContent>
-            </div>
-          </Tabs>
-        </div>
-
-        <div className="col-span-12 lg:col-span-4 flex flex-col gap-6 min-h-0">
-           <Card className="bg-primary text-white shadow-2xl p-6 rounded-[2.5rem] border-none overflow-hidden relative shrink-0">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-4">Capítulos</h2>
-            <div className="space-y-2 max-h-[180px] overflow-y-auto scrollbar-hide">
+      <div className="flex-1 flex overflow-hidden relative">
+        
+        {/* Sidebar de Conteúdo (Desktop e Mobile Overlay) */}
+        <aside className={`
+          absolute inset-y-0 right-0 w-full md:w-80 lg:w-[350px] bg-white border-l z-30 transition-transform duration-500 transform
+          ${showSidebar ? 'translate-x-0' : 'translate-x-full'}
+          lg:relative lg:translate-x-0 flex flex-col shadow-2xl lg:shadow-none
+        `}>
+          <div className="p-6 bg-primary text-white shrink-0">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent mb-4">Ementa da Jornada</h2>
+            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-hide">
               {modules.map((module, idx) => (
                 <button 
                   key={module.id}
                   onClick={() => {
                     setActiveModuleId(module.id);
                     if (contents[module.id]?.length > 0) setActiveContentId(contents[module.id][0].id);
+                    if (window.innerWidth < 1024) setShowSidebar(false);
                   }}
-                  className={`w-full text-left p-4 rounded-2xl transition-all relative overflow-hidden group ${activeModuleId === module.id ? 'bg-white text-primary shadow-xl' : 'hover:bg-white/5 opacity-60 hover:opacity-100'}`}>
-                  <div className="flex items-center gap-4 relative z-10">
+                  className={`w-full text-left p-4 rounded-2xl transition-all border-2 ${activeModuleId === module.id ? 'bg-white text-primary border-accent shadow-lg' : 'bg-white/5 border-transparent hover:bg-white/10 opacity-60'}`}>
+                  <div className="flex items-center gap-4">
                     <span className={`text-xl font-black italic ${activeModuleId === module.id ? 'text-accent' : 'text-white/20'}`}>{idx + 1}</span>
-                    <p className="font-black text-xs uppercase tracking-wider truncate">{module.title}</p>
+                    <p className="font-black text-[10px] uppercase tracking-wider truncate">{module.title}</p>
                   </div>
                 </button>
               ))}
             </div>
-          </Card>
+          </div>
 
-          <Card className="bg-white shadow-2xl p-6 rounded-[2.5rem] flex-1 flex flex-col min-h-0 border">
-             <h2 className="text-[10px] font-black text-primary/40 uppercase tracking-[0.3em] mb-6 px-2">Itens do Capítulo</h2>
-             <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 scrollbar-thin">
-              {contents[activeModuleId || ""]?.map((content, idx) => (
-                  <button 
-                    key={content.id}
-                    onClick={() => setActiveContentId(content.id)}
-                    className={`w-full text-left p-4 rounded-[1.5rem] transition-all flex items-center gap-4 border-2 ${activeContentId === content.id ? 'bg-accent/5 border-accent shadow-lg' : 'bg-muted/10 border-transparent hover:bg-muted/20'}`}>
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${activeContentId === content.id ? 'bg-accent text-white' : 'bg-white text-primary/40'}`}>
-                         {content.type === 'video' && <PlayCircle className="h-5 w-5" />}
-                         {content.type === 'quiz' && <BrainCircuit className="h-5 w-5" />}
-                         {content.type === 'pdf' && <FileText className="h-5 w-5" />}
-                         {content.type === 'text' && <FileSearch className="h-5 w-5" />}
-                         {content.type === 'file' && <Paperclip className="h-5 w-5" />}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className={`font-black text-[10px] uppercase tracking-widest truncate ${activeContentId === content.id ? 'text-accent' : 'text-primary/60'}`}>{content.title}</p>
-                        <p className="text-[8px] font-bold text-muted-foreground uppercase opacity-60 mt-0.5">{content.type}</p>
-                      </div>
-                      {activeContentId === content.id && <CheckCircle2 className="h-4 w-4 text-accent ml-auto shrink-0" />}
-                  </button>
-              ))}
-              {(!contents[activeModuleId || ""] || contents[activeModuleId || ""].length === 0) && (
-                <div className="text-center py-10 opacity-30">
-                  <p className="text-[10px] font-black uppercase tracking-widest italic">Sem materiais</p>
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollable-content">
+             <h3 className="text-[9px] font-black text-primary/40 uppercase tracking-[0.2em] mb-4">Materiais do Capítulo</h3>
+             {contents[activeModuleId || ""]?.map((content) => (
+                <button 
+                  key={content.id}
+                  onClick={() => {
+                    setActiveContentId(content.id);
+                    if (window.innerWidth < 1024) setShowSidebar(false);
+                  }}
+                  className={`w-full text-left p-4 rounded-2xl transition-all flex items-center gap-4 border-2 ${activeContentId === content.id ? 'bg-accent/5 border-accent shadow-md' : 'bg-muted/10 border-transparent hover:bg-muted/20'}`}>
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${activeContentId === content.id ? 'bg-accent text-white' : 'bg-white text-primary/40'}`}>
+                       {content.type === 'video' ? <PlayCircle className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-black text-[10px] uppercase tracking-widest truncate ${activeContentId === content.id ? 'text-accent' : 'text-primary/60'}`}>{content.title}</p>
+                      <p className="text-[8px] font-bold text-muted-foreground uppercase mt-0.5">{content.type}</p>
+                    </div>
+                    {activeContentId === content.id && <CheckCircle2 className="h-4 w-4 text-accent ml-auto shrink-0" />}
+                </button>
+             ))}
+          </div>
+        </aside>
+
+        {/* Área Principal do Player e Abas */}
+        <main className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+          <div className="w-full aspect-video md:aspect-[21/9] bg-black relative group shadow-2xl">
+            {activeContent?.type === 'video' ? (
+              <div id="youtube-player" className="w-full h-full" />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-primary text-white p-10 text-center">
+                <div className="h-20 w-20 rounded-3xl bg-white/10 flex items-center justify-center mb-6 animate-pulse">
+                  <Layout className="h-10 w-10 text-accent" />
                 </div>
-              )}
-             </div>
-          </Card>
-        </div>
+                <h3 className="text-2xl font-black italic uppercase tracking-widest">{activeContent?.title || "Selecione um Material"}</h3>
+                <p className="text-sm text-slate-400 mt-2 max-w-md italic">Utilize as abas abaixo para interagir com as instruções do seu mentor.</p>
+              </div>
+            )}
+          </div>
+
+          <Tabs defaultValue="summary" className="flex-1 flex flex-col min-h-0 bg-white shadow-inner">
+            <TabsList className="grid w-full grid-cols-4 h-16 bg-white border-b p-0 gap-0">
+              {["summary", "quiz", "support", "attachments"].map((tab) => (
+                <TabsTrigger 
+                  key={tab} 
+                  value={tab} 
+                  className="data-[state=active]:bg-primary data-[state=active]:text-white h-full rounded-none font-black text-[10px] uppercase tracking-[0.2em] transition-all gap-2"
+                >
+                  {tab === 'summary' && <BookOpen className="h-4 w-4" />}
+                  {tab === 'quiz' && <BrainCircuit className="h-4 w-4" />}
+                  {tab === 'support' && <Video className="h-4 w-4" />}
+                  {tab === 'attachments' && <Paperclip className="h-4 w-4" />}
+                  <span className="hidden md:inline">{tab === 'summary' ? 'Guia' : tab === 'quiz' ? 'Prática' : tab === 'support' ? 'Live' : 'Anexos'}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            
+            <div className="flex-1 overflow-y-auto p-6 md:p-12 scrollable-content">
+               <TabsContent value="summary" className="mt-0 outline-none animate-in slide-in-from-bottom-4">
+                  <div className="max-w-4xl space-y-8">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-2xl bg-accent/10 flex items-center justify-center text-accent shadow-inner rotate-3">
+                        <Sparkles className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-black text-primary italic">Diretrizes do Mentor</h2>
+                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Orientações para absorção de conteúdo</p>
+                      </div>
+                    </div>
+                    <Card className="border-none shadow-xl bg-slate-50 p-8 rounded-[2.5rem] relative overflow-hidden group">
+                      <div className="absolute top-0 left-0 w-2 h-full bg-accent" />
+                      <p className="text-base md:text-lg leading-relaxed text-primary/80 font-medium italic whitespace-pre-line relative z-10">
+                        {activeContent?.description || "Este material foi estrategicamente selecionado para fortalecer sua base técnica. Foque nos conceitos fundamentais apresentados e anote suas dúvidas para a próxima sessão de mentoria."}
+                      </p>
+                    </Card>
+                  </div>
+               </TabsContent>
+
+               <TabsContent value="quiz" className="mt-0 outline-none">
+                  <div className="max-w-4xl space-y-8">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-xl">
+                          <BrainCircuit className="h-6 w-6" />
+                        </div>
+                        <h2 className="text-2xl font-black text-primary italic">Atividade de Fixação</h2>
+                      </div>
+                      <Badge className="bg-green-100 text-green-700 border-none font-black text-[10px] px-4 py-1 uppercase">Validado por IA</Badge>
+                    </div>
+                    
+                    {activeContent?.url?.includes('quiz') || activeContent?.url?.includes('form') ? (
+                      <div className="p-12 bg-white border-4 border-dashed rounded-[3rem] text-center space-y-6 shadow-sm">
+                         <div className="h-20 w-20 bg-accent/10 rounded-full flex items-center justify-center mx-auto">
+                            <Layers className="h-10 w-10 text-accent" />
+                         </div>
+                         <p className="text-lg font-bold text-primary italic">Este capítulo possui uma avaliação externa vinculada.</p>
+                         <Button asChild className="bg-primary text-white h-16 rounded-2xl font-black px-12 shadow-2xl hover:scale-105 transition-all">
+                           <a href={activeContent?.url} target="_blank" rel="noopener noreferrer">ABRIR AMBIENTE DE PROVA <ArrowRight className="ml-2 h-5 w-5" /></a>
+                         </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-20 bg-muted/10 rounded-[3rem] border-2 border-dashed border-muted/20 opacity-40">
+                        <HelpCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                        <p className="text-sm font-black uppercase tracking-widest italic">Nenhum quiz associado a este item</p>
+                      </div>
+                    )}
+                  </div>
+               </TabsContent>
+
+               <TabsContent value="attachments" className="mt-0 outline-none">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {activeContent?.type === 'pdf' || activeContent?.url?.includes('.pdf') ? (
+                      <Card className="p-8 border-none shadow-xl bg-white rounded-[2rem] flex items-center gap-6 group hover:bg-primary transition-all duration-500 cursor-pointer">
+                        <div className="h-16 w-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-white/10 group-hover:text-white shadow-inner transition-colors">
+                          <FileText className="h-8 w-8" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-black text-[10px] text-muted-foreground group-hover:text-white/60 uppercase tracking-widest">Material de Apoio</p>
+                          <p className="text-lg font-black text-primary group-hover:text-white italic leading-tight">Guia Técnico.pdf</p>
+                        </div>
+                        <Button asChild variant="ghost" size="icon" className="h-12 w-12 rounded-full text-primary group-hover:text-white hover:bg-white/20">
+                          <a href={activeContent?.url} target="_blank" rel="noopener noreferrer"><Paperclip className="h-6 w-6" /></a>
+                        </Button>
+                      </Card>
+                    ) : (
+                      <div className="col-span-full py-20 text-center opacity-30 italic font-bold">Nenhum anexo disponível para este conteúdo.</div>
+                    )}
+                  </div>
+               </TabsContent>
+            </div>
+          </Tabs>
+        </main>
       </div>
     </div>
   );

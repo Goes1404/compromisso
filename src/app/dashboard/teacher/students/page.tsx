@@ -7,13 +7,24 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, AlertCircle, UserCircle, Send, Filter, ShieldCheck, Clock, Download, Loader2, FlaskConical } from "lucide-react";
+import { 
+  Search, 
+  AlertCircle, 
+  UserCircle, 
+  Send, 
+  Filter, 
+  ShieldCheck, 
+  Clock, 
+  Download, 
+  Loader2, 
+  FlaskConical,
+  GraduationCap,
+  Mail,
+  ArrowUpRight
+} from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-
-// TODO: Refatorar para usar o Firebase.
-// A lógica de busca e seeding de alunos foi mocada.
 
 const mockStudents = [
   {
@@ -24,7 +35,8 @@ const mockStudents = [
     institution: "ETEC Jorge Street",
     course: "Mecatrônica",
     last_access: new Date().toISOString(),
-    is_financial_aid_eligible: true
+    is_financial_aid_eligible: true,
+    progress: 85
   },
   {
     id: "demo-s-2",
@@ -33,8 +45,9 @@ const mockStudents = [
     profile_type: "uni",
     institution: "FATEC São Paulo",
     course: "ADS",
-    last_access: new Date(Date.now() - 864000000).toISOString(), // 10 dias atrás (Risco)
-    is_financial_aid_eligible: false
+    last_access: new Date(Date.now() - 864000000).toISOString(),
+    is_financial_aid_eligible: false,
+    progress: 42
   },
   {
     id: "demo-s-3",
@@ -44,27 +57,8 @@ const mockStudents = [
     institution: "ETEC Lauro Gomes",
     course: "Informática",
     last_access: new Date().toISOString(),
-    is_financial_aid_eligible: true
-  },
-  {
-    id: "demo-s-4",
-    name: "Diana Prince",
-    email: "diana@exemplo.com",
-    profile_type: "uni",
-    institution: "USP",
-    course: "Direito",
-    last_access: new Date(Date.now() - 172800000).toISOString(),
-    is_financial_aid_eligible: false
-  },
-  {
-    id: "demo-s-5",
-    name: "Eduardo Silva",
-    email: "edu@exemplo.com",
-    profile_type: "etec",
-    institution: "ETEC Getúlio Vargas",
-    course: "Design",
-    last_access: new Date(Date.now() - 1209600000).toISOString(), // 14 dias atrás (Risco)
-    is_financial_aid_eligible: true
+    is_financial_aid_eligible: true,
+    progress: 98
   }
 ];
 
@@ -75,30 +69,14 @@ export default function TeacherStudentsPage() {
   const [activeFilter, setActiveFilter] = useState<"all" | "at_risk" | "financial_aid">("all");
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSeeding, setIsSeeding] = useState(false);
 
-  const fetchStudents = () => {
+  useEffect(() => {
     setLoading(true);
     setTimeout(() => {
         setStudents(mockStudents);
         setLoading(false);
     }, 800);
-  };
-
-  useEffect(() => {
-    if(user) fetchStudents();
-  }, [user]);
-
-  const handleSeedStudents = () => {
-    setIsSeeding(true);
-    console.log("Simulando adição de estudantes demo...");
-    setTimeout(() => {
-        const newStudents = [...students, ...mockStudents.map(s => ({...s, id: `${s.id}-${Date.now()}`}))];
-        setStudents(newStudents);
-        toast({ title: "Rede Populada!", description: "5 estudantes demo adicionados para análise (simulação)." });
-        setIsSeeding(false);
-    }, 1200);
-  };
+  }, []);
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -109,111 +87,141 @@ export default function TeacherStudentsPage() {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       return matchesSearch && (!student.last_access || new Date(student.last_access) < sevenDaysAgo);
     }
-    
-    if (activeFilter === "financial_aid") {
-      return matchesSearch && student.is_financial_aid_eligible === true;
-    }
-
+    if (activeFilter === "financial_aid") return matchesSearch && student.is_financial_aid_eligible === true;
     return matchesSearch;
   });
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 overflow-x-hidden">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-black text-primary italic leading-none">Meus Alunos</h1>
-          <p className="text-muted-foreground text-sm md:text-base font-medium">Gestão de estudantes da rede.</p>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1 px-1">
+          <h1 className="text-3xl font-black text-primary italic leading-none">Gestão de Rede</h1>
+          <p className="text-muted-foreground font-medium text-lg">Monitoramento estratégico do corpo discente.</p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={handleSeedStudents} 
-          disabled={isSeeding}
-          className="rounded-xl h-12 border-dashed border-accent text-accent font-black hover:bg-accent/5 px-6"
-        >
-          {isSeeding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FlaskConical className="h-4 w-4 mr-2" />}
-          Gerar Alunos de Teste
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <Button onClick={() => setActiveFilter("all")} variant={activeFilter === "all" ? "default" : "outline"} className="h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest gap-2">
-          <UserCircle className="h-4 w-4" /> Todos
-        </Button>
-        <Button onClick={() => setActiveFilter("at_risk")} variant={activeFilter === "at_risk" ? "default" : "outline"} className={`h-14 rounded-2xl font-black text-[10px] uppercase gap-2 ${activeFilter === "at_risk" ? 'bg-red-600' : 'text-red-600'}`}>
-          <AlertCircle className="h-4 w-4" /> Risco
-        </Button>
-        <Button onClick={() => setActiveFilter("financial_aid")} variant={activeFilter === "financial_aid" ? "default" : "outline"} className={`h-14 rounded-2xl font-black text-[10px] uppercase gap-2 ${activeFilter === "financial_aid" ? 'bg-green-600' : 'text-green-600'}`}>
-          <ShieldCheck className="h-4 w-4" /> Isenção
-        </Button>
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Pesquisar..." className="h-14 pl-12 bg-white border-none shadow-sm rounded-2xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <div className="flex items-center gap-3">
+          <div className="relative w-full md:w-80 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
+            <Input 
+              placeholder="Pesquisar aluno..." 
+              className="pl-12 h-14 bg-white border-none shadow-xl rounded-2xl italic focus-visible:ring-2 focus-visible:ring-accent/50"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
-      <Card className="border-none shadow-2xl rounded-3xl bg-white overflow-hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Button onClick={() => setActiveFilter("all")} variant={activeFilter === "all" ? "default" : "outline"} className={`h-16 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-lg transition-all ${activeFilter === 'all' ? 'bg-primary scale-105' : 'bg-white'}`}>
+          <UserCircle className="h-5 w-5 mr-2" /> Total Rede
+        </Button>
+        <Button onClick={() => setActiveFilter("at_risk")} variant={activeFilter === "at_risk" ? "default" : "outline"} className={`h-16 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-lg transition-all ${activeFilter === 'at_risk' ? 'bg-red-600 scale-105 text-white' : 'bg-white text-red-600 border-red-100'}`}>
+          <AlertCircle className="h-5 w-5 mr-2" /> Alunos em Risco
+        </Button>
+        <Button onClick={() => setActiveFilter("financial_aid")} variant={activeFilter === "financial_aid" ? "default" : "outline"} className={`h-16 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-lg transition-all ${activeFilter === 'financial_aid' ? 'bg-green-600 scale-105 text-white' : 'bg-white text-green-600 border-green-100'}`}>
+          <ShieldCheck className="h-5 w-5 mr-2" /> Isenção Social
+        </Button>
+      </div>
+
+      {/* Tabela Modernizada: Cards no Mobile, Table no Desktop */}
+      <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
         <CardContent className="p-0">
-          <ScrollArea className="w-full">
-            <div className="min-w-[800px]">
-              {loading ? (
-                <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-accent" /></div>
-              ) : (
-                <Table>
-                  <TableHeader className="bg-muted/5">
-                    <TableRow className="border-none">
-                      <TableHead className="px-8 font-black uppercase text-[10px] tracking-widest text-primary/50">Estudante</TableHead>
-                      <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/50">Instituição</TableHead>
-                      <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/50">Status</TableHead>
-                      <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/50">Ação</TableHead>
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-slate-50 border-b border-muted/10">
+                <TableRow className="border-none h-16">
+                  <TableHead className="px-8 font-black uppercase text-[10px] tracking-widest text-primary/40">Estudante</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/40">Instituição / Curso</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/40">Status</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/40">Evolução</TableHead>
+                  <TableHead className="text-right px-8 font-black uppercase text-[10px] tracking-widest text-primary/40">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStudents.map((student) => {
+                  const isAtRisk = activeFilter === 'at_risk' || (student.last_access && new Date(student.last_access) < new Date(Date.now() - 7 * 86400000));
+                  return (
+                    <TableRow key={student.id} className="border-b last:border-0 hover:bg-accent/5 transition-all group h-24">
+                      <TableCell className="px-8">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center font-black text-primary text-sm shadow-inner group-hover:bg-primary group-hover:text-white transition-all">{student.name.charAt(0)}</div>
+                          <div className="flex flex-col">
+                            <span className="font-black text-primary text-sm italic">{student.name}</span>
+                            <span className="text-[10px] text-muted-foreground font-bold flex items-center gap-1"><Mail className="h-3 w-3"/> {student.email}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-black text-primary/70">{student.institution}</span>
+                          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{student.course}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`border-none font-black text-[8px] uppercase h-6 px-3 ${isAtRisk ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                          {isAtRisk ? 'Risco Detectado' : 'Ativo'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="w-24 space-y-1">
+                          <div className="flex justify-between text-[8px] font-black text-primary/40 uppercase">
+                            <span>{student.progress}%</span>
+                          </div>
+                          <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-accent" style={{ width: `${student.progress}%` }} />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right px-8">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 text-accent hover:bg-accent/10"><Send className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 text-primary hover:bg-primary/5"><ArrowUpRight className="h-4 w-4" /></Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredStudents.map((student) => {
-                      const sevenDaysAgo = new Date();
-                      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                      const isAtRisk = !student.last_access || new Date(student.last_access) < sevenDaysAgo;
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
 
-                      return (
-                        <TableRow key={student.id} className="border-b last:border-0 hover:bg-accent/5 transition-colors group">
-                          <TableCell className="px-8 py-6">
-                            <div className="flex items-center gap-4">
-                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">{student.name?.charAt(0) || "U"}</div>
-                              <div>
-                                <p className="font-black text-primary text-sm leading-none mb-1">{student.name}</p>
-                                <p className="text-[10px] text-muted-foreground">{student.email}</p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-xs font-bold text-primary/70">{student.institution || "-"}</TableCell>
-                          <TableCell>
-                            {isAtRisk ? (
-                              <Badge className="bg-red-100 text-red-700 border-none font-black text-[8px] uppercase">Risco de Evasão</Badge>
-                            ) : (
-                              <Badge className="bg-green-100 text-green-700 border-none font-black text-[8px] uppercase">Ativo</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right px-8">
-                            <Button variant="ghost" size="icon" className="rounded-full text-accent hover:bg-accent hover:text-white transition-all">
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    {filteredStudents.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={4} className="py-20 text-center">
-                          <UserCircle className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                          <p className="font-black italic text-muted-foreground">Nenhum aluno encontrado</p>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              )}
+          {/* Visualização Mobile (Cards) */}
+          <div className="md:hidden grid grid-cols-1 divide-y divide-muted/10">
+            {filteredStudents.map((student) => (
+              <div key={student.id} className="p-6 space-y-4 hover:bg-accent/5 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary text-white flex items-center justify-center font-black text-xs shadow-lg">{student.name.charAt(0)}</div>
+                    <div className="flex flex-col">
+                      <span className="font-black text-primary text-sm italic">{student.name}</span>
+                      <Badge className="w-fit bg-muted/50 text-[7px] font-black uppercase text-primary/40 border-none mt-1">{student.profile_type}</Badge>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" className="rounded-xl text-accent"><Send className="h-5 w-5" /></Button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Instituição</p>
+                    <p className="text-[10px] font-bold text-primary italic leading-tight">{student.institution}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Progresso</p>
+                    <div className="flex items-center gap-2">
+                      <Progress value={student.progress} className="h-1.5 flex-1" />
+                      <span className="text-[9px] font-black text-accent">{student.progress}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredStudents.length === 0 && (
+            <div className="py-24 text-center">
+              <UserCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground/20" />
+              <p className="font-black italic text-xl text-primary/40 uppercase tracking-widest">Rede Vazia</p>
             </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+          )}
         </CardContent>
       </Card>
     </div>
