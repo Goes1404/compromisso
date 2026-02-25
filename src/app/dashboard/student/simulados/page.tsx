@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Loader2, Award, RotateCw, BrainCircuit, Library } from 'lucide-react';
+import { Loader2, Award, RotateCw, BrainCircuit, Library, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/lib/AuthProvider';
-import { createClient } from '@/app/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
 
 const SIMULATION_SIZE = 10;
 
@@ -36,7 +36,6 @@ type Answer = {
 
 export default function SimuladoPage() {
   const { user } = useAuth();
-  const supabase = createClient();
 
   const [gameState, setGameState] = useState<'loading_subjects' | 'idle' | 'loading_questions' | 'active' | 'finished' | 'error'>('loading_subjects');
   const [subjects, setSubjects] = useState<SubjectWithCount[]>([]);
@@ -45,21 +44,41 @@ export default function SimuladoPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
 
-  useEffect(() => {
-    const fetchSubjects = async () => {
-      setGameState('loading_subjects');
-      try {
-        const { data, error } = await supabase.rpc('get_subjects_with_question_count');
-        if (error) throw error;
+  const fetchSubjects = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setGameState('error');
+      return;
+    }
+
+    setGameState('loading_subjects');
+    try {
+      // Tenta usar a RPC (função do banco)
+      const { data, error } = await supabase.rpc('get_subjects_with_question_count');
+      
+      if (error) {
+        console.warn('RPC get_subjects_with_question_count não encontrada, usando fallback de tabela simples.');
+        // Fallback: Busca matérias direto da tabela se a RPC falhar
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('subjects')
+          .select('id, name')
+          .order('name');
+        
+        if (fallbackError) throw fallbackError;
+        
+        setSubjects(fallbackData?.map(s => ({ id: s.id, name: s.name, question_count: 0 })) || []);
+      } else {
         setSubjects(data || []);
-        setGameState('idle');
-      } catch (e) {
-        console.error('Erro ao buscar matérias:', e);
-        setGameState('error');
       }
-    };
+      setGameState('idle');
+    } catch (e: any) {
+      console.error('Erro crítico ao buscar matérias:', e.message || e);
+      setGameState('error');
+    }
+  }, []);
+
+  useEffect(() => {
     fetchSubjects();
-  }, [supabase]);
+  }, [fetchSubjects]);
 
   const fetchQuestions = useCallback(async (subjectId: string) => {
     setGameState('loading_questions');
@@ -69,24 +88,39 @@ export default function SimuladoPage() {
             p_limit: SIMULATION_SIZE
         });
 
-        if (error) throw error;
-
-        const formattedQuestions = data.map((q: any) => ({
+        if (error) {
+          // Fallback se a RPC de sorteio falhar
+          const { data: fallbackQuestions, error: fallbackError } = await supabase
+            .from('questions')
+            .select(`*, subjects(name)`)
+            .eq('subject_id', subjectId)
+            .limit(SIMULATION_SIZE);
+          
+          if (fallbackError) throw fallbackError;
+          
+          const formatted = fallbackQuestions.map((q: any) => ({
             ...q,
-            subjects: typeof q.subjects === 'string' ? JSON.parse(q.subjects) : q.subjects,
-            options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options
-        }));
+            options: typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || [])
+          }));
+          setQuestions(formatted);
+        } else {
+          const formattedQuestions = data.map((q: any) => ({
+              ...q,
+              subjects: typeof q.subjects === 'string' ? JSON.parse(q.subjects) : q.subjects,
+              options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options
+          }));
+          setQuestions(formattedQuestions);
+        }
 
-        setQuestions(formattedQuestions);
         setCurrentQuestionIndex(0);
         setAnswers([]);
         setSelectedAnswer(null);
         setGameState('active');
-    } catch (error) {
-        console.error('Erro ao montar simulado:', error);
+    } catch (error: any) {
+        console.error('Erro ao montar simulado:', error.message || error);
         setGameState('error');
     }
-  }, [supabase]);
+  }, []);
 
   const handleNextQuestion = () => {
     if (selectedAnswer === null) return;
@@ -147,17 +181,17 @@ export default function SimuladoPage() {
             </CardHeader>
             <CardContent className='p-6 md:p-12 pt-2'>
                 <RadioGroup value={selectedAnswer ?? ''} onValueChange={setSelectedAnswer} className="space-y-3">
-                {currentQuestion.options.map((opt) => (
+                {currentQuestion.options.map((opt: any) => (
                     <Label 
-                    key={opt.letter} 
+                    key={opt.letter || opt.key} 
                     className={`flex items-start gap-4 text-xs md:text-base p-4 md:p-6 rounded-xl md:rounded-[1.5rem] border-2 transition-all cursor-pointer ${
-                        selectedAnswer === opt.letter ? 'border-accent bg-accent/5' : 'border-muted/20 hover:border-accent/40'
+                        selectedAnswer === (opt.letter || opt.key) ? 'border-accent bg-accent/5' : 'border-muted/20 hover:border-accent/40'
                     }`}
                     >
-                    <RadioGroupItem value={opt.letter} id={opt.letter} className="mt-1" />
+                    <RadioGroupItem value={opt.letter || opt.key} id={opt.letter || opt.key} className="mt-1" />
                     <div className="flex gap-2 md:gap-4">
-                        <span className={`font-black italic ${selectedAnswer === opt.letter ? 'text-accent' : 'text-primary/30'}`}>
-                        {opt.letter.toUpperCase()}.
+                        <span className={`font-black italic ${selectedAnswer === (opt.letter || opt.key) ? 'text-accent' : 'text-primary/30'}`}>
+                        {(opt.letter || opt.key).toUpperCase()}.
                         </span>
                         <span className="font-medium text-slate-700">{opt.text}</span>
                     </div>
@@ -205,8 +239,10 @@ export default function SimuladoPage() {
   if (gameState === 'error') {
     return (
         <div className='flex flex-col items-center justify-center h-[60vh] gap-4'>
-            <p className='text-red-500 font-bold italic'>Ocorreu um erro ao carregar os dados.</p>
-            <Button onClick={() => window.location.reload()} variant="outline">Recarregar Página</Button>
+            <AlertCircle className="h-12 w-12 text-red-500" />
+            <p className='text-red-500 font-bold italic'>Ocorreu um erro ao carregar os dados do simulado.</p>
+            <p className='text-xs text-muted-foreground'>Verifique se o script SQL foi executado no Supabase.</p>
+            <Button onClick={() => fetchSubjects()} variant="outline">Tentar Novamente</Button>
         </div>
     )
   }
@@ -222,18 +258,19 @@ export default function SimuladoPage() {
 
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
             {subjects.map(subject => (
-                <Card key={subject.id} className={`border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden flex flex-col justify-between ${subject.question_count === 0 ? 'opacity-50' : ''}`}>
+                <Card key={subject.id} className={`border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden flex flex-col justify-between`}>
                     <CardHeader>
                         <CardTitle className='text-2xl font-black text-primary'>{subject.name}</CardTitle>
-                        <CardDescription className='font-medium'>{subject.question_count} questões disponíveis</CardDescription>
+                        <CardDescription className='font-medium'>
+                          {Number(subject.question_count) > 0 ? `${subject.question_count} questões disponíveis` : 'Matéria disponível para estudo'}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Button 
                             onClick={() => fetchQuestions(subject.id)}
-                            disabled={Number(subject.question_count) === 0}
                             className='w-full h-12 rounded-xl bg-primary font-black'
                         >
-                            {Number(subject.question_count) === 0 ? 'Sem questões' : 'Começar Simulado'}
+                            Começar Simulado
                         </Button>
                     </CardContent>
                 </Card>

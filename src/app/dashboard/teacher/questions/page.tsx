@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -7,10 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, FilePlus, ListChecks, PlusCircle, FlaskConical, AlertCircle } from 'lucide-react';
+import { Loader2, FilePlus, ListChecks, PlusCircle } from 'lucide-react';
 import { QuestionsDashboard } from '@/components/QuestionsDashboard';
 import { QuestionsList } from '@/components/QuestionsList';
-import { createClient } from '@/app/lib/supabase';
+import { supabase } from '@/app/lib/supabase';
 import { useAuth } from '@/lib/AuthProvider';
 import {
     Select,
@@ -70,14 +70,12 @@ export default function QuestionBankPage() {
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [rawText, setRawText] = useState('');
     const [extractedQuestions, setExtractedQuestions] = useState<ParsedQuestion[]>([]);
-    const [view, setView] = useState<'upload' | 'validate' | 'finished'>('upload');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [manualQuestion, setManualQuestion] = useState({ question_text: '', year: new Date().getFullYear(), subject_id: '', correct_answer: '' });
     const [manualOptions, setManualOptions] = useState({ A: '', B: '', C: '', D: '', E: '' });
 
     useEffect(() => {
         const fetchSubjects = async () => {
-            const supabase = createClient();
             const { data, error } = await supabase.from('subjects').select('id, name');
             if (error) {
                 toast({ title: "Erro ao buscar matérias", description: error.message, variant: 'destructive' });
@@ -98,7 +96,6 @@ export default function QuestionBankPage() {
             const { questions, errors } = parseExamText(rawText, defaultSubjectId);
             if (errors.length > 0) toast({ title: "Erro na Análise", description: errors.join('\n'), variant: 'destructive' });
             setExtractedQuestions(questions);
-            setView('validate');
             setIsAnalyzing(false);
         }, 500);
     };
@@ -116,7 +113,6 @@ export default function QuestionBankPage() {
         
         setIsSaving(true);
         try {
-            const supabase = createClient();
             const optionsToSave: QuestionOption[] = Object.entries(manualOptions).map(([key, text]) => ({ key, text }));
             const { error } = await supabase.from('questions').insert([{ 
                 ...manualQuestion, 
@@ -130,7 +126,7 @@ export default function QuestionBankPage() {
             setManualQuestion({ question_text: '', year: new Date().getFullYear(), subject_id: subjects.find(s => s.name === 'Não Categorizado')?.id || '', correct_answer: '' });
             setManualOptions({ A: '', B: '', C: '', D: '', E: '' });
             
-            // Força a atualização da lista (recarregando levemente a página ou emitindo evento)
+            // Recarrega a página para atualizar a lista
             window.location.reload();
         } catch (err: any) {
             toast({ title: "Falha na Persistência", description: err.message, variant: 'destructive' });
