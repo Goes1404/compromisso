@@ -6,7 +6,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { gemini15Flash } from '@genkit-ai/google-genai';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const FinancialAidDeterminationInputSchema = z.object({
   totalMonthlyIncome: z.number().describe("A renda bruta mensal total da família em Reais (BRL)."),
@@ -33,7 +33,7 @@ export async function financialAidDetermination(
 
 const prompt = ai.definePrompt({
   name: 'financialAidDeterminationPrompt',
-  model: gemini15Flash,
+  model: googleAI.model('gemini-1.5-flash'),
   input: { schema: FinancialAidDeterminationInputSchema },
   output: { schema: FinancialAidDeterminationOutputSchema },
   system: `Você é a Aurora, uma consultora especialista em auxílio estudantil do curso Compromisso. 
@@ -49,7 +49,7 @@ const prompt = ai.definePrompt({
   Total de Residentes: {{{familySize}}}`,
 });
 
-const financialAidDeterminationFlow = ai.defineFlow(
+export const financialAidDeterminationFlow = ai.defineFlow(
   {
     name: 'financialAidDeterminationFlow',
     inputSchema: FinancialAidDeterminationInputSchema,
