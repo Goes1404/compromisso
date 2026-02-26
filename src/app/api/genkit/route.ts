@@ -1,48 +1,47 @@
-
-import { ai } from '@/ai/genkit';
 import { NextRequest, NextResponse } from 'next/server';
+import { conceptExplanationAssistantFlow } from '@/ai/flows/concept-explanation-assistant';
+import { financialAidDeterminationFlow } from '@/ai/flows/financial-aid-determination';
+import { quizGeneratorFlow } from '@/ai/flows/quiz-generator';
 
-import '@/ai/flows/concept-explanation-assistant';
-import '@/ai/flows/financial-aid-determination';
-import '@/ai/flows/quiz-generator';
+/**
+ * @fileOverview Gateway de API para os fluxos da Aurora IA.
+ * Mapeia as chamadas do front-end para os fluxos do Genkit.
+ */
 
 export async function POST(req: NextRequest) {
   try {
     const text = await req.text();
     if (!text || text.trim() === '') {
-      return NextResponse.json(
-        { error: 'Corpo da requisição vazio ou inválido.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Corpo vazio.' }, { status: 400 });
     }
 
-    let body;
-    try {
-      body = JSON.parse(text);
-    } catch (e) {
-      return NextResponse.json(
-        { error: 'Formato JSON inválido.' },
-        { status: 400 }
-      );
-    }
-
-    const { flowId, input } = body;
+    const { flowId, input } = JSON.parse(text);
 
     if (!flowId) {
-      return NextResponse.json(
-        { error: 'flowId é obrigatório.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'flowId é obrigatório.' }, { status: 400 });
     }
 
-    // Genkit 1.x pattern: ai.run(flowId, input)
-    const result = await ai.run(flowId, input);
+    // Mapeamento explícito para evitar erros de registro dinâmico
+    const flows: Record<string, any> = {
+      conceptExplanationAssistant: conceptExplanationAssistantFlow,
+      financialAidDetermination: financialAidDeterminationFlow,
+      quizGenerator: quizGeneratorFlow,
+    };
+
+    const targetFlow = flows[flowId];
+
+    if (!targetFlow) {
+      console.error(`Flow não encontrado: ${flowId}`);
+      return NextResponse.json({ error: `Flow '${flowId}' não cadastrado.` }, { status: 404 });
+    }
+
+    const result = await targetFlow(input);
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    console.error(`Erro ao executar flow:`, error);
+    console.error(`Erro ao executar Aurora IA:`, error);
     return NextResponse.json(
-      { error: `Ocorreu um erro interno: ${error.message || 'Erro desconhecido'}` },
+      { error: `Falha na Aurora: ${error.message || 'Erro interno'}` },
       { status: 500 }
     );
   }

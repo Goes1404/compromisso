@@ -45,8 +45,19 @@ const prompt = ai.definePrompt({
   Contexto: {{{description}}}`,
 });
 
+export const quizGeneratorFlow = ai.defineFlow(
+  {
+    name: 'quizGenerator',
+    inputSchema: QuizGeneratorInputSchema,
+    outputSchema: QuizGeneratorOutputSchema,
+  },
+  async (input) => {
+    const { output } = await prompt(input);
+    if (!output) throw new Error("A IA falhou ao gerar o quiz.");
+    return output;
+  }
+);
+
 export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizGeneratorOutput> {
-  const { output } = await prompt(input);
-  if (!output) throw new Error("A IA falhou ao gerar o quiz.");
-  return output;
+  return quizGeneratorFlow(input);
 }

@@ -2,8 +2,6 @@
 
 /**
  * @fileOverview Aurora - Assistente Pedagógica do Compromisso.
- * 
- * - conceptExplanationAssistant: Server Action para o chat.
  */
 
 import { ai } from '@/ai/genkit';
@@ -67,13 +65,9 @@ REGRAS:
 {{/each}}{{/if}}`,
 });
 
-export async function conceptExplanationAssistant(input: ConceptExplanationAssistantInput): Promise<ConceptExplanationAssistantOutput> {
-  return conceptExplanationAssistantFlow(input);
-}
-
-const conceptExplanationAssistantFlow = ai.defineFlow(
+export const conceptExplanationAssistantFlow = ai.defineFlow(
   {
-    name: 'conceptExplanationAssistant', // Corrigido para corresponder às chamadas do front-end
+    name: 'conceptExplanationAssistant',
     inputSchema: ConceptExplanationAssistantInputSchema,
     outputSchema: ConceptExplanationAssistantOutputSchema,
   },
@@ -88,3 +82,7 @@ const conceptExplanationAssistantFlow = ai.defineFlow(
     }
   }
 );
+
+export async function conceptExplanationAssistant(input: ConceptExplanationAssistantInput): Promise<ConceptExplanationAssistantOutput> {
+  return conceptExplanationAssistantFlow(input);
+}
