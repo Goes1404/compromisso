@@ -65,8 +65,7 @@ export default function DashboardHome() {
     if (!user) return;
     setLoadingProgress(true);
     try {
-      // Busca progresso com join na tabela de trilhas
-      // Importante: a Foreign Key deve estar definida no banco
+      // A mágica acontece aqui: o Join com 'trail:trails' só funciona se houver a Foreign Key no SQL
       const { data: progress, error } = await supabase
         .from('user_progress')
         .select(`
@@ -86,7 +85,7 @@ export default function DashboardHome() {
       
       if (error) throw error;
       
-      // Filtrar apenas registros que possuem trilha válida associada
+      // Filtramos apenas os que têm a relação de trilha válida
       setRecentProgress(progress?.filter(p => p.trail) || []);
     } catch (e) {
       console.error("Erro ao buscar progresso:", e);
@@ -99,7 +98,6 @@ export default function DashboardHome() {
     async function fetchHomeData() {
       if (!user) return;
 
-      // 1. Avisos (Mock)
       setLoadingAnnouncements(true);
       setAnnouncements([
            { id: 2, title: 'Simulados de Março', message: 'Os novos simulados de Biologia e Química já estão disponíveis no banco de questões.', priority: 'medium' },
@@ -107,7 +105,6 @@ export default function DashboardHome() {
       ]);
       setLoadingAnnouncements(false);
 
-      // 2. Sugestões de Trilhas (Exemplos)
       setLoadingLibrary(true);
       const { data: featured } = await supabase
         .from('trails')
@@ -123,7 +120,6 @@ export default function DashboardHome() {
       })) || []);
       setLoadingLibrary(false);
 
-      // 3. Progresso do Usuário
       await fetchProgress();
     }
     fetchHomeData();
@@ -134,7 +130,6 @@ export default function DashboardHome() {
     
     setIsStarting(trailId);
     try {
-      // Verifica se já existe progresso para não duplicar
       const { data: existing } = await supabase
         .from('user_progress')
         .select('id')
@@ -153,7 +148,6 @@ export default function DashboardHome() {
         if (insertError) throw insertError;
         toast({ title: "Trilha Iniciada!", description: "Ela agora aparece na sua lista de atividades recentes." });
       } else {
-        // Apenas atualiza a data de acesso para subir na lista
         await supabase
           .from('user_progress')
           .update({ last_accessed: new Date().toISOString() })
@@ -162,7 +156,7 @@ export default function DashboardHome() {
         toast({ title: "Atividade Retomada", description: "A trilha foi movida para o topo da sua lista." });
       }
 
-      // Refresh instantâneo da lista na Home
+      // Refresh instantâneo para mostrar no Dashboard
       await fetchProgress();
     } catch (e: any) {
       console.error("Erro ao iniciar trilha:", e);
