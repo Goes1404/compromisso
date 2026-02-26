@@ -11,38 +11,48 @@ import { useEffect, useState, useMemo, memo, useRef, Suspense } from "react";
 import { useAuth } from "@/lib/AuthProvider"; 
 
 const studentItems = [
+  // Núcleo de Estudo
   { icon: Home, label: "Página Inicial", href: "/dashboard/home" },
   { icon: Compass, label: "Trilhas de Estudo", href: "/dashboard/trails" },
-  { icon: FileCheck, label: "Documentação", href: "/dashboard/student/documents" },
   { icon: FileText, label: "Simulados", href: "/dashboard/student/simulados" },
+  { icon: Video, label: "Aulas ao Vivo", href: "/dashboard/live" },
+  { icon: Library, label: "Biblioteca Digital", href: "/dashboard/library" },
+  // Comunicação e Social
   { icon: MessagesSquare, label: "Fóruns de Discussão", href: "/dashboard/forum" },
   { icon: MessageSquare, label: "Chat com Mentores", href: "/dashboard/chat", badge: true },
-  { icon: Library, label: "Biblioteca Digital", href: "/dashboard/library" },
-  { icon: Video, label: "Aulas ao Vivo", href: "/dashboard/live" },
+  // Administrativo e Apoio
+  { icon: FileCheck, label: "Documentação", href: "/dashboard/student/documents" },
   { icon: Calculator, label: "Simulador de Isenção", href: "/dashboard/financial-aid" },
   { icon: Settings, label: "Configurações", href: "/dashboard/settings" },
 ];
 
 const teacherItems = [
+  // Gestão Pedagógica
   { icon: LayoutDashboard, label: "Painel de Gestão", href: "/dashboard/teacher/home" },
   { icon: ClipboardList, label: "Gestão de Trilhas", href: "/dashboard/teacher/trails" },
-  { icon: Library, label: "Gestão de Biblioteca", href: "/dashboard/teacher/library" },
   { icon: Database, label: "Banco de Questões", href: "/dashboard/teacher/questions" },
+  { icon: Library, label: "Gestão de Biblioteca", href: "/dashboard/teacher/library" },
+  // Interação e Transmissão
   { icon: MonitorPlay, label: "Gerenciar Lives", href: "/dashboard/teacher/live" },
   { icon: MessagesSquare, label: "Fórum Pedagógico", href: "/dashboard/forum" },
   { icon: MessageSquare, label: "Chats com Alunos", href: "/dashboard/chat", badge: true },
+  // Administrativo
   { icon: Bell, label: "Mural de Avisos", href: "/dashboard/teacher/communication" },
   { icon: Settings, label: "Configurações", href: "/dashboard/settings" },
 ];
 
 const adminItems = [
+  // Inteligência e BI
   { icon: ShieldCheck, label: "Gestão 360", href: "/dashboard/admin/home" },
-  { icon: FileCheck, label: "Status de Documentos", href: "/dashboard/admin/checklists" },
-  { icon: ClipboardList, label: "Aprovação de Trilhas", href: "/dashboard/admin/trails" },
-  { icon: Eye, label: "Auditoria de Chats", href: "/dashboard/admin/chats" },
-  { icon: Library, label: "Curadoria de Acervo", href: "/dashboard/teacher/library" },
-  { icon: Users, label: "Gestão de Turmas", href: "/dashboard/admin/students" },
   { icon: BarChart3, label: "BI & Analytics", href: "/dashboard/teacher/analytics" },
+  // Auditoria e Controle
+  { icon: FileCheck, label: "Status de Documentos", href: "/dashboard/admin/checklists" },
+  { icon: Eye, label: "Auditoria de Chats", href: "/dashboard/admin/chats" },
+  { icon: Users, label: "Gestão de Turmas", href: "/dashboard/admin/students" },
+  // Workflow de Conteúdo
+  { icon: ClipboardList, label: "Aprovação de Trilhas", href: "/dashboard/admin/trails" },
+  { icon: Library, label: "Curadoria de Acervo", href: "/dashboard/teacher/library" },
+  // Global
   { icon: Bell, label: "Comunicados Globais", href: "/dashboard/teacher/communication" },
   { icon: MessagesSquare, label: "Fórum de Gestão", href: "/dashboard/forum" },
   { icon: Settings, label: "Configurações", href: "/dashboard/settings" },
