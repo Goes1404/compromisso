@@ -3,8 +3,9 @@
 
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-// Carregamento dinâmico dos widgets que só rodam no cliente para evitar erros de hidratação
+// Carregamento dinâmico estrito para o cliente
 const AccessibilityWidget = dynamic(() => 
   import('@/components/AccessibilityWidget').then(mod => mod.AccessibilityWidget),
   { ssr: false }
@@ -17,14 +18,21 @@ const Vlibras = dynamic(() =>
 
 export function ClientWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Regra para não renderizar os widgets em páginas de login/registro
-  const shouldRenderWidgets = !['/login', '/register', '/'].includes(pathname);
+  const isAuthPage = ['/login', '/register', '/'].includes(pathname);
+
+  if (!mounted) return <>{children}</>;
 
   return (
     <>
       {children}
-      {shouldRenderWidgets && (
+      {!isAuthPage && (
         <>
           <AccessibilityWidget />
           <Vlibras />

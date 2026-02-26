@@ -1,3 +1,4 @@
+
 import { AuthProvider } from '@/lib/AuthProvider';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -17,8 +18,8 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={inter.variable}>
-      <body className="font-sans antialiased">
+    <html lang="pt-BR" className={`${inter.variable} font-sans`}>
+      <body className="antialiased min-h-screen bg-background">
         <AuthProvider>
           <ClientWrapper>
             {children}

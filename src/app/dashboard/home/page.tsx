@@ -65,7 +65,7 @@ export default function DashboardHome() {
     if (!user || !isSupabaseConfigured) return;
     setLoadingProgress(true);
     try {
-      // Busca o progresso e tenta trazer os detalhes da trilha via relacionamento
+      // Query otimizada com tratamento de relacionamento
       const { data: progress, error } = await supabase
         .from('user_progress')
         .select(`
@@ -73,7 +73,7 @@ export default function DashboardHome() {
           percentage, 
           last_accessed, 
           trail_id,
-          trails (
+          trail:trails (
             title, 
             category, 
             image_url
@@ -84,25 +84,20 @@ export default function DashboardHome() {
         .limit(5);
       
       if (error) {
-        // Se o erro for de relacionamento, explicamos melhor no console
-        if (error.message.includes('relationship')) {
-          console.warn("Atenção: Relacionamento entre user_progress e trails não encontrado no banco. Rode o SQL fornecido.");
-        } else {
-          console.error("Erro Supabase Progresso:", error.message, error.details);
-        }
+        console.error("Erro Supabase Progresso:", error.message);
         setRecentProgress([]);
         return;
       }
 
-      // Mapeia garantindo que a trilha existe para evitar erros de renderização
-      const mappedProgress = progress?.map(p => ({
-        ...p,
-        trail: Array.isArray(p.trails) ? p.trails[0] : p.trails
-      })).filter(p => p.trail);
+      // Supabase pode retornar 'trail' como objeto ou array dependendo da FK
+      const mappedProgress = progress?.map(p => {
+        const trailData = Array.isArray(p.trail) ? p.trail[0] : p.trail;
+        return { ...p, trail: trailData };
+      }).filter(p => p.trail);
 
       setRecentProgress(mappedProgress || []);
     } catch (e: any) {
-      console.error("Erro fatal ao buscar progresso:", e.message || e);
+      console.error("Erro fatal ao buscar progresso:", e);
     } finally {
       setLoadingProgress(false);
     }
@@ -149,36 +144,21 @@ export default function DashboardHome() {
     
     setIsStarting(trailId);
     try {
-      const { data: existing } = await supabase
-        .from('user_progress')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('trail_id', trailId)
-        .maybeSingle();
+      const { error: upsertError } = await supabase.from('user_progress').upsert({
+        user_id: user.id,
+        trail_id: trailId,
+        last_accessed: new Date().toISOString()
+      }, { onConflict: 'user_id,trail_id' });
 
-      if (!existing) {
-        const { error: insertError } = await supabase.from('user_progress').insert({
-          user_id: user.id,
-          trail_id: trailId,
-          percentage: 0,
-          last_accessed: new Date().toISOString()
-        });
-
-        if (insertError) throw insertError;
-        toast({ title: "Trilha Iniciada!", description: "Ela agora aparece na sua lista de atividades recentes." });
-      } else {
-        await supabase
-          .from('user_progress')
-          .update({ last_accessed: new Date().toISOString() })
-          .eq('id', existing.id);
-        
-        toast({ title: "Atividade Retomada", description: "A trilha foi movida para o topo da sua lista." });
-      }
-
+      if (upsertError) throw upsertError;
+      
+      toast({ title: "Trilha Adicionada! 🚀", description: "Ela agora aparece no seu Dashboard." });
+      
+      // Re-fetch progress to update the list immediately
       await fetchProgress();
     } catch (e: any) {
-      console.error("Erro ao iniciar trilha:", e.message || e);
-      toast({ title: "Erro ao sincronizar", description: "Verifique se a tabela de progresso foi criada corretamente com Foreign Keys.", variant: "destructive" });
+      console.error("Erro ao iniciar trilha:", e);
+      toast({ title: "Erro ao sincronizar", description: "Verifique seu banco de dados.", variant: "destructive" });
     } finally {
       setIsStarting(null);
     }
@@ -249,7 +229,7 @@ export default function DashboardHome() {
               </h2>
               {recentProgress.length > 0 && (
                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest bg-muted/20 px-3 py-1 rounded-full">
-                  Últimas 5 trilhas ativas
+                  Últimas 5 atividades
                 </span>
               )}
             </div>
@@ -270,11 +250,6 @@ export default function DashboardHome() {
                   return (
                     <Link key={prog.id} href={`/dashboard/classroom/${prog.trail_id}`}>
                       <Card className={`border-none shadow-xl hover:shadow-2xl transition-all duration-500 bg-white rounded-3xl p-5 flex flex-col md:flex-row items-center gap-6 group relative overflow-hidden ${isFinished ? 'bg-slate-50/50' : ''}`}>
-                        {isFinished && (
-                          <div className="absolute top-0 right-0 p-2">
-                            <CheckCircle2 className="h-5 w-5 text-green-500 opacity-20" />
-                          </div>
-                        )}
                         <div className={`h-14 w-14 md:h-16 md:w-16 rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform ${isFinished ? 'bg-green-50 text-green-600' : 'bg-accent/10 text-accent'}`}>
                           {isFinished ? <CheckCircle2 className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
                         </div>
@@ -309,8 +284,8 @@ export default function DashboardHome() {
             ) : (
               <div className="py-12 text-center border-4 border-dashed rounded-[2.5rem] bg-muted/5 opacity-40">
                 <PlayCircle className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-                <p className="font-black italic text-primary">Inicie sua primeira trilha ao lado!</p>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground mt-2">Suas trilhas aparecerão aqui automaticamente.</p>
+                <p className="font-black italic text-primary">Nenhuma trilha iniciada</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground mt-2">Use o botão "+" ao lado para fixar trilhas aqui.</p>
               </div>
             )}
           </div>
@@ -333,7 +308,7 @@ export default function DashboardHome() {
                     <Sparkles className="h-4 w-4 animate-pulse" />
                     <span className="text-[9px] font-black uppercase tracking-widest">Dica da Aurora</span>
                   </div>
-                  <p className="text-[11px] font-medium leading-relaxed italic opacity-80">"Comece uma das recomendações abaixo e veja seu dashboard ganhar vida."</p>
+                  <p className="text-[11px] font-medium leading-relaxed italic opacity-80">"Fixe suas trilhas preferidas para vê-las aqui sempre que entrar."</p>
                 </div>
                 <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-black h-12 rounded-2xl shadow-xl transition-all border-none">
                   <Link href="/dashboard/chat">Falar com Mentor</Link>

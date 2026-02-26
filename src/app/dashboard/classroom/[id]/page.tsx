@@ -19,13 +19,13 @@ import {
   Video,
   CheckCircle2,
   HelpCircle,
-  FileSearch,
   Layout,
   Layers,
   Sparkles,
   ArrowRight,
   Menu,
-  X
+  X,
+  PlusCircle
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -48,13 +48,14 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
   const [videoProgress, setVideoProgress] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isApiReady, setIsApiReady] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [isEnrolling, setIsEnrolledLoading] = useState(false);
   
   const playerRef = useRef<any>(null);
   const progressInterval = useRef<any>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const loadTrailData = useCallback(async () => {
-    if (!trailId) return;
+    if (!trailId || !user) return;
     try {
       setLoading(true);
       
@@ -64,6 +65,20 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
         return;
       }
       setTrail(trailData);
+
+      // Check if enrolled
+      const { data: progressData } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('trail_id', trailId)
+        .maybeSingle();
+      
+      if (progressData) {
+        setIsEnrolled(true);
+        setVideoProgress(progressData.percentage || 0);
+        setIsCompleted(progressData.percentage === 100);
+      }
 
       const { data: modulesData } = await supabase
         .from('modules')
@@ -101,11 +116,35 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
     } finally {
       setLoading(false);
     }
-  }, [trailId, toast]);
+  }, [trailId, user, toast]);
 
   useEffect(() => {
     loadTrailData();
   }, [loadTrailData]);
+
+  const handleEnroll = async () => {
+    if (!user || !trailId || isEnrolling) return;
+    setIsEnrolledLoading(true);
+    try {
+      const { error } = await supabase.from('user_progress').upsert({
+        user_id: user.id,
+        trail_id: trailId,
+        percentage: videoProgress > 0 ? Math.round(videoProgress) : 0,
+        last_accessed: new Date().toISOString()
+      }, { onConflict: 'user_id,trail_id' });
+
+      if (!error) {
+        setIsEnrolled(true);
+        toast({ title: "Fixado no Dashboard!", description: "Acompanhe seu progresso pela página inicial." });
+      } else {
+        throw error;
+      }
+    } catch (e) {
+      toast({ title: "Erro ao salvar", variant: "destructive" });
+    } finally {
+      setIsEnrolledLoading(false);
+    }
+  };
 
   const updateServerProgress = useCallback(async (percentage: number) => {
     const completed = percentage >= 80;
@@ -116,7 +155,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
         trail_id: trailId,
         percentage: Math.round(percentage),
         last_accessed: new Date().toISOString()
-      });
+      }, { onConflict: 'user_id,trail_id' });
       toast({ title: "Progresso Registrado! ✅", description: "Sua dedicação está sendo mapeada." });
     }
   }, [isCompleted, toast, user, trailId]);
@@ -204,7 +243,13 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
         
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
+          {!isEnrolled && (
+            <Button onClick={handleEnroll} disabled={isEnrolling} className="hidden md:flex bg-accent text-accent-foreground font-black text-[10px] uppercase h-10 px-6 rounded-xl shadow-lg animate-pulse hover:animate-none">
+              {isEnrolling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
+              Salvar no Dashboard
+            </Button>
+          )}
           <div className="hidden lg:flex flex-col items-end gap-1 w-40">
             <div className="flex justify-between w-full text-[9px] font-black uppercase text-primary/40">
               <span>Progresso</span>
@@ -222,13 +267,19 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
 
       <div className="flex-1 flex overflow-hidden relative">
         
-        {/* Sidebar de Conteúdo (Desktop e Mobile Overlay) */}
+        {/* Sidebar de Conteúdo */}
         <aside className={`
           absolute inset-y-0 right-0 w-full md:w-80 lg:w-[350px] bg-white border-l z-30 transition-transform duration-500 transform
           ${showSidebar ? 'translate-x-0' : 'translate-x-full'}
           lg:relative lg:translate-x-0 flex flex-col shadow-2xl lg:shadow-none
         `}>
           <div className="p-6 bg-primary text-white shrink-0">
+            {!isEnrolled && (
+              <Button onClick={handleEnroll} disabled={isEnrolling} className="md:hidden w-full mb-6 bg-accent text-accent-foreground font-black text-[10px] uppercase h-12 rounded-xl shadow-lg">
+                {isEnrolling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
+                Salvar no Dashboard
+              </Button>
+            )}
             <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent mb-4">Ementa da Jornada</h2>
             <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-hide">
               {modules.map((module, idx) => (
