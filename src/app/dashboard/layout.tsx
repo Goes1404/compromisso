@@ -216,8 +216,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
         
         <SwipeHandler>
-          <main className={`flex-1 flex flex-col min-h-0 ${isAppPage ? 'overflow-hidden' : 'overflow-y-auto'} p-2 md:p-8`}>
-            <div className={isAppPage ? 'app-container' : 'max-w-7xl mx-auto w-full'}>
+          <main className={`flex-1 flex flex-col min-h-0 ${isAppPage ? 'p-0' : 'p-4 md:p-8 overflow-y-auto'}`}>
+            <div className={isAppPage ? 'flex-1 flex flex-col min-h-0' : 'max-w-7xl mx-auto w-full'}>
               <Suspense fallback={<LoadingFallback />}>
                 {children}
               </Suspense>

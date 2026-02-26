@@ -228,9 +228,9 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-6rem)] animate-in fade-in duration-500 overflow-hidden">
+    <div className="flex flex-col h-full animate-in fade-in duration-500 overflow-hidden">
       
-      <header className="bg-white/80 backdrop-blur-xl border-b px-4 md:px-8 py-3 md:py-4 flex items-center justify-between shrink-0 z-20">
+      <header className="bg-white border-b px-4 md:px-8 h-16 md:h-20 flex items-center justify-between shrink-0 z-20 shadow-sm">
         <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-primary/5 h-9 w-9 md:h-10 md:w-10 shrink-0">
             <ChevronLeft className="h-5 w-5 md:h-6 md:w-6 text-primary" />
@@ -241,14 +241,14 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
         
-        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+        <div className="flex items-center gap-2 md:gap-6 shrink-0">
           {!isEnrolled && (
-            <Button onClick={handleEnroll} disabled={isEnrolling} className="hidden sm:flex bg-accent text-accent-foreground font-black text-[10px] uppercase h-9 md:h-10 px-4 md:px-6 rounded-xl shadow-lg hover:animate-none">
+            <Button onClick={handleEnroll} disabled={isEnrolling} className="hidden sm:flex bg-accent text-accent-foreground font-black text-[10px] uppercase h-9 md:h-10 px-4 md:px-6 rounded-xl shadow-lg hover:animate-none border-none">
               {isEnrolling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
               Salvar
             </Button>
           )}
-          <div className="hidden lg:flex flex-col items-end gap-1 w-40">
+          <div className="hidden lg:flex flex-col items-end gap-1 w-48">
             <div className="flex justify-between w-full text-[9px] font-black uppercase text-primary/40">
               <span>Progresso</span>
               <span className="text-accent italic">{Math.round(videoProgress)}%</span>
@@ -266,19 +266,19 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
       <div className="flex-1 flex overflow-hidden relative">
         
         <aside className={`
-          absolute inset-y-0 right-0 w-full sm:w-80 lg:w-[350px] bg-white border-l z-30 transition-transform duration-500 transform
-          ${showSidebar ? 'translate-x-0' : 'translate-x-full'}
+          absolute inset-y-0 left-0 w-full sm:w-80 lg:w-[380px] bg-white border-r z-30 transition-transform duration-500 transform
+          ${showSidebar ? 'translate-x-0' : '-translate-x-full'}
           lg:relative lg:translate-x-0 flex flex-col shadow-2xl lg:shadow-none
         `}>
           <div className="p-4 md:p-6 bg-primary text-white shrink-0">
             {!isEnrolled && (
-              <Button onClick={handleEnroll} disabled={isEnrolling} className="sm:hidden w-full mb-4 bg-accent text-accent-foreground font-black text-[10px] uppercase h-11 rounded-xl shadow-lg">
+              <Button onClick={handleEnroll} disabled={isEnrolling} className="sm:hidden w-full mb-4 bg-accent text-accent-foreground font-black text-[10px] uppercase h-11 rounded-xl shadow-lg border-none">
                 {isEnrolling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
                 Salvar no Dashboard
               </Button>
             )}
             <h2 className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-accent mb-3 md:mb-4">Ementa da Jornada</h2>
-            <div className="space-y-2 max-h-[150px] md:max-h-[200px] overflow-y-auto pr-2 scrollbar-hide">
+            <div className="space-y-2 max-h-[25vh] overflow-y-auto pr-2 scrollbar-hide">
               {modules.map((module, idx) => (
                 <button 
                   key={module.id}
@@ -287,7 +287,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                     if (contents[module.id]?.length > 0) setActiveContentId(contents[module.id][0].id);
                     if (window.innerWidth < 1024) setShowSidebar(false);
                   }}
-                  className={`w-full text-left p-3 md:p-4 rounded-xl md:rounded-2xl transition-all border-2 ${activeModuleId === module.id ? 'bg-white text-primary border-accent shadow-lg' : 'bg-white/5 border-transparent hover:bg-white/10 opacity-60'}`}>
+                  className={`w-full text-left p-3 md:p-4 rounded-xl md:rounded-2xl transition-all border-2 ${activeModuleId === module.id ? 'bg-white text-primary border-accent shadow-lg scale-[1.02]' : 'bg-white/5 border-transparent hover:bg-white/10 opacity-60'}`}>
                   <div className="flex items-center gap-3 md:gap-4">
                     <span className={`text-sm md:text-xl font-black italic ${activeModuleId === module.id ? 'text-accent' : 'text-white/20'}`}>{idx + 1}</span>
                     <p className="font-black text-[8px] md:text-[10px] uppercase tracking-wider truncate">{module.title}</p>
@@ -297,7 +297,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4 scrollable-content">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4 scrollable-content bg-slate-50/50">
              <h3 className="text-[8px] md:text-[9px] font-black text-primary/40 uppercase tracking-[0.2em] mb-2 md:mb-4">Materiais do Capítulo</h3>
              {contents[activeModuleId || ""]?.map((content) => (
                 <button 
@@ -306,8 +306,8 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                     setActiveContentId(content.id);
                     if (window.innerWidth < 1024) setShowSidebar(false);
                   }}
-                  className={`w-full text-left p-3 md:p-4 rounded-xl md:rounded-2xl transition-all flex items-center gap-3 md:gap-4 border-2 ${activeContentId === content.id ? 'bg-accent/5 border-accent shadow-md' : 'bg-muted/10 border-transparent hover:bg-muted/20'}`}>
-                    <div className={`h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl flex items-center justify-center shrink-0 shadow-sm ${activeContentId === content.id ? 'bg-accent text-white' : 'bg-white text-primary/40'}`}>
+                  className={`w-full text-left p-3 md:p-4 rounded-xl md:rounded-2xl transition-all flex items-center gap-3 md:gap-4 border-2 ${activeContentId === content.id ? 'bg-white border-accent shadow-md' : 'bg-white border-transparent hover:border-muted/20'}`}>
+                    <div className={`h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl flex items-center justify-center shrink-0 shadow-sm ${activeContentId === content.id ? 'bg-accent text-white' : 'bg-muted/30 text-primary/40'}`}>
                        {content.type === 'video' ? <PlayCircle className="h-4 w-4 md:h-5 md:w-5" /> : <FileText className="h-4 w-4 md:h-5 md:w-5" />}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -320,7 +320,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
           </div>
         </aside>
 
-        <main className="flex-1 flex flex-col bg-slate-50 overflow-hidden relative">
+        <main className="flex-1 flex flex-col bg-white overflow-hidden relative">
           <div className="w-full aspect-video md:aspect-[21/9] bg-black relative group shadow-2xl shrink-0">
             {activeContent?.type === 'video' ? (
               <div id="youtube-player" className="w-full h-full" />
@@ -330,18 +330,18 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                   <Layout className="h-6 w-6 md:h-10 md:w-10 text-accent" />
                 </div>
                 <h3 className="text-base md:text-2xl font-black italic uppercase tracking-widest truncate max-w-full px-4">{activeContent?.title || "Selecione um Material"}</h3>
-                <p className="text-[10px] md:text-sm text-slate-400 mt-2 max-w-md italic hidden sm:block">Utilize as abas abaixo para interagir com as instruções do seu mentor.</p>
+                <p className="text-[10px] md:sm text-slate-400 mt-2 max-w-md italic hidden sm:block">Utilize as abas abaixo para interagir com as instruções do seu mentor.</p>
               </div>
             )}
           </div>
 
-          <Tabs defaultValue="summary" className="flex-1 flex flex-col min-h-0 bg-white shadow-inner overflow-hidden">
+          <Tabs defaultValue="summary" className="flex-1 flex flex-col min-h-0 bg-white overflow-hidden">
             <TabsList className="grid w-full grid-cols-4 h-12 md:h-16 bg-white border-b p-0 gap-0 shrink-0">
               {["summary", "quiz", "support", "attachments"].map((tab) => (
                 <TabsTrigger 
                   key={tab} 
                   value={tab} 
-                  className="data-[state=active]:bg-primary data-[state=active]:text-white h-full rounded-none font-black text-[8px] md:text-[10px] uppercase tracking-[0.1em] md:tracking-[0.2em] transition-all gap-1 md:gap-2 px-1"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-white h-full rounded-none font-black text-[8px] md:text-[10px] uppercase tracking-[0.1em] md:tracking-[0.2em] transition-all gap-1 md:gap-2 px-1 border-none"
                 >
                   {tab === 'summary' && <BookOpen className="h-3.5 w-3.5 md:h-4 md:w-4" />}
                   {tab === 'quiz' && <BrainCircuit className="h-3.5 w-3.5 md:h-4 md:w-4" />}
@@ -352,7 +352,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
               ))}
             </TabsList>
             
-            <div className="flex-1 overflow-y-auto p-4 md:p-12 scrollable-content">
+            <div className="flex-1 overflow-y-auto p-4 md:p-10 scrollable-content">
                <TabsContent value="summary" className="mt-0 outline-none animate-in slide-in-from-bottom-4">
                   <div className="max-w-4xl space-y-4 md:space-y-8">
                     <div className="flex items-center gap-3 md:gap-4">
@@ -360,8 +360,8 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                         <Sparkles className="h-5 w-5 md:h-6 md:w-6" />
                       </div>
                       <div>
-                        <h2 className="text-lg md:text-2xl font-black text-primary italic">Diretrizes do Mentor</h2>
-                        <p className="text-[7px] md:text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-0.5">Orientações para absorção de conteúdo</p>
+                        <h2 className="text-lg md:text-2xl font-black text-primary italic leading-none">Diretrizes do Mentor</h2>
+                        <p className="text-[7px] md:text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Orientações para absorção de conteúdo</p>
                       </div>
                     </div>
                     <Card className="border-none shadow-xl bg-slate-50 p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] relative overflow-hidden group">
@@ -380,7 +380,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                         <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-primary text-white flex items-center justify-center shadow-xl">
                           <BrainCircuit className="h-5 w-5 md:h-6 md:w-6" />
                         </div>
-                        <h2 className="text-lg md:text-2xl font-black text-primary italic">Atividade de Fixação</h2>
+                        <h2 className="text-lg md:text-2xl font-black text-primary italic leading-none">Atividade de Fixação</h2>
                       </div>
                       <Badge className="hidden sm:flex bg-green-100 text-green-700 border-none font-black text-[10px] px-4 py-1 uppercase">Validado por IA</Badge>
                     </div>
@@ -391,7 +391,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                             <Layers className="h-7 w-7 md:h-10 md:w-10 text-accent" />
                          </div>
                          <p className="text-sm md:text-lg font-bold text-primary italic">Este capítulo possui uma avaliação externa vinculada.</p>
-                         <Button asChild className="bg-primary text-white h-12 md:h-16 rounded-xl md:rounded-2xl font-black px-6 md:px-12 shadow-2xl hover:scale-105 transition-all w-full md:w-auto">
+                         <Button asChild className="bg-primary text-white h-12 md:h-16 rounded-xl md:rounded-2xl font-black px-6 md:px-12 shadow-2xl hover:scale-105 transition-all w-full md:w-auto border-none">
                            <a href={activeContent?.url} target="_blank" rel="noopener noreferrer">ABRIR AMBIENTE DE PROVA <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" /></a>
                          </Button>
                       </div>
@@ -415,7 +415,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                           <p className="font-black text-[7px] md:text-[10px] text-muted-foreground group-hover:text-white/60 uppercase tracking-widest">Material de Apoio</p>
                           <p className="text-sm md:text-lg font-black text-primary group-hover:text-white italic leading-tight truncate">Guia Técnico.pdf</p>
                         </div>
-                        <Button asChild variant="ghost" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-full text-primary group-hover:text-white hover:bg-white/20 shrink-0">
+                        <Button asChild variant="ghost" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-full text-primary group-hover:text-white hover:bg-white/20 shrink-0 border-none">
                           <a href={activeContent?.url} target="_blank" rel="noopener noreferrer"><Paperclip className="h-5 w-5 md:h-6 md:w-6" /></a>
                         </Button>
                       </Card>
