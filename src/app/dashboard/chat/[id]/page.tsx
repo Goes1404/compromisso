@@ -166,15 +166,15 @@ export default function DirectChatPage() {
   };
   
   if (loading) return (
-    <div className="flex h-full items-center justify-center flex-col gap-4 py-20">
+    <div className="flex h-screen items-center justify-center flex-col gap-4">
       <Loader2 className="h-10 w-10 animate-spin text-accent" />
       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Sintonizando Canal...</p>
     </div>
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] animate-in fade-in duration-500 overflow-hidden space-y-3">
-      <div className="flex items-center justify-between p-2 md:p-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border shrink-0">
+    <div className="flex flex-col h-full bg-slate-50 animate-in fade-in overflow-hidden">
+      <div className="flex items-center justify-between p-3 md:p-4 bg-white shadow-sm border-b shrink-0 z-10">
         <div className="flex items-center gap-3 overflow-hidden min-w-0">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full h-10 w-10 shrink-0 hover:bg-primary/5">
             <ChevronLeft className="h-6 md:h-7 md:w-7 text-primary" />
@@ -208,55 +208,53 @@ export default function DirectChatPage() {
         </div>
       </div>
 
-      <Card className="flex-1 min-h-0 flex flex-col shadow-2xl shadow-primary/5 border-none overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-white relative">
+      <div className="flex-1 min-h-0 flex flex-col relative">
         <ScrollArea className="flex-1" ref={scrollRef}>
-          <div className="flex flex-col gap-5 py-8 px-4 md:px-12">
+          <div className="flex flex-col gap-5 py-8 px-4 md:px-12 max-w-5xl mx-auto w-full">
             {messages.map((msg, i) => {
               const isMe = msg.sender_id === user?.id;
               const isFromAurora = msg.sender_id === "aurora-ai";
               return (
-                <div key={msg.id || i} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 duration-300`}>
+                <div key={msg.id || i} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2`}>
                   <div className="flex items-center gap-2 mb-1 px-2">
                     <span className="text-[7px] font-bold text-muted-foreground italic">{format(new Date(msg.created_at), "HH:mm")}</span>
                   </div>
                   <div className={`px-5 py-3 rounded-[1.5rem] md:rounded-[2rem] text-sm leading-relaxed font-medium shadow-sm max-w-[90%] md:max-w-[75%] transition-all ${
                       isMe 
                         ? 'bg-primary text-white rounded-tr-none shadow-primary/10' 
-                        : isFromAurora 
-                          ? 'bg-accent/5 text-primary rounded-tl-none border border-accent/10'
-                          : 'bg-muted/30 text-primary rounded-tl-none border border-muted/20'
+                        : 'bg-white text-primary rounded-tl-none border border-primary/5'
                     }`}>
                      {msg.content}
                   </div>
                 </div>
               );
             })}
-            {(isAiThinking || isSending) && (
+            {isAiThinking && (
               <div className="flex justify-start">
-                <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-[1.5rem] rounded-tl-none border border-slate-100 animate-pulse">
+                <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-[1.5rem] rounded-tl-none border shadow-sm animate-pulse">
                   <Loader2 className="h-3 w-3 animate-spin text-accent" />
-                  <span className="text-[8px] font-black uppercase tracking-widest text-primary/40 italic">Sincronizando...</span>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-primary/40 italic">Aurora processando...</span>
                 </div>
               </div>
             )}
           </div>
         </ScrollArea>
 
-        <div className="p-4 md:p-6 bg-slate-50/50 border-t shrink-0">
-          <form onSubmit={handleSend} className="flex items-center gap-3 max-w-4xl mx-auto bg-white p-2 pl-6 rounded-full shadow-xl border border-muted/20 focus-within:ring-2 focus-within:ring-accent/30 transition-all">
+        <div className="p-4 md:p-6 bg-white border-t shrink-0">
+          <form onSubmit={handleSend} className="flex items-center gap-3 max-w-4xl mx-auto bg-slate-100 p-2 pl-6 rounded-full border focus-within:ring-2 focus-within:ring-accent/30 transition-all">
              <Input 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={isAiThinking || isSending}
-              placeholder={isAurora ? "Tire uma dúvida..." : "Escreva sua mensagem..."}
-              className="flex-1 h-10 md:h-12 bg-transparent border-none text-primary font-medium italic focus-visible:ring-0 px-0 text-sm md:text-base"
+              placeholder={isAurora ? "Tire uma dúvida..." : "Mensagem..."}
+              className="flex-1 h-10 md:h-12 bg-transparent border-none text-primary font-medium italic focus-visible:ring-0 px-0"
             />
-            <Button type="submit" disabled={!input.trim() || isAiThinking || isSending} className="h-10 w-10 md:h-12 md:w-12 bg-primary hover:bg-primary/95 rounded-full shadow-xl shrink-0 border-none transition-transform active:scale-90">
+            <button type="submit" disabled={!input.trim() || isAiThinking || isSending} className="h-10 w-10 md:h-12 md:w-12 bg-primary hover:bg-primary/95 rounded-full shadow-xl shrink-0 border-none transition-transform active:scale-90 flex items-center justify-center">
               {isAiThinking || isSending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4 text-white" />}
-            </Button>
+            </button>
           </form>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

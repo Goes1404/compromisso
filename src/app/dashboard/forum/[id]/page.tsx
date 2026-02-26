@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, Send, Loader2, MessageSquare, Calendar } from "lucide-react";
+import { ChevronLeft, Send, Loader2, MessageSquare, Calendar, Info } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/app/lib/supabase";
@@ -106,7 +106,7 @@ export default function ForumDetailPage() {
 
   if (loading) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-4 py-20">
+      <div className="h-screen flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-10 animate-spin text-accent" />
         <p className="text-muted-foreground font-black uppercase text-[10px] tracking-widest animate-pulse">Sincronizando Debate...</p>
       </div>
@@ -114,14 +114,14 @@ export default function ForumDetailPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-full mx-auto w-full animate-in fade-in overflow-hidden">
-       <div className="flex items-center justify-between p-2 md:p-4 bg-white/50 backdrop-blur-md rounded-2xl shadow-sm border mb-2">
+    <div className="flex flex-col h-full bg-slate-50 animate-in fade-in overflow-hidden">
+       <div className="flex items-center justify-between p-3 md:p-4 bg-white shadow-sm border-b shrink-0 z-10">
         <div className="flex items-center gap-3 overflow-hidden min-w-0">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full h-10 w-10 shrink-0 hover:bg-primary/5">
             <ChevronLeft className="h-6 w-6 text-primary" />
           </Button>
           <div className="min-w-0">
-            <h1 className="text-base md:text-xl font-black text-primary italic leading-none truncate">
+            <h1 className="text-sm md:text-lg font-black text-primary italic leading-none truncate">
               {forum?.name}
             </h1>
             <div className="flex items-center gap-2 mt-1">
@@ -133,16 +133,16 @@ export default function ForumDetailPage() {
           </div>
         </div>
         <div className="hidden md:flex items-center gap-2">
-          <Badge className="bg-green-100 text-green-700 border-none font-black text-[9px] px-3 py-1 uppercase tracking-tighter animate-pulse">Debate Ativo</Badge>
+          <Badge className="bg-green-100 text-green-700 border-none font-black text-[9px] px-3 py-1 uppercase tracking-tighter">Debate Ativo</Badge>
         </div>
       </div>
 
-      <Card className="flex-1 min-h-0 border-none shadow-2xl shadow-primary/5 rounded-[2rem] md:rounded-[3rem] bg-white overflow-hidden flex flex-col relative">
+      <div className="flex-1 min-h-0 flex flex-col relative">
         <ScrollArea className="flex-1" ref={scrollRef}>
-           <div className="flex flex-col gap-6 py-8 px-4 md:px-12">
-                <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 mb-4 max-w-2xl mx-auto w-full">
-                  <p className="text-[10px] font-black uppercase text-primary/40 mb-3 flex items-center gap-2">
-                    <MessageSquare className="h-3 w-3" /> Pauta Inicial
+           <div className="flex flex-col gap-6 py-8 px-4 md:px-12 max-w-5xl mx-auto w-full">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border-l-4 border-accent mb-4">
+                  <p className="text-[10px] font-black uppercase text-primary/40 mb-2 flex items-center gap-2">
+                    <Info className="h-3 w-3" /> Pauta Inicial do Debate
                   </p>
                   <p className="text-sm md:text-base font-medium italic text-primary/80 leading-relaxed">
                     "{forum?.description}"
@@ -150,11 +150,11 @@ export default function ForumDetailPage() {
                 </div>
 
                 {posts.length === 0 ? (
-                  <div className="text-center py-12 opacity-30 flex flex-col items-center">
+                  <div className="text-center py-20 opacity-30 flex flex-col items-center">
                     <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
                       <MessageSquare className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <p className="font-black italic uppercase text-xs">Seja o primeiro a contribuir</p>
+                    <p className="font-black italic uppercase text-xs">Seja o primeiro a contribuir com este tópico</p>
                   </div>
                 ) : (
                   posts.map((post) => {
@@ -167,10 +167,10 @@ export default function ForumDetailPage() {
                                 {format(new Date(post.created_at), "HH:mm")}
                               </span>
                             </div>
-                            <div className={`px-5 py-3.5 rounded-[1.5rem] shadow-sm max-w-[90%] md:max-w-[70%] text-sm font-medium leading-relaxed ${
+                            <div className={`px-5 py-3.5 rounded-[1.5rem] shadow-sm max-w-[90%] md:max-w-[75%] text-sm font-medium leading-relaxed ${
                               isMe 
                                 ? 'bg-primary text-white rounded-tr-none' 
-                                : 'bg-muted/30 text-primary rounded-tl-none border border-muted/20'
+                                : 'bg-white text-primary rounded-tl-none border border-primary/5'
                             }`}>
                                 {post.content}
                             </div>
@@ -180,21 +180,22 @@ export default function ForumDetailPage() {
                 )}
            </div>
         </ScrollArea>
-        <div className="p-4 md:p-6 bg-slate-50/50 border-t shrink-0">
-          <form onSubmit={handleSendPost} className="flex items-center gap-3 bg-white p-2 pl-6 rounded-full shadow-xl border border-muted/20 focus-within:ring-2 focus-within:ring-accent/30 transition-all duration-300 max-w-4xl mx-auto">
+        
+        <div className="p-4 md:p-6 bg-white border-t shrink-0">
+          <form onSubmit={handleSendPost} className="flex items-center gap-3 bg-slate-100 p-2 pl-6 rounded-full shadow-inner border max-w-4xl mx-auto focus-within:ring-2 focus-within:ring-accent/30 transition-all">
             <Input 
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
-              placeholder="Contribuir com o debate..."
+              placeholder="Sua contribuição..."
               disabled={isSubmitting}
               className="flex-1 h-10 md:h-12 bg-transparent border-none text-primary text-sm font-medium italic focus-visible:ring-0 px-0"
             />
-            <Button type="submit" disabled={!newPost.trim() || isSubmitting} className="h-10 w-10 md:h-12 md:w-12 bg-primary hover:bg-primary/95 text-white rounded-full shadow-xl shrink-0 transition-all">
+            <Button type="submit" disabled={!newPost.trim() || isSubmitting} className="h-10 w-10 md:h-12 md:w-12 bg-primary hover:bg-primary/95 text-white rounded-full shadow-xl shrink-0 transition-transform active:scale-90">
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </form>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

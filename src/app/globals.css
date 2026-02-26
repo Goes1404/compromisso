@@ -68,21 +68,6 @@
   background: hsl(var(--accent) / 0.4);
 }
 
-/* Container para páginas de interação fixa (Chat e Classroom) */
-.app-container {
-  height: calc(100vh - 10rem);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-}
-
-@media (max-width: 768px) {
-  .app-container {
-    height: calc(100vh - 8rem);
-  }
-}
-
 .scrollable-content {
   flex: 1;
   overflow-y: auto;
@@ -94,7 +79,6 @@
   animation-fill-mode: forwards;
 }
 
-/* Animação Personalizada para entrada lateral */
 @keyframes slide-right {
   from { transform: translateX(-20px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
@@ -104,7 +88,6 @@
   animation: slide-right 0.5s ease-out forwards;
 }
 
-/* Fix para botões que não devem ter outline azul no mobile */
 button:focus {
   outline: none;
 }
