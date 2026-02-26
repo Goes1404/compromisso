@@ -2,7 +2,7 @@
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarTrigger, SidebarInset, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
-import { Home, Compass, BookOpen, Video, Library, LogOut, Bell, LayoutDashboard, ClipboardList, BarChart3, MessageSquare, MessagesSquare, MonitorPlay, Calculator, FileText, Database, Sparkles, ShieldCheck, Users, Settings, Loader2 } from "lucide-react";
+import { Home, Compass, BookOpen, Video, Library, LogOut, Bell, LayoutDashboard, ClipboardList, BarChart3, MessageSquare, MessagesSquare, MonitorPlay, Calculator, FileText, Database, Sparkles, ShieldCheck, Users, Settings, Loader2, Eye } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,6 +37,7 @@ const teacherItems = [
 const adminItems = [
   { icon: ShieldCheck, label: "Gestão 360", href: "/dashboard/admin/home" },
   { icon: ClipboardList, label: "Aprovação de Trilhas", href: "/dashboard/admin/trails" },
+  { icon: Eye, label: "Auditoria de Chats", href: "/dashboard/admin/chats" },
   { icon: Library, label: "Curadoria de Acervo", href: "/dashboard/teacher/library" },
   { icon: Users, label: "Gestão de Turmas", href: "/dashboard/admin/students" },
   { icon: BarChart3, label: "BI & Analytics", href: "/dashboard/teacher/analytics" },
