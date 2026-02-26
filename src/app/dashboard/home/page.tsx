@@ -21,7 +21,9 @@ import {
   ChevronRight,
   CheckCircle2,
   Plus,
-  Zap
+  Zap,
+  FileText,
+  Video
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -54,8 +56,10 @@ const priorityStyles = {
 export default function DashboardHome() {
   const { user, profile, loading: isUserLoading } = useAuth();
   const { toast } = useToast();
-  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
-  const [loadingLibrary, setLoadingLibrary] = useState(true);
+  const [recommendedTrails, setRecommendedTrails] = useState<LibraryItem[]>([]);
+  const [loadingTrails, setLoadingTrails] = useState(true);
+  const [libraryResources, setLibraryResources] = useState<any[]>([]);
+  const [loadingResources, setLoadingResources] = useState(true);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   const [recentProgress, setRecentProgress] = useState<any[]>([]);
@@ -114,7 +118,7 @@ export default function DashboardHome() {
       ]);
       setLoadingAnnouncements(false);
 
-      setLoadingLibrary(true);
+      setLoadingTrails(true);
       try {
         const { data: featured } = await supabase
           .from('trails')
@@ -122,16 +126,30 @@ export default function DashboardHome() {
           .or('status.eq.active,status.eq.published')
           .limit(3);
         
-        setLibraryItems(featured?.map(f => ({ 
+        setRecommendedTrails(featured?.map(f => ({ 
           id: f.id, 
           title: f.title, 
           description: f.description, 
           category: f.category 
         })) || []);
       } catch (e) {
-        console.error("Erro ao buscar biblioteca recomendada");
+        console.error("Erro ao buscar trilhas recomendadas");
       } finally {
-        setLoadingLibrary(false);
+        setLoadingTrails(false);
+      }
+
+      setLoadingResources(true);
+      try {
+        const { data: res } = await supabase
+          .from('library_resources')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(2);
+        setLibraryResources(res || []);
+      } catch (e) {
+        console.error("Erro ao buscar acervo");
+      } finally {
+        setLoadingResources(false);
       }
 
       await fetchProgress();
@@ -346,15 +364,50 @@ export default function DashboardHome() {
               </div>
             </Card>
 
-            {/* Sugestões de Início */}
-            <h3 className="text-xl font-black text-primary italic px-2">Recomendados</h3>
+            {/* Biblioteca Digital (Novo) */}
+            <h3 className="text-xl font-black text-primary italic px-2 flex items-center gap-2">
+              <Library className="h-5 w-5 text-accent" /> Acervo Digital
+            </h3>
             <div className="space-y-4">
-              {loadingLibrary ? (
+              {loadingResources ? (
+                <div className="py-6 flex flex-col items-center justify-center gap-2">
+                  <Loader2 className="animate-spin text-accent h-6 w-6" />
+                  <p className="text-[8px] font-black uppercase opacity-40">Sincronizando Acervo...</p>
+                </div>
+              ) : libraryResources.length > 0 ? libraryResources.map((res) => (
+                <Card key={res.id} className="p-4 border-none shadow-lg bg-white rounded-2xl hover:shadow-xl transition-all group overflow-hidden relative">
+                  <div className="flex items-center gap-4 relative z-10">
+                    <div className="h-10 w-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary shrink-0 transition-colors group-hover:bg-primary group-hover:text-white">
+                      {res.type === 'Video' ? <Video className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[7px] font-black text-accent uppercase tracking-widest">{res.category}</p>
+                      <h4 className="font-bold text-xs text-primary truncate italic">{res.title}</h4>
+                    </div>
+                    <Button asChild size="icon" variant="ghost" className="h-8 w-8 rounded-full hover:bg-accent/10 text-accent">
+                      <Link href="/dashboard/library"><ChevronRight className="h-4 w-4" /></Link>
+                    </Button>
+                  </div>
+                </Card>
+              )) : (
+                <div className="text-center py-10 opacity-20 border-2 border-dashed rounded-2xl">
+                  <p className="text-[8px] font-black uppercase">Acervo em Curadoria</p>
+                </div>
+              )}
+              <Button asChild variant="ghost" className="w-full text-[10px] font-black uppercase text-accent hover:bg-accent/5">
+                <Link href="/dashboard/library">Acessar Biblioteca <ChevronRight className="ml-1 h-3 w-3"/></Link>
+              </Button>
+            </div>
+
+            {/* Sugestões de Início (Trilhas) */}
+            <h3 className="text-xl font-black text-primary italic px-2">Sugestões de Estudo</h3>
+            <div className="space-y-4">
+              {loadingTrails ? (
                 <div className="py-10 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="animate-spin text-accent h-6 w-6" />
                   <p className="text-[8px] font-black uppercase opacity-40">Buscando Recomendações...</p>
                 </div>
-              ) : libraryItems.length > 0 ? libraryItems.map((item) => (
+              ) : recommendedTrails.length > 0 ? recommendedTrails.map((item) => (
                 <Card key={item.id} className="p-4 border-none shadow-lg bg-white rounded-2xl hover:shadow-xl transition-all group overflow-hidden relative">
                   <div className="flex items-center gap-4 relative z-10">
                     <div className="h-12 w-12 rounded-xl bg-muted/30 relative overflow-hidden shrink-0">
