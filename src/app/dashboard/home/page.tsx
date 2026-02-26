@@ -26,7 +26,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthProvider"; 
 import { supabase, isSupabaseConfigured } from "@/app/lib/supabase";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 
@@ -65,7 +65,6 @@ export default function DashboardHome() {
     if (!user || !isSupabaseConfigured) return;
     setLoadingProgress(true);
     try {
-      // Query otimizada com tratamento de relacionamento
       const { data: progress, error } = await supabase
         .from('user_progress')
         .select(`
@@ -89,7 +88,6 @@ export default function DashboardHome() {
         return;
       }
 
-      // Supabase pode retornar 'trail' como objeto ou array dependendo da FK
       const mappedProgress = progress?.map(p => {
         const trailData = Array.isArray(p.trail) ? p.trail[0] : p.trail;
         return { ...p, trail: trailData };
@@ -153,8 +151,6 @@ export default function DashboardHome() {
       if (upsertError) throw upsertError;
       
       toast({ title: "Trilha Adicionada! 🚀", description: "Ela agora aparece no seu Dashboard." });
-      
-      // Re-fetch progress to update the list immediately
       await fetchProgress();
     } catch (e: any) {
       console.error("Erro ao iniciar trilha:", e);
@@ -247,6 +243,9 @@ export default function DashboardHome() {
                   
                   if (!trailData) return null;
 
+                  const lastAccessedDate = new Date(prog.last_accessed);
+                  const isValidDate = isValid(lastAccessedDate);
+
                   return (
                     <Link key={prog.id} href={`/dashboard/classroom/${prog.trail_id}`}>
                       <Card className={`border-none shadow-xl hover:shadow-2xl transition-all duration-500 bg-white rounded-3xl p-5 flex flex-col md:flex-row items-center gap-6 group relative overflow-hidden ${isFinished ? 'bg-slate-50/50' : ''}`}>
@@ -259,7 +258,7 @@ export default function DashboardHome() {
                               {trailData.category} {isFinished && '• CONCLUÍDA'}
                             </span>
                             <span className="text-[8px] font-black text-primary/40 uppercase flex items-center gap-1 italic">
-                              <Clock className="h-3 w-3"/> {prog.last_accessed ? formatDistanceToNow(new Date(prog.last_accessed), { addSuffix: true, locale: ptBR }) : 'Recém iniciada'}
+                              <Clock className="h-3 w-3"/> {isValidDate ? formatDistanceToNow(lastAccessedDate, { addSuffix: true, locale: ptBR }) : 'Recém iniciada'}
                             </span>
                           </div>
                           <h3 className="font-black text-base text-primary italic leading-none truncate max-w-[300px]">
