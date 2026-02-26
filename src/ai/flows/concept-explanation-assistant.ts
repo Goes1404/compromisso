@@ -6,6 +6,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { gemini15Flash } from '@genkit-ai/google-genai';
 
 const searchEducationalContent = ai.defineTool(
   {
@@ -46,7 +47,7 @@ export type ConceptExplanationAssistantOutput = z.infer<typeof ConceptExplanatio
 
 const prompt = ai.definePrompt({
   name: 'conceptExplanationAssistantPrompt',
-  model: 'googleai/gemini-1.5-flash',
+  model: gemini15Flash,
   tools: [searchEducationalContent],
   input: { schema: ConceptExplanationAssistantInputSchema },
   output: { schema: ConceptExplanationAssistantOutputSchema },
@@ -77,7 +78,8 @@ export const conceptExplanationAssistantFlow = ai.defineFlow(
       if (!output) throw new Error("A IA retornou um resultado nulo.");
       return output;
     } catch (error: any) {
-      console.error("Erro Aurora IA (Concept):", error);
+      // Log detalhado no console do servidor para depuração técnica
+      console.error("ERRO CRÍTICO AURORA IA:", error?.message || error);
       return { response: "Olá! Notei uma pequena instabilidade na conexão com meu cérebro digital. Pode repetir sua dúvida?" };
     }
   }
