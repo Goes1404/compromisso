@@ -20,7 +20,8 @@ import {
   PlayCircle,
   ChevronRight,
   CheckCircle2,
-  Plus
+  Plus,
+  Zap
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -75,12 +76,13 @@ export default function DashboardHome() {
           trail:trails (
             title, 
             category, 
-            image_url
+            image_url,
+            teacher_name
           )
         `)
         .eq('user_id', user.id)
         .order('last_accessed', { ascending: false })
-        .limit(5);
+        .limit(4);
       
       if (error) {
         console.error("Erro Supabase Progresso:", error.message);
@@ -89,7 +91,6 @@ export default function DashboardHome() {
       }
 
       const mappedProgress = progress?.map(p => {
-        // Trata o caso do Supabase retornar objeto ou array
         const trailData = Array.isArray(p.trail) ? p.trail[0] : p.trail;
         return { ...p, trail: trailData };
       }).filter(p => p.trail) || [];
@@ -191,6 +192,7 @@ export default function DashboardHome() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
+          {/* Mural de Avisos */}
           <div>
             <h2 className="text-xl font-black text-primary italic flex items-center gap-2 px-2 mb-4">
               <Megaphone className="h-5 w-5 text-accent" /> Mural de Avisos
@@ -200,17 +202,17 @@ export default function DashboardHome() {
                 <Loader2 className="animate-spin text-accent h-8 w-8" />
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {announcements.map(ann => {
                   const Icon = priorityStyles[ann.priority].icon;
                   const color = priorityStyles[ann.priority].color;
                   const bgColor = priorityStyles[ann.priority].bgColor;
                   return (
-                    <div key={ann.id} className={`p-4 rounded-xl flex items-start gap-4 shadow-sm ${bgColor} animate-in slide-in-from-left duration-500`}>
+                    <div key={ann.id} className={`p-4 rounded-2xl flex items-start gap-4 shadow-sm ${bgColor} animate-in slide-in-from-left duration-500 border border-black/5`}>
                       <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${color}`} />
                       <div className="flex-1">
                         <p className={`font-bold text-sm ${color}`}>{ann.title}</p>
-                        <p className="text-xs text-slate-600">{ann.message}</p>
+                        <p className="text-[10px] text-slate-600 line-clamp-2 leading-relaxed">{ann.message}</p>
                       </div>
                     </div>
                   )
@@ -219,6 +221,7 @@ export default function DashboardHome() {
             )}
           </div>
 
+          {/* Continuar Aprendizado - Cards Mini Versão Trilhas */}
           <div>
             <div className="flex items-center justify-between px-2 mb-4">
               <h2 className="text-xl font-black text-primary italic flex items-center gap-2">
@@ -226,7 +229,7 @@ export default function DashboardHome() {
               </h2>
               {recentProgress.length > 0 && (
                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest bg-muted/20 px-3 py-1 rounded-full">
-                  Últimas 5 atividades
+                  Histórico Recente
                 </span>
               )}
             </div>
@@ -237,8 +240,8 @@ export default function DashboardHome() {
                 <p className="text-[10px] font-black uppercase text-muted-foreground">Sincronizando Atividades...</p>
               </div>
             ) : recentProgress.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4">
-                {recentProgress.map((prog) => {
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {recentProgress.map((prog, index) => {
                   const isFinished = prog.percentage === 100;
                   const trailData = prog.trail;
                   
@@ -250,33 +253,58 @@ export default function DashboardHome() {
 
                   return (
                     <Link key={prog.id} href={`/dashboard/classroom/${prog.trail_id}`}>
-                      <Card className={`border-none shadow-xl hover:shadow-2xl transition-all duration-500 bg-white rounded-3xl p-5 flex flex-col md:flex-row items-center gap-6 group relative overflow-hidden ${isFinished ? 'bg-slate-50/50' : ''}`}>
-                        <div className={`h-14 w-14 md:h-16 md:w-16 rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform ${isFinished ? 'bg-green-50 text-green-600' : 'bg-accent/10 text-accent'}`}>
-                          {isFinished ? <CheckCircle2 className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
-                        </div>
-                        <div className="flex-1 space-y-2 w-full">
-                          <div className="flex justify-between items-center">
-                            <span className={`text-[9px] font-black uppercase tracking-widest ${isFinished ? 'text-green-600' : 'text-accent'}`}>
-                              {trailData.category} {isFinished && '• CONCLUÍDA'}
-                            </span>
-                            <span className="text-[8px] font-black text-primary/40 uppercase flex items-center gap-1 italic">
-                              <Clock className="h-3 w-3"/> {isDateValid ? formatDistanceToNow(lastAccessedDate, { addSuffix: true, locale: ptBR }) : 'Recentemente'}
-                            </span>
+                      <Card className="group overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-500 bg-white rounded-[2rem] flex flex-col relative animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${index * 100}ms` }}>
+                        
+                        <div className="relative aspect-[21/9] overflow-hidden">
+                          <Image 
+                            src={trailData.image_url || `https://picsum.photos/seed/${prog.trail_id}/600/300`} 
+                            alt={trailData.title} 
+                            fill 
+                            className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-60" />
+                          
+                          <div className="absolute top-3 left-3">
+                            <Badge className="bg-white/90 backdrop-blur-md text-primary border-none shadow-lg flex items-center gap-1.5 px-2 py-1 rounded-lg">
+                              <Zap className={`h-3 w-3 ${isFinished ? 'text-green-500 fill-green-500' : 'text-accent fill-accent'}`} />
+                              <span className="text-[8px] font-black uppercase tracking-wider">{trailData.category}</span>
+                            </Badge>
                           </div>
-                          <h3 className="font-black text-base text-primary italic leading-none truncate max-w-[300px]">
-                            {trailData.title}
-                          </h3>
-                          <div className="space-y-1.5 pt-1">
-                            <div className="flex justify-between items-center">
-                              <span className="text-[8px] font-black text-primary/40 uppercase">Evolução</span>
-                              <span className={`text-[10px] font-black italic ${isFinished ? 'text-green-600' : 'text-accent'}`}>{prog.percentage}%</span>
+
+                          {isFinished && (
+                            <div className="absolute top-3 right-3">
+                              <Badge className="bg-green-500 text-white border-none font-black text-[7px] uppercase px-2 py-1 rounded-lg shadow-lg">CONCLUÍDA</Badge>
                             </div>
-                            <Progress value={prog.percentage} className="h-1 rounded-full overflow-hidden bg-muted">
+                          )}
+                        </div>
+                        
+                        <CardContent className="p-5 space-y-3 flex-1">
+                          <div className="space-y-1">
+                            <div className="flex justify-between items-center mb-1">
+                               <span className="text-[8px] font-black text-primary/40 uppercase flex items-center gap-1 italic">
+                                <Clock className="h-2.5 w-2.5"/> {isDateValid ? formatDistanceToNow(lastAccessedDate, { addSuffix: true, locale: ptBR }) : 'Recentemente'}
+                              </span>
+                            </div>
+                            <h3 className="font-black text-sm text-primary italic leading-tight group-hover:text-accent transition-colors duration-300 line-clamp-1">
+                              {trailData.title}
+                            </h3>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-[8px] font-black text-muted-foreground uppercase">
+                              <span>Evolução</span>
+                              <span className={isFinished ? 'text-green-600' : 'text-accent'}>{prog.percentage}%</span>
+                            </div>
+                            <Progress value={prog.percentage} className="h-1 rounded-full bg-muted overflow-hidden">
                                <div className={`h-full transition-all duration-1000 ${isFinished ? 'bg-green-500' : 'bg-accent'}`} style={{ width: `${prog.percentage}%` }} />
                             </Progress>
                           </div>
-                        </div>
-                        <ChevronRight className="hidden md:block h-5 w-5 text-muted-foreground/30 group-hover:text-accent group-hover:translate-x-1 transition-all" />
+
+                          <div className="flex items-center justify-between pt-2 border-t border-muted/10">
+                            <p className="text-[9px] font-bold text-muted-foreground italic truncate">Mentor: {trailData.teacher_name || "Rede"}</p>
+                            <ChevronRight className="h-4 w-4 text-accent translate-x-0 group-hover:translate-x-1 transition-all" />
+                          </div>
+                        </CardContent>
                       </Card>
                     </Link>
                   )
@@ -293,7 +321,8 @@ export default function DashboardHome() {
         </div>
 
         <div className="space-y-8">
-            <h3 className="text-xl font-black text-primary italic px-2">Sistema Monitorado</h3>
+            {/* Sistema Monitorado */}
+            <h3 className="text-xl font-black text-primary italic px-2">Monitoramento</h3>
             <Card className="border-none shadow-2xl bg-primary text-white rounded-[2.5rem] p-8 overflow-hidden relative group">
               <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-accent/20 rounded-full blur-2xl" />
               <div className="relative z-10 space-y-6">
@@ -317,7 +346,8 @@ export default function DashboardHome() {
               </div>
             </Card>
 
-            <h3 className="text-xl font-black text-primary italic px-2">Sugestões de Início</h3>
+            {/* Sugestões de Início */}
+            <h3 className="text-xl font-black text-primary italic px-2">Recomendados</h3>
             <div className="space-y-4">
               {loadingLibrary ? (
                 <div className="py-10 flex flex-col items-center justify-center gap-2">
