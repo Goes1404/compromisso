@@ -7,7 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { gemini15Flash } from '@genkit-ai/google-genai';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const searchEducationalContent = ai.defineTool(
   {
@@ -48,11 +48,12 @@ export type ConceptExplanationAssistantOutput = z.infer<typeof ConceptExplanatio
 
 const prompt = ai.definePrompt({
   name: 'conceptExplanationAssistantPrompt',
-  model: gemini15Flash,
+  // Usando o modelo solicitado pelo usuário via Genkit Plugin
+  model: googleAI.model('gemini-3-flash-preview'),
   tools: [searchEducationalContent],
   input: { schema: ConceptExplanationAssistantInputSchema },
   output: { schema: ConceptExplanationAssistantOutputSchema },
-  config: { temperature: 0.7 },
+  config: { temperature: 1.0 }, // Recomendado manter 1.0 para o Gemini 3
   system: `Você é a Aurora, a assistente pedagógica do curso Compromisso.
 Sua missão é ajudar estudantes brasileiros com dúvidas para o ENEM e vestibulares.
 
@@ -79,9 +80,15 @@ export const conceptExplanationAssistantFlow = ai.defineFlow(
       if (!output) throw new Error("A IA retornou um resultado nulo.");
       return output;
     } catch (error: any) {
-      // Log detalhado para depuração
+      // Log detalhado para depuração no servidor
       console.error("ERRO CRÍTICO AURORA IA:", error?.message || error);
-      return { response: `Olá! Notei uma pequena instabilidade na conexão com meu cérebro digital (${error?.message?.substring(0, 50)}...). Pode repetir sua dúvida?` };
+      
+      // Se o erro for de autenticação, avisa no chat
+      if (error?.message?.includes("API key")) {
+        return { response: "Ops! Minha chave de acesso parece estar com problemas. Por favor, verifique a GEMINI_API_KEY no ambiente." };
+      }
+      
+      return { response: `Olá! Notei uma pequena instabilidade técnica (${error?.message?.substring(0, 40)}...). Pode repetir sua dúvida?` };
     }
   }
 );
