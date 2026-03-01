@@ -1,21 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { 
   Sparkles, 
   BookOpen, 
   Send, 
   Loader2, 
   CheckCircle2, 
-  AlertCircle,
   FileText,
   TrendingUp,
-  Layout,
   Type,
   ChevronRight,
   Eraser,
@@ -52,6 +49,7 @@ export default function StudentEssayPage() {
         setTheme(data.result.title);
         toast({ title: "Novo Tema Gerado!", description: "A Aurora selecionou um desafio estratégico para você." });
       } else {
+        console.error("Debug Aurora API (Tema):", data);
         throw new Error(data.error || "Erro na conexão com o motor de temas.");
       }
     } catch (e: any) {
@@ -82,6 +80,7 @@ export default function StudentEssayPage() {
         setResult(data.result);
         toast({ title: "Correção Finalizada!", description: "Sua análise detalhada já está disponível." });
       } else {
+        console.error("Debug Aurora API (Correção):", data);
         throw new Error(data.error || "Falha na análise da Aurora.");
       }
     } catch (e: any) {
@@ -124,7 +123,6 @@ export default function StudentEssayPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Editor de Texto */}
         <div className={`space-y-6 transition-all duration-500 ${result ? 'lg:col-span-7' : 'lg:col-span-8'}`}>
           <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
             <CardHeader className="bg-primary/5 p-6 md:p-8 border-b border-dashed">
@@ -171,7 +169,6 @@ export default function StudentEssayPage() {
           </Card>
         </div>
 
-        {/* Painel de Resultados ou Instruções */}
         <div className={`space-y-6 transition-all duration-500 ${result ? 'lg:col-span-5' : 'lg:col-span-4'}`}>
           {!result ? (
             <div className="space-y-6 animate-in slide-in-from-right-4">

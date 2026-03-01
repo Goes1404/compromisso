@@ -34,7 +34,7 @@ const EssayEvaluatorOutputSchema = z.object({
 
 const prompt = ai.definePrompt({
   name: 'essayEvaluatorPrompt',
-  model: googleAI.model('gemini-1.5-flash'),
+  model: googleAI.model('gemini-3-flash-preview'),
   input: { schema: EssayEvaluatorInputSchema },
   output: { schema: EssayEvaluatorOutputSchema },
   config: { temperature: 0.4 },

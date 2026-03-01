@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
 import { ai } from '@/ai/genkit';
@@ -22,7 +21,6 @@ export async function GET() {
     diagnostics.supabase = { status: 'error', details: 'Variáveis de ambiente não configuradas ou incompletas.' };
   } else {
     try {
-      // Teste leve de leitura
       const { error } = await supabase.from('profiles').select('id').limit(1);
       if (error) throw error;
       diagnostics.supabase = { status: 'ok', details: 'Conexão ativa e permissão de leitura ok.' };
@@ -31,20 +29,20 @@ export async function GET() {
     }
   }
 
-  // 2. Testar Genkit (Chamada leve ao Gemini)
+  // 2. Testar Genkit (Usando Gemini 3 que validamos como funcional)
   try {
     const response = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
+      model: 'googleai/gemini-3-flash-preview',
       prompt: 'Responda apenas "ok"',
       config: { maxOutputTokens: 5 }
     });
     if (response.text) {
-      diagnostics.genkit = { status: 'ok', details: 'Google AI Plugin operacional.' };
+      diagnostics.genkit = { status: 'ok', details: 'Google AI Plugin operacional com Gemini 3.' };
     } else {
       throw new Error("Sem resposta do modelo.");
     }
   } catch (e: any) {
-    diagnostics.genkit = { status: 'error', details: 'Verifique se a GOOGLE_GENAI_API_KEY está correta.' };
+    diagnostics.genkit = { status: 'error', details: e.message || 'Verifique se a GEMINI_API_KEY está correta.' };
   }
 
   const allOk = diagnostics.supabase.status === 'ok' && diagnostics.genkit.status === 'ok';
