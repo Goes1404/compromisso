@@ -1,4 +1,3 @@
-
 'use client';
 
 import dynamic from 'next/dynamic';
@@ -17,15 +16,8 @@ const Vlibras = dynamic(() =>
 
 export function ClientWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const isAuthPage = ['/login', '/register', '/'].includes(pathname || '');
-
-  if (!mounted) return <>{children}</>;
 
   return (
     <>
