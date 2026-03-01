@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,10 +22,12 @@ import {
   CheckCircle,
   Lightbulb,
   Target,
-  Link as LinkIcon
+  Link as LinkIcon,
+  XCircle,
+  ArrowRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const mockHistory = [
   { date: '01/05', score: 560 },
@@ -55,6 +58,14 @@ const ESSAY_TIPS = [
     color: "text-green-500"
   }
 ];
+
+const COMPETENCY_LABELS: Record<string, string> = {
+  c1: "Domínio da Norma Culta",
+  c2: "Compreender a Proposta",
+  c3: "Organização de Informações",
+  c4: "Mecanismos Linguísticos",
+  c5: "Proposta de Intervenção"
+};
 
 export default function StudentEssayPage() {
   const { toast } = useToast();
@@ -113,6 +124,7 @@ export default function StudentEssayPage() {
       });
       
       const data = await res.json();
+      console.log("Aurora Correction Result:", data);
       
       if (res.ok && data.success) {
         setResult(data.result);
@@ -130,7 +142,6 @@ export default function StudentEssayPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 pb-20 px-2 md:px-4">
       
-      {/* Header Industrial */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -161,7 +172,6 @@ export default function StudentEssayPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Editor Central */}
         <div className="lg:col-span-8 space-y-8">
           <Card className="border-none shadow-[0_30px_60px_-12px_rgba(0,0,0,0.1)] rounded-[2.5rem] bg-white overflow-hidden ring-1 ring-black/5">
             <CardHeader className="bg-slate-50/50 p-6 md:p-10 border-b border-dashed">
@@ -220,23 +230,99 @@ export default function StudentEssayPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* ÁREA DE RESULTADOS DETALHADOS */}
+          {result && (
+            <div className="space-y-8 animate-in slide-in-from-bottom-10 duration-1000">
+              <Card className="border-none shadow-2xl bg-primary text-white rounded-[2.5rem] overflow-hidden">
+                <div className="p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-10">
+                  <div className="text-center md:text-left space-y-4">
+                    <Badge className="bg-accent text-accent-foreground font-black text-[10px] px-4 py-1.5 uppercase tracking-widest">Diagnóstico Final</Badge>
+                    <h2 className="text-8xl md:text-9xl font-black italic tracking-tighter leading-none">{result.total_score}</h2>
+                    <p className="text-sm md:text-xl font-medium italic text-white/70 max-w-xl">"{result.general_feedback}"</p>
+                  </div>
+                  <div className="h-40 w-40 rounded-[3rem] bg-white/10 flex items-center justify-center rotate-6 shadow-inner border border-white/5">
+                    <CheckCircle2 className="h-20 w-20 text-accent" />
+                  </div>
+                </div>
+              </Card>
+
+              {/* COMPETÊNCIAS ENEM */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.entries(result.competencies).map(([key, comp]: any) => (
+                  <Card key={key} className="border-none shadow-xl bg-white rounded-[2rem] p-8 group hover:border-accent/30 border-2 border-transparent transition-all">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-[10px] font-black uppercase text-primary/40 tracking-widest">{COMPETENCY_LABELS[key] || key.toUpperCase()}</span>
+                      <Badge className="bg-primary text-white font-black italic text-sm px-3">{comp.score} / 200</Badge>
+                    </div>
+                    <p className="text-sm text-primary/80 font-medium leading-relaxed italic">"{comp.feedback}"</p>
+                  </Card>
+                ))}
+              </div>
+
+              {/* RAIO-X GRAMATICAL (RED/GREEN) */}
+              {result.detailed_corrections && result.detailed_corrections.length > 0 && (
+                <Card className="border-none shadow-2xl bg-white rounded-[2.5rem] overflow-hidden">
+                  <CardHeader className="bg-slate-50 p-8 border-b">
+                    <CardTitle className="text-xl font-black text-primary italic flex items-center gap-3">
+                      <AlertCircle className="h-6 w-6 text-red-500" />
+                      Diagnóstico Gramatical
+                    </CardTitle>
+                    <CardDescription className="font-medium italic">Trechos identificados para ajuste imediato.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-8 space-y-6">
+                    {result.detailed_corrections.map((corr: any, i: number) => (
+                      <div key={i} className="p-6 rounded-2xl bg-slate-50 border border-black/5 space-y-4">
+                        <div className="flex flex-col sm:flex-row gap-4 items-center">
+                          <div className="flex-1 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium line-through decoration-red-400 decoration-2">
+                            {corr.original}
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-primary/20 rotate-90 sm:rotate-0" />
+                          <div className="flex-1 p-4 bg-green-50 border border-green-100 rounded-xl text-green-700 text-sm font-bold italic">
+                            {corr.suggestion}
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 pl-2">
+                          <div className="h-5 w-5 rounded-full bg-accent/10 text-accent flex items-center justify-center shrink-0 mt-0.5">
+                            <Lightbulb className="h-3 w-3" />
+                          </div>
+                          <p className="text-[11px] font-bold text-primary/60 uppercase tracking-tight italic">{corr.reason}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* SUGESTÕES DE MELHORIA */}
+              {result.suggestions && (
+                <Card className="border-none shadow-xl bg-accent text-accent-foreground rounded-[2.5rem] p-10">
+                  <div className="flex items-center gap-4 mb-6">
+                    <Sparkles className="h-8 w-8" />
+                    <h3 className="text-2xl font-black italic">Sugestões de Evolução</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {result.suggestions.map((s: string, i: number) => (
+                      <div key={i} className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/5">
+                        <CheckCircle className="h-4 w-4 shrink-0" />
+                        <span className="text-sm font-bold italic">{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+              
+              <div className="flex justify-center pt-4">
+                <Button onClick={() => setResult(null)} variant="outline" className="rounded-2xl h-14 px-10 border-2 font-black uppercase text-xs tracking-widest text-primary hover:bg-slate-50">
+                  Nova Redação Master
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Sidebar Pedagógica */}
         <div className="lg:col-span-4 space-y-8">
           
-          {/* Resultados Aurora (Quando disponíveis) */}
-          {result && (
-            <Card className="border-none shadow-2xl bg-primary text-white rounded-[2.5rem] p-10 text-center relative overflow-hidden animate-in zoom-in-95">
-              <div className="absolute top-0 right-0 p-4 opacity-10"><Sparkles className="h-20 w-20" /></div>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent">Desempenho Geral</p>
-              <h2 className="text-8xl font-black italic tracking-tighter text-white my-4">{result.total_score}</h2>
-              <p className="text-xs font-medium italic text-white/70 leading-relaxed">"{result.general_feedback}"</p>
-              <Button onClick={() => setResult(null)} variant="outline" className="mt-8 w-full border-white/20 text-white hover:bg-white/10 rounded-xl font-black uppercase text-[10px]">Nova Tentativa</Button>
-            </Card>
-          )}
-
-          {/* Textos Motivadores */}
           {!result && supportingTexts.length > 0 && (
             <Card className="border-none shadow-xl bg-white rounded-[2.5rem] overflow-hidden animate-in slide-in-from-right-4">
               <CardHeader className="bg-accent/5 p-6 border-b">
@@ -256,7 +342,6 @@ export default function StudentEssayPage() {
             </Card>
           )}
 
-          {/* Checklist INEP */}
           <Card className="border-none shadow-xl bg-primary text-white rounded-[2.5rem] p-8 space-y-6 relative overflow-hidden group">
             <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-accent/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
             <div className="relative z-10">
@@ -279,7 +364,6 @@ export default function StudentEssayPage() {
             </div>
           </Card>
 
-          {/* Dicas Aurora (NOVA SEÇÃO) */}
           <div className="space-y-4">
             <h3 className="text-[10px] font-black text-primary/40 uppercase tracking-[0.3em] px-4 flex items-center gap-2">
               <Lightbulb className="h-3 w-3 text-accent" /> Mentor Express
@@ -301,7 +385,6 @@ export default function StudentEssayPage() {
         </div>
       </div>
 
-      {/* Dashboard de Evolução (MOVIDO PARA BAIXO) */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden p-10 md:p-16 mt-12 group">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
           <div className="space-y-2">
