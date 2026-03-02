@@ -17,9 +17,9 @@ import {
   ShieldCheck, 
   Sparkles,
   Palette,
-  AlertCircle,
   Lock,
-  Star
+  Star,
+  RefreshCw
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -34,8 +34,6 @@ const PRESET_AVATARS = [
   "https://picsum.photos/seed/user6/200/200",
 ];
 
-const SUBJECTS = ["Matemática", "Física", "Química", "Biologia", "Linguagens", "História", "Geografia"];
-
 export default function SettingsPage() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -43,11 +41,34 @@ export default function SettingsPage() {
   
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     avatar_url: "",
     favorite_subject: ""
   });
+
+  useEffect(() => {
+    async function fetchSubjects() {
+      setLoadingSubjects(true);
+      try {
+        const { data, error } = await supabase
+          .from('subjects')
+          .select('id, name')
+          .order('name');
+        
+        if (error) throw error;
+        setSubjects(data || []);
+      } catch (e) {
+        console.error("Erro ao carregar matérias:", e);
+      } finally {
+        setLoadingSubjects(false);
+      }
+    }
+
+    fetchSubjects();
+  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -191,10 +212,14 @@ export default function SettingsPage() {
                     </Label>
                     <Select value={formData.favorite_subject} onValueChange={(v) => setFormData({...formData, favorite_subject: v})}>
                       <SelectTrigger className="h-14 rounded-2xl bg-muted/30 border-none font-bold">
-                        <SelectValue placeholder="Selecione sua matéria foco" />
+                        {loadingSubjects ? (
+                          <div className="flex items-center gap-2"><RefreshCw className="h-3 w-3 animate-spin" /> Carregando catálogo...</div>
+                        ) : (
+                          <SelectValue placeholder="Selecione sua matéria foco" />
+                        )}
                       </SelectTrigger>
-                      <SelectContent className="rounded-xl border-none shadow-2xl">
-                        {SUBJECTS.map(s => <SelectItem key={s} value={s} className="font-bold">{s}</SelectItem>)}
+                      <SelectContent className="rounded-xl border-none shadow-2xl max-h-60">
+                        {subjects.map(s => <SelectItem key={s.id} value={s.name} className="font-bold">{s.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>

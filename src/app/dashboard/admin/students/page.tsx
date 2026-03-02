@@ -17,30 +17,36 @@ import {
   ArrowUpRight,
   PlusCircle,
   Database,
-  Trash2,
-  Star
+  Star,
+  Filter
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/app/lib/supabase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 
 export default function AdminStudentsPage() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [subjectFilter, setSubjectFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   
   const [cohorts, setCohorts] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [newCohort, setNewCohort] = useState({ name: "", description: "" });
 
   async function fetchData() {
     setLoading(true);
     try {
+      const { data: subjectData } = await supabase.from('subjects').select('name').order('name');
+      if (subjectData) setSubjects(subjectData);
+
       const { data: classData } = await supabase
         .from('classes')
         .select('*')
@@ -129,11 +135,12 @@ export default function AdminStudentsPage() {
     }
   };
 
-  const filteredStudents = students.filter(s => 
-    s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.favorite_subject?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStudents = students.filter(s => {
+    const matchesSearch = s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          s.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSubject = subjectFilter === "all" || s.favorite_subject === subjectFilter;
+    return matchesSearch && matchesSubject;
+  });
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -201,11 +208,23 @@ export default function AdminStudentsPage() {
       </div>
 
       <Card className="border-none shadow-2xl rounded-3xl bg-white overflow-hidden">
-        <CardHeader className="p-8 border-b border-muted/10 flex flex-row items-center justify-between">
+        <CardHeader className="p-8 border-b border-muted/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle className="text-xl font-black text-primary italic">Lista Mestra de Alunos ({filteredStudents.length})</CardTitle>
-          <div className="relative w-64 group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-accent" />
-            <Input placeholder="Pesquisar..." className="pl-10 h-11 bg-muted/30 border-none rounded-xl font-medium italic" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+              <SelectTrigger className="w-40 h-11 bg-muted/30 border-none rounded-xl font-bold">
+                <Filter className="h-3 w-3 mr-2 opacity-40" />
+                <SelectValue placeholder="Matéria" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-none shadow-2xl max-h-60">
+                <SelectItem value="all" className="font-bold">Todos</SelectItem>
+                {subjects.map(s => <SelectItem key={s.name} value={s.name} className="font-bold">{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <div className="relative w-64 group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-accent" />
+              <Input placeholder="Pesquisar..." className="pl-10 h-11 bg-muted/30 border-none rounded-xl font-medium italic" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
