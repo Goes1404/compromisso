@@ -52,8 +52,9 @@ export default function CoordinatorDashboard() {
   useEffect(() => {
     async function fetchDashboardData() {
       setLoading(true);
-      checkHealth();
+      await checkHealth();
       try {
+        // 1. Buscar Logs de Atividade
         const { data: logData } = await supabase
           .from('activity_logs')
           .select('*')
@@ -62,31 +63,41 @@ export default function CoordinatorDashboard() {
         
         if (logData) setLogs(logData);
 
+        // 2. Contagem de Alunos (Qualquer um que não seja admin ou teacher)
         const { count: studentCount } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
           .not('profile_type', 'in', '("teacher","admin")');
 
+        // 3. Contagem de Professores
         const { count: teacherCount } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
           .eq('profile_type', 'teacher');
 
+        // 4. Taxa de Conclusão Média
         const { data: progressData } = await supabase
           .from('user_progress')
           .select('percentage');
         
-        const avgCompletion = progressData && progressData.length > 0
-          ? Math.round(progressData.reduce((acc, curr) => acc + curr.percentage, 0) / progressData.length)
-          : 0;
+        let avgCompletion = 0;
+        if (progressData && progressData.length > 0) {
+          avgCompletion = Math.round(progressData.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / progressData.length);
+        }
 
+        // 5. Média Global de Simulados (Grade 0-10)
         const { data: scoreData } = await supabase
           .from('simulation_attempts')
           .select('score, total_questions');
         
-        const avgScore = scoreData && scoreData.length > 0
-          ? (scoreData.reduce((acc, curr) => acc + (curr.score / curr.total_questions), 0) / scoreData.length) * 10
-          : 0;
+        let avgScore = 0;
+        if (scoreData && scoreData.length > 0) {
+          const totalValidAttempts = scoreData.filter(s => s.total_questions > 0);
+          if (totalValidAttempts.length > 0) {
+            const sumGrades = totalValidAttempts.reduce((acc, curr) => acc + (curr.score / curr.total_questions), 0);
+            avgScore = (sumGrades / totalValidAttempts.length) * 10;
+          }
+        }
 
         setStats({
           totalStudents: studentCount || 0,
