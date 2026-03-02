@@ -55,33 +55,23 @@ export default function CoordinatorDashboard() {
       await checkHealth();
       
       try {
-        console.log("[ADMIN DEBUG] Iniciando Varredura de Rede...");
-
         const { data: allProfiles, error: pErr } = await supabase
           .from('profiles')
           .select('id, profile_type, name');
         
-        if (pErr) {
-          console.error("[ADMIN DEBUG] Erro Supabase:", pErr.message);
-        } else {
+        if (!pErr && allProfiles) {
           const studentKeywords = ['etec', 'uni', 'enem', 'cpop', 'student', 'aluno'];
           
-          const students = allProfiles?.filter(p => {
+          const students = allProfiles.filter(p => {
             const type = (p.profile_type || '').toLowerCase().trim();
             return studentKeywords.some(key => type.includes(key)) || type === '';
-          }) || [];
+          });
 
-          const teachers = allProfiles?.filter(p => {
+          const teachers = allProfiles.filter(p => {
             const type = (p.profile_type || '').toLowerCase().trim();
-            const isNotStudent = !studentKeywords.some(key => type.includes(key));
-            return isNotStudent && type !== '';
-          }) || [];
-          
-          console.table(allProfiles?.map(p => ({
-            Nome: p.name,
-            TipoOriginal: p.profile_type || "NULO",
-            Classificacao: studentKeywords.some(key => (p.profile_type || '').toLowerCase().includes(key)) || (p.profile_type || '') === '' ? "ALUNO" : "DOCENTE/STAFF"
-          })));
+            const isStudentType = studentKeywords.some(key => type.includes(key)) || type === '';
+            return !isStudentType;
+          });
           
           setStats(prev => ({
             ...prev,
@@ -102,28 +92,18 @@ export default function CoordinatorDashboard() {
           .select('percentage');
         
         if (progressData && progressData.length > 0) {
-          const validProgress = progressData.filter(p => p.percentage !== null);
-          const avgCompletion = validProgress.length > 0 
-            ? Math.round(validProgress.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / validProgress.length)
-            : 0;
-          setStats(prev => ({ ...prev, completionRate: avgCompletion }));
+          const sum = progressData.reduce((acc, curr) => acc + (curr.percentage || 0), 0);
+          setStats(prev => ({ ...prev, completionRate: Math.round(sum / progressData.length) }));
         }
 
-        try {
-          const { data: scoreData } = await supabase
-            .from('simulation_attempts')
-            .select('score, total_questions');
-          
-          if (scoreData && scoreData.length > 0) {
-            const validAttempts = scoreData.filter(s => s.total_questions > 0);
-            if (validAttempts.length > 0) {
-              const sumGrades = validAttempts.reduce((acc, curr) => acc + (curr.score / curr.total_questions), 0);
-              const avgScore = (sumGrades / validAttempts.length) * 10;
-              setStats(prev => ({ ...prev, avgScore: Number(avgScore.toFixed(1)) }));
-            }
-          }
-        } catch (e) {
-          console.log("[ADMIN DEBUG] Dados de simulados ainda não disponíveis.");
+        const { data: scoreData } = await supabase
+          .from('simulation_attempts')
+          .select('score, total_questions');
+        
+        if (scoreData && scoreData.length > 0) {
+          const sumGrades = scoreData.reduce((acc, curr) => acc + (curr.score / curr.total_questions), 0);
+          const avgScore = (sumGrades / scoreData.length) * 10;
+          setStats(prev => ({ ...prev, avgScore: Number(avgScore.toFixed(1)) }));
         }
 
       } catch (err) {
@@ -138,7 +118,7 @@ export default function CoordinatorDashboard() {
   if (isUserLoading || loading) return (
     <div className="h-96 flex flex-col items-center justify-center gap-4">
       <Loader2 className="h-10 w-10 animate-spin text-accent" />
-      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Sincronizando Auditoria Global...</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Sincronizando Auditoria Global...</p>
     </div>
   );
 

@@ -17,36 +17,30 @@ import {
   ArrowUpRight,
   PlusCircle,
   Database,
-  Star,
-  Filter
+  Star
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/app/lib/supabase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 
 export default function AdminStudentsPage() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [subjectFilter, setSubjectFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   
   const [cohorts, setCohorts] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
-  const [subjects, setSubjects] = useState<any[]>([]);
   const [newCohort, setNewCohort] = useState({ name: "", description: "" });
 
   async function fetchData() {
     setLoading(true);
     try {
-      const { data: subjectData } = await supabase.from('subjects').select('name').order('name');
-      if (subjectData) setSubjects(subjectData);
-
+      // 1. Buscar Turmas
       const { data: classData } = await supabase
         .from('classes')
         .select('*')
@@ -54,6 +48,7 @@ export default function AdminStudentsPage() {
       
       if (classData) setCohorts(classData);
 
+      // 2. Buscar Alunos
       const { data: allProfiles, error: pError } = await supabase
         .from('profiles')
         .select(`
@@ -61,8 +56,7 @@ export default function AdminStudentsPage() {
           name, 
           profile_type, 
           class_id,
-          favorite_subject,
-          classes (name)
+          favorite_subject
         `)
         .order('name');
 
@@ -74,6 +68,7 @@ export default function AdminStudentsPage() {
         return studentKeywords.some(key => type.includes(key)) || type === '';
       }) || [];
 
+      // 3. Buscar Progresso (Opcional)
       const { data: progressData } = await supabase
         .from('user_progress')
         .select('user_id, percentage');
@@ -84,10 +79,12 @@ export default function AdminStudentsPage() {
           ? Math.round(userProgress.reduce((acc, curr) => acc + curr.percentage, 0) / userProgress.length)
           : 0;
         
+        const cohort = cohorts.find(c => c.id === s.class_id)?.name || 'Pendente';
+        
         return {
           ...s,
           engagement: `${avgProgress}%`,
-          cohort: (s.classes as any)?.name || 'Pendente',
+          cohort,
           status: avgProgress > 70 ? 'high' : avgProgress > 30 ? 'medium' : 'low'
         };
       });
@@ -122,7 +119,7 @@ export default function AdminStudentsPage() {
 
       await supabase.from('activity_logs').insert({
         user_id: user.id,
-        user_name: profile?.name || user.email,
+        user_name: profile?.name || 'Administrador',
         action: `Criou a Turma: ${newCohort.name}`,
         entity_type: 'class',
         entity_id: data.id
@@ -139,11 +136,9 @@ export default function AdminStudentsPage() {
     }
   };
 
-  const filteredStudents = students.filter(s => {
-    const matchesSearch = s.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSubject = subjectFilter === "all" || s.favorite_subject === subjectFilter;
-    return matchesSearch && matchesSubject;
-  });
+  const filteredStudents = students.filter(s => 
+    s.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 px-1">
@@ -213,11 +208,9 @@ export default function AdminStudentsPage() {
       <Card className="border-none shadow-2xl rounded-3xl bg-white overflow-hidden">
         <CardHeader className="p-8 border-b border-muted/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle className="text-xl font-black text-primary italic">Lista Mestra de Alunos ({filteredStudents.length})</CardTitle>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-64 group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-accent" />
-              <Input placeholder="Pesquisar..." className="pl-10 h-11 bg-muted/30 border-none rounded-xl font-medium italic" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            </div>
+          <div className="relative w-64 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-accent" />
+            <Input placeholder="Pesquisar..." className="pl-10 h-11 bg-muted/30 border-none rounded-xl font-medium italic" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">

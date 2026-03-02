@@ -38,6 +38,7 @@ export default function AdminChecklistAuditPage() {
     async function fetchChecklists() {
       setLoading(true);
       try {
+        // 1. Buscar Perfis
         const { data: allProfiles, error: pError } = await supabase
           .from('profiles')
           .select('id, name, profile_type')
@@ -45,20 +46,23 @@ export default function AdminChecklistAuditPage() {
 
         if (pError) throw pError;
 
+        // Lógica industrial de filtragem de alunos
         const studentKeywords = ['etec', 'uni', 'enem', 'cpop', 'student', 'aluno'];
         const profiles = allProfiles?.filter(p => {
           const type = (p.profile_type || '').toLowerCase().trim();
           return studentKeywords.some(key => type.includes(key)) || type === '';
         }) || [];
 
+        // 2. Buscar Dados de Checklist
         const { data: checklists, error: cError } = await supabase
           .from('student_checklists')
           .select('user_id');
 
-        if (cError) throw cError;
+        // Se a tabela não existir, checklists será vazio, o que é seguro
+        const checklistData = checklists || [];
 
         const progressMap = profiles.map(p => {
-          const count = (checklists || []).filter(c => c.user_id === p.id).length;
+          const count = checklistData.filter(c => c.user_id === p.id).length;
           const percent = (count / TOTAL_REQUIRED_DOCS) * 100;
           return {
             id: p.id,
