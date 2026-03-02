@@ -39,15 +39,15 @@ export default function AdminChecklistAuditPage() {
     async function fetchChecklists() {
       setLoading(true);
       try {
-        // Busca todos os perfis que não são professores nem admin
-        const { data: profiles, error: pError } = await supabase
+        // Busca todos os perfis e filtra no cliente para evitar problemas com nulls
+        const { data: allProfiles, error: pError } = await supabase
           .from('profiles')
-          .select('id, name, email')
-          .neq('profile_type', 'teacher')
-          .neq('profile_type', 'admin')
+          .select('id, name, email, profile_type')
           .order('name');
 
         if (pError) throw pError;
+
+        const profiles = allProfiles?.filter(p => p.profile_type !== 'teacher' && p.profile_type !== 'admin') || [];
 
         const { data: checklists, error: cError } = await supabase
           .from('student_checklists')
@@ -55,7 +55,7 @@ export default function AdminChecklistAuditPage() {
 
         if (cError) throw cError;
 
-        const progressMap = (profiles || []).map(p => {
+        const progressMap = profiles.map(p => {
           const count = (checklists || []).filter(c => c.user_id === p.id).length;
           const percent = (count / TOTAL_REQUIRED_DOCS) * 100;
           return {

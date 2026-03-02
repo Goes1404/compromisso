@@ -54,7 +54,8 @@ export default function AdminStudentsPage() {
       
       if (classData) setCohorts(classData);
 
-      const { data: studentData } = await supabase
+      // Busca todos os perfis e filtra no cliente para ser resiliente a nulls
+      const { data: allProfiles, error: pError } = await supabase
         .from('profiles')
         .select(`
           id, 
@@ -65,30 +66,30 @@ export default function AdminStudentsPage() {
           favorite_subject,
           classes (name)
         `)
-        .neq('profile_type', 'teacher')
-        .neq('profile_type', 'admin')
         .order('name');
+
+      if (pError) throw pError;
+
+      const studentProfiles = allProfiles?.filter(p => p.profile_type !== 'teacher' && p.profile_type !== 'admin') || [];
 
       const { data: progressData } = await supabase
         .from('user_progress')
         .select('user_id, percentage');
 
-      if (studentData) {
-        const mapped = studentData.map(s => {
-          const userProgress = progressData?.filter(p => p.user_id === s.id) || [];
-          const avgProgress = userProgress.length > 0 
-            ? Math.round(userProgress.reduce((acc, curr) => acc + curr.percentage, 0) / userProgress.length)
-            : 0;
-          
-          return {
-            ...s,
-            engagement: `${avgProgress}%`,
-            cohort: (s.classes as any)?.name || 'Pendente',
-            status: avgProgress > 70 ? 'high' : avgProgress > 30 ? 'medium' : 'low'
-          };
-        });
-        setStudents(mapped);
-      }
+      const mapped = studentProfiles.map(s => {
+        const userProgress = progressData?.filter(p => p.user_id === s.id) || [];
+        const avgProgress = userProgress.length > 0 
+          ? Math.round(userProgress.reduce((acc, curr) => acc + curr.percentage, 0) / userProgress.length)
+          : 0;
+        
+        return {
+          ...s,
+          engagement: `${avgProgress}%`,
+          cohort: (s.classes as any)?.name || 'Pendente',
+          status: avgProgress > 70 ? 'high' : avgProgress > 30 ? 'medium' : 'low'
+        };
+      });
+      setStudents(mapped);
 
     } catch (e) {
       console.error("Erro buscar alunos:", e);

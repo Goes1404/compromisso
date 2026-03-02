@@ -38,6 +38,7 @@ export default function CoordinatorDashboard() {
   async function checkHealth() {
     try {
       const res = await fetch('/api/health');
+      if (!res.ok) throw new Error();
       const data = await res.json();
       setNetworkStatus({
         db: data.supabase?.status === 'ok' ? 'online' : 'offline',
@@ -54,9 +55,29 @@ export default function CoordinatorDashboard() {
       await checkHealth();
       
       try {
-        console.log("[ADMIN] Iniciando coleta de dados reais...");
+        console.log("[ADMIN DEBUG] Iniciando coleta de dados...");
 
-        // 1. Buscar Logs de Atividade
+        // 1. Buscar Todos os Perfis (Mais robusto que filtros SQL para depuração)
+        const { data: allProfiles, error: pErr } = await supabase
+          .from('profiles')
+          .select('id, profile_type, name');
+        
+        if (pErr) {
+          console.error("[ADMIN DEBUG] Erro ao buscar perfis:", pErr.message);
+        } else {
+          console.log("[ADMIN DEBUG] Perfis localizados no banco:", allProfiles?.length || 0, allProfiles);
+          
+          const students = allProfiles?.filter(p => p.profile_type !== 'teacher' && p.profile_type !== 'admin') || [];
+          const teachers = allProfiles?.filter(p => p.profile_type === 'teacher') || [];
+          
+          setStats(prev => ({
+            ...prev,
+            totalStudents: students.length,
+            totalTeachers: teachers.length
+          }));
+        }
+
+        // 2. Buscar Logs de Atividade
         const { data: logData } = await supabase
           .from('activity_logs')
           .select('*')
@@ -64,57 +85,32 @@ export default function CoordinatorDashboard() {
           .limit(5);
         if (logData) setLogs(logData);
 
-        // 2. Contagem de Alunos (Qualquer perfil que não seja teacher ou admin)
-        const { data: students, error: sErr } = await supabase
-          .from('profiles')
-          .select('id, profile_type')
-          .neq('profile_type', 'teacher')
-          .neq('profile_type', 'admin');
-        
-        const studentCount = students?.length || 0;
-        console.log("[ADMIN] Alunos localizados:", studentCount);
-
-        // 3. Contagem de Professores
-        const { data: teachers } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('profile_type', 'teacher');
-        
-        const teacherCount = teachers?.length || 0;
-
-        // 4. Taxa de Conclusão Média
-        let avgCompletion = 0;
+        // 3. Taxa de Conclusão Média
         const { data: progressData } = await supabase
           .from('user_progress')
           .select('percentage');
         
         if (progressData && progressData.length > 0) {
-          avgCompletion = Math.round(progressData.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / progressData.length);
+          const avgCompletion = Math.round(progressData.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / progressData.length);
+          setStats(prev => ({ ...prev, completionRate: avgCompletion }));
         }
 
-        // 5. Média Global de Simulados
-        let avgScore = 0;
+        // 4. Média Global de Simulados
         const { data: scoreData } = await supabase
           .from('simulation_attempts')
           .select('score, total_questions');
         
         if (scoreData && scoreData.length > 0) {
-          const totalValidAttempts = scoreData.filter(s => s.total_questions > 0);
-          if (totalValidAttempts.length > 0) {
-            const sumGrades = totalValidAttempts.reduce((acc, curr) => acc + (curr.score / curr.total_questions), 0);
-            avgScore = (sumGrades / totalValidAttempts.length) * 10;
+          const validAttempts = scoreData.filter(s => s.total_questions > 0);
+          if (validAttempts.length > 0) {
+            const sumGrades = validAttempts.reduce((acc, curr) => acc + (curr.score / curr.total_questions), 0);
+            const avgScore = (sumGrades / validAttempts.length) * 10;
+            setStats(prev => ({ ...prev, avgScore: Number(avgScore.toFixed(1)) }));
           }
         }
 
-        setStats({
-          totalStudents: studentCount,
-          totalTeachers: teacherCount,
-          completionRate: avgCompletion,
-          avgScore: Number(avgScore.toFixed(1))
-        });
-
       } catch (err) {
-        console.error("Erro geral dashboard admin:", err);
+        console.error("[ADMIN DEBUG] Erro fatal no processamento:", err);
       } finally {
         setLoading(false);
       }
