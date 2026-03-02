@@ -53,24 +53,22 @@ export default function CoordinatorDashboard() {
     async function fetchDashboardData() {
       setLoading(true);
       await checkHealth();
+      
       try {
-        // 1. Buscar Logs de Atividade
+        // 1. Buscar Logs de Atividade (Independente)
         const { data: logData } = await supabase
           .from('activity_logs')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(5);
-        
         if (logData) setLogs(logData);
 
-        // 2. Contagem de Alunos (Filtro ajustado para ser mais permissivo)
-        const { count: studentCount, error: sError } = await supabase
+        // 2. Contagem de Alunos
+        // Filtramos qualquer um que NÃO seja admin ou teacher explicitamente
+        const { count: studentCount } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
-          .not('profile_type', 'eq', 'teacher')
-          .not('profile_type', 'eq', 'admin');
-
-        if (sError) console.error("Erro count alunos:", sError);
+          .not('profile_type', 'in', '("teacher","admin")');
 
         // 3. Contagem de Professores
         const { count: teacherCount } = await supabase
@@ -78,29 +76,33 @@ export default function CoordinatorDashboard() {
           .select('*', { count: 'exact', head: true })
           .eq('profile_type', 'teacher');
 
-        // 4. Taxa de Conclusão Média
-        const { data: progressData } = await supabase
-          .from('user_progress')
-          .select('percentage');
-        
+        // 4. Taxa de Conclusão Média (Resiliente)
         let avgCompletion = 0;
-        if (progressData && progressData.length > 0) {
-          avgCompletion = Math.round(progressData.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / progressData.length);
-        }
-
-        // 5. Média Global de Simulados
-        const { data: scoreData } = await supabase
-          .from('simulation_attempts')
-          .select('score, total_questions');
-        
-        let avgScore = 0;
-        if (scoreData && scoreData.length > 0) {
-          const totalValidAttempts = scoreData.filter(s => s.total_questions > 0);
-          if (totalValidAttempts.length > 0) {
-            const sumGrades = totalValidAttempts.reduce((acc, curr) => acc + (curr.score / curr.total_questions), 0);
-            avgScore = (sumGrades / totalValidAttempts.length) * 10;
+        try {
+          const { data: progressData } = await supabase
+            .from('user_progress')
+            .select('percentage');
+          
+          if (progressData && progressData.length > 0) {
+            avgCompletion = Math.round(progressData.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / progressData.length);
           }
-        }
+        } catch (e) { console.warn("Tabela user_progress indisponível"); }
+
+        // 5. Média Global de Simulados (Resiliente à tabela ausente)
+        let avgScore = 0;
+        try {
+          const { data: scoreData } = await supabase
+            .from('simulation_attempts')
+            .select('score, total_questions');
+          
+          if (scoreData && scoreData.length > 0) {
+            const totalValidAttempts = scoreData.filter(s => s.total_questions > 0);
+            if (totalValidAttempts.length > 0) {
+              const sumGrades = totalValidAttempts.reduce((acc, curr) => acc + (curr.score / curr.total_questions), 0);
+              avgScore = (sumGrades / totalValidAttempts.length) * 10;
+            }
+          }
+        } catch (e) { console.warn("Tabela simulation_attempts indisponível"); }
 
         setStats({
           totalStudents: studentCount || 0,
@@ -110,7 +112,7 @@ export default function CoordinatorDashboard() {
         });
 
       } catch (err) {
-        console.error("Erro dashboard admin:", err);
+        console.error("Erro geral dashboard admin:", err);
       } finally {
         setLoading(false);
       }
