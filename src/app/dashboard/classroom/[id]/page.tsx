@@ -29,7 +29,6 @@ import {
   Target,
   Lightbulb,
   Zap,
-  ShieldCheck,
   Award
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
@@ -225,47 +224,48 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
   if (loading) return (
     <div className="flex flex-col h-screen items-center justify-center gap-6 bg-slate-900">
       <Loader2 className="animate-spin h-12 w-12 text-accent" />
-      <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white animate-pulse">Sintonizando Estúdio</p>
+      <p className="text-sm font-black uppercase tracking-[0.3em] text-white animate-pulse">Sintonizando Estúdio</p>
     </div>
   );
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 animate-in fade-in duration-500 overflow-hidden">
       
-      <header className="bg-primary text-white px-4 h-14 flex items-center justify-between shrink-0 z-20 shadow-xl border-b border-white/5">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-white/10 h-8 w-8 shrink-0 text-white">
-            <ChevronLeft className="h-5 w-5" />
+      {/* CABEÇALHO PROFISSIONAL */}
+      <header className="bg-primary text-white px-6 h-16 flex items-center justify-between shrink-0 z-20 shadow-xl border-b border-white/5">
+        <div className="flex items-center gap-4 overflow-hidden">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-white/10 h-10 w-10 shrink-0 text-white transition-all">
+            <ChevronLeft className="h-6 w-6" />
           </Button>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <Compass className="h-2.5 w-2.5 text-accent" />
-              <p className="text-[7px] font-black uppercase tracking-widest text-white/40">{trail?.category}</p>
+            <div className="flex items-center gap-2">
+              <Compass className="h-3 w-3 text-accent" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/40">{trail?.category}</p>
             </div>
-            <h1 className="text-xs font-black italic leading-none truncate max-w-[120px] md:max-w-[200px]">{trail?.title}</h1>
+            <h1 className="text-sm md:text-base font-black italic leading-none truncate max-w-[200px] md:max-w-md">{trail?.title}</h1>
           </div>
         </div>
         
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="hidden sm:flex flex-col items-end gap-1 w-32">
-            <div className="flex justify-between w-full text-[7px] font-black uppercase text-white/40">
+        <div className="flex items-center gap-6 shrink-0">
+          <div className="hidden md:flex flex-col items-end gap-1.5 w-48">
+            <div className="flex justify-between w-full text-[10px] font-black uppercase text-white/40">
               <span>Evolução</span>
               <span className="text-accent">{Math.round(videoProgress)}%</span>
             </div>
-            <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-               <div className="h-full bg-accent transition-all duration-1000" style={{ width: `${videoProgress}%` }} />
+            <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+               <div className="h-full bg-accent transition-all duration-1000 shadow-[0_0_10px_rgba(245,158,11,0.5)]" style={{ width: `${videoProgress}%` }} />
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {!isEnrolled && (
-              <Button onClick={handleEnroll} disabled={isEnrolling} className="hidden md:flex bg-accent text-accent-foreground font-black text-[8px] uppercase h-8 px-4 rounded-lg shadow-lg border-none">
-                {isEnrolling ? <Loader2 className="h-3 w-3 animate-spin mr-1.5" /> : <PlusCircle className="h-3 w-3 mr-1.5" />}
-                Fixar
+              <Button onClick={handleEnroll} disabled={isEnrolling} className="hidden md:flex bg-accent text-accent-foreground font-black text-xs uppercase h-10 px-6 rounded-xl shadow-lg border-none hover:scale-105 active:scale-95 transition-all">
+                {isEnrolling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
+                Fixar Trilha
               </Button>
             )}
-            <Button variant="ghost" size="icon" className="rounded-lg text-white h-8 w-8 hover:bg-white/10" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              {sidebarOpen ? <PanelRightClose className="h-5 w-5" /> : <PanelRightOpen className="h-5 w-5" />}
+            <Button variant="ghost" size="icon" className="rounded-xl text-white h-10 w-10 hover:bg-white/10 transition-all" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              {sidebarOpen ? <PanelRightClose className="h-6 w-6" /> : <PanelRightOpen className="h-6 w-6" />}
             </Button>
           </div>
         </div>
@@ -273,23 +273,25 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
 
       <div className="flex-1 flex overflow-hidden relative">
         
-        <main className="flex-1 flex flex-col bg-white overflow-hidden relative min-w-0">
-          <div className="w-full aspect-video md:aspect-[21/9] bg-black relative group shadow-2xl shrink-0">
+        {/* CONTEÚDO PRINCIPAL (80%) */}
+        <main className="flex-1 flex flex-col bg-white overflow-hidden relative min-w-0 shadow-inner">
+          <div className="w-full aspect-video bg-black relative group shadow-2xl shrink-0 overflow-hidden">
             {activeContent?.type === 'video' ? (
               <div id="youtube-player" className="w-full h-full" />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-800 to-primary text-white p-6 text-center">
-                <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-xl flex items-center justify-center mb-4 relative">
-                  <Layout className="h-6 w-6 text-accent" />
+              <div className="w-full h-full flex flex-col items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-800 to-primary text-white p-10 text-center">
+                <div className="h-20 w-20 rounded-3xl bg-white/10 backdrop-blur-xl flex items-center justify-center mb-6 relative border border-white/10 shadow-2xl">
+                  <Layout className="h-10 w-10 text-accent" />
                 </div>
-                <h3 className="text-sm md:text-lg font-black italic uppercase tracking-tight max-w-lg">{activeContent?.title || "Selecione um Material"}</h3>
-                <p className="text-[8px] text-white/40 mt-2 italic font-medium">Use o console abaixo para interagir.</p>
+                <h3 className="text-xl md:text-3xl font-black italic uppercase tracking-tight max-w-2xl">{activeContent?.title || "Selecione um Material na lateral"}</h3>
+                <p className="text-sm text-white/40 mt-4 italic font-medium">Use o console abaixo para interagir com os recursos deste módulo.</p>
               </div>
             )}
           </div>
 
+          {/* CONSOLE DE ESTUDOS */}
           <Tabs defaultValue="summary" className="flex-1 flex flex-col min-h-0 bg-white overflow-hidden">
-            <TabsList className="grid w-full grid-cols-4 h-12 bg-slate-950 p-0 gap-0 shrink-0 shadow-2xl">
+            <TabsList className="grid w-full grid-cols-4 h-14 bg-slate-950 p-0 gap-0 shrink-0 shadow-2xl border-b border-white/5">
               {[
                 { id: "summary", label: "Roteiro", icon: BookOpen },
                 { id: "quiz", label: "Prática", icon: BrainCircuit },
@@ -299,71 +301,71 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                 <TabsTrigger 
                   key={tab.id} 
                   value={tab.id} 
-                  className="data-[state=active]:bg-white data-[state=active]:text-primary h-full rounded-none font-black text-[8px] uppercase tracking-[0.1em] transition-all gap-2 border-none text-white/40 hover:text-white/80"
+                  className="data-[state=active]:bg-white data-[state=active]:text-primary h-full rounded-none font-black text-[10px] md:text-xs uppercase tracking-[0.15em] transition-all gap-3 border-none text-white/40 hover:text-white/80"
                 >
-                  <tab.icon className="h-3.5 w-3.5" />
+                  <tab.icon className="h-4 w-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
             
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/30">
+            <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-slate-50/30">
                <TabsContent value="summary" className="mt-0 outline-none animate-in fade-in duration-500">
-                  <div className="max-w-5xl mx-auto space-y-8 pb-10">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="md:col-span-2 space-y-6">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Target className="h-4 w-4 text-accent" />
-                            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">Plano de Aprendizado</h2>
+                  <div className="max-w-5xl mx-auto space-y-10 pb-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                      <div className="lg:col-span-2 space-y-8">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <Target className="h-5 w-5 text-accent" />
+                            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-primary/40">Plano de Aprendizado</h2>
                           </div>
-                          <h3 className="text-xl font-black text-primary italic leading-tight">{activeContent?.title}</h3>
-                          <p className="text-sm font-medium text-primary/70 leading-relaxed italic whitespace-pre-line">
-                            {activeContent?.description || "Inicie este material para fortalecer seus fundamentos técnicos. Este conteúdo foi estrategicamente selecionado para o seu perfil."}
+                          <h3 className="text-2xl md:text-3xl font-black text-primary italic leading-tight">{activeContent?.title}</h3>
+                          <p className="text-base md:text-lg font-medium text-primary/70 leading-relaxed italic whitespace-pre-line border-l-4 border-accent/20 pl-6 py-2">
+                            {activeContent?.description || "Inicie este material para fortalecer seus fundamentos técnicos. Este conteúdo foi estrategicamente selecionado para o seu perfil acadêmico."}
                           </p>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <Card className="p-5 border-none shadow-lg bg-white rounded-2xl space-y-3 group hover:shadow-xl transition-all">
-                            <div className="flex items-center gap-3 text-primary">
-                              <div className="h-8 w-8 rounded-xl bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-inner">
-                                <Zap className="h-4 w-4" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                          <Card className="p-6 border-none shadow-xl bg-white rounded-3xl space-y-4 group hover:-translate-y-1 transition-all duration-300">
+                            <div className="flex items-center gap-4 text-primary">
+                              <div className="h-10 w-10 rounded-2xl bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-inner">
+                                <Zap className="h-5 w-5" />
                               </div>
-                              <span className="text-[9px] font-black uppercase tracking-widest">Ação Necessária</span>
+                              <span className="text-[11px] font-black uppercase tracking-widest">Ação Necessária</span>
                             </div>
-                            <p className="text-[11px] font-medium italic opacity-70">Assista ao vídeo e anote os pontos de dúvida crítica para a próxima live.</p>
+                            <p className="text-sm font-medium italic opacity-70 leading-relaxed">Assista ao vídeo e anote os pontos de dúvida crítica para a próxima live de mentoria.</p>
                           </Card>
-                          <Card className="p-5 border-none shadow-lg bg-white rounded-2xl space-y-3 group hover:shadow-xl transition-all">
-                            <div className="flex items-center gap-3 text-primary">
-                              <div className="h-8 w-8 rounded-xl bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-inner">
-                                <Award className="h-4 w-4" />
+                          <Card className="p-6 border-none shadow-xl bg-white rounded-3xl space-y-4 group hover:-translate-y-1 transition-all duration-300">
+                            <div className="flex items-center gap-4 text-primary">
+                              <div className="h-10 w-10 rounded-2xl bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-inner">
+                                <Award className="h-5 w-5" />
                               </div>
-                              <span className="text-[9px] font-black uppercase tracking-widest">Meta de Fixação</span>
+                              <span className="text-[11px] font-black uppercase tracking-widest">Meta de Fixação</span>
                             </div>
-                            <p className="text-[11px] font-medium italic opacity-70">Realizar o mini-assessment logo após a aula para validar o progresso.</p>
+                            <p className="text-sm font-medium italic opacity-70 leading-relaxed">Realizar o mini-assessment logo após a aula para validar o progresso técnico.</p>
                           </Card>
                         </div>
                       </div>
 
-                      <div className="space-y-6">
-                        <Card className="p-6 border-none shadow-2xl bg-primary text-white rounded-[2rem] relative overflow-hidden group">
-                          <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-accent/20 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-                          <div className="relative z-10 space-y-4">
-                            <div className="flex items-center gap-2">
-                              <Lightbulb className="h-4 w-4 text-accent" />
-                              <span className="text-[9px] font-black uppercase tracking-widest">Sugestão Aurora</span>
+                      <div className="space-y-8">
+                        <Card className="p-8 border-none shadow-2xl bg-primary text-white rounded-[2.5rem] relative overflow-hidden group">
+                          <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-accent/20 rounded-full blur-3xl group-hover:scale-125 transition-transform" />
+                          <div className="relative z-10 space-y-6">
+                            <div className="flex items-center gap-3">
+                              <Lightbulb className="h-6 w-6 text-accent" />
+                              <span className="text-[11px] font-black uppercase tracking-widest">Sugestão Aurora IA</span>
                             </div>
-                            <p className="text-[11px] font-medium leading-relaxed italic opacity-90">
-                              "Estudos indicam que pausar o vídeo a cada 10 minutos para resumir o que foi dito aumenta a retenção em até 40%."
+                            <p className="text-sm md:text-base font-medium leading-relaxed italic opacity-90">
+                              "Pausar o conteúdo a cada 15 minutos para explicar em voz alta o que foi aprendido aumenta a retenção em até 60%."
                             </p>
                           </div>
                         </Card>
 
-                        <div className="space-y-3">
-                          <h4 className="text-[8px] font-black uppercase tracking-[0.2em] text-primary/40 px-2">Competências Focadas</h4>
-                          <div className="flex flex-wrap gap-2">
+                        <div className="space-y-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 px-3">Habilidades em Foco</h4>
+                          <div className="flex flex-wrap gap-3">
                             {['Raciocínio Lógico', 'Análise Crítica', 'Base Teórica', 'Prática Técnica'].map(tag => (
-                              <Badge key={tag} variant="outline" className="bg-white border-muted/20 text-primary/60 font-bold text-[8px] uppercase px-3 h-6 rounded-lg italic">
+                              <Badge key={tag} variant="outline" className="bg-white border-muted/20 text-primary/60 font-bold text-[10px] uppercase px-4 h-8 rounded-xl italic shadow-sm hover:border-accent/30 transition-all">
                                 {tag}
                               </Badge>
                             ))}
@@ -374,61 +376,61 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                   </div>
                </TabsContent>
 
-               <TabsContent value="quiz" className="mt-0 outline-none animate-in slide-in-from-bottom-2">
-                  <div className="max-w-4xl space-y-4">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg">
-                        <BrainCircuit className="h-4 w-4" />
+               <TabsContent value="quiz" className="mt-0 outline-none animate-in slide-in-from-bottom-4 duration-500">
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-xl rotate-3">
+                        <BrainCircuit className="h-6 w-6" />
                       </div>
                       <div>
-                        <h2 className="text-sm font-black text-primary italic leading-none">Atividade de Fixação</h2>
-                        <p className="text-[7px] font-black text-muted-foreground uppercase tracking-widest mt-1">Consolidação</p>
+                        <h2 className="text-xl font-black text-primary italic leading-none">Avaliação de Consolidação</h2>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-1.5">Validar Aprendizado</p>
                       </div>
                     </div>
                     
                     {activeContent?.url?.includes('quiz') || activeContent?.url?.includes('form') ? (
-                      <Card className="p-10 bg-white border-2 border-dashed border-slate-200 rounded-[2rem] text-center space-y-4 shadow-md">
-                         <div className="h-12 w-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                            <Layers className="h-6 w-6 text-accent" />
+                      <Card className="p-16 bg-white border-2 border-dashed border-slate-200 rounded-[3rem] text-center space-y-8 shadow-2xl group transition-all hover:border-accent/40">
+                         <div className="h-24 w-24 bg-accent/10 rounded-full flex items-center justify-center mx-auto shadow-inner group-hover:scale-110 transition-transform">
+                            <Layers className="h-12 w-12 text-accent" />
                          </div>
-                         <div className="space-y-1">
-                            <p className="text-sm font-black text-primary italic">Ambiente de Simulado Externo</p>
-                            <p className="text-[9px] text-muted-foreground font-medium italic">Avaliação vinculada em plataforma externa segura.</p>
+                         <div className="space-y-3">
+                            <p className="text-2xl font-black text-primary italic">Ambiente de Simulado Ativo</p>
+                            <p className="text-sm text-muted-foreground font-medium italic max-w-sm mx-auto">Esta aula possui uma avaliação vinculada em plataforma externa segura.</p>
                          </div>
-                         <Button asChild className="bg-primary text-white h-10 rounded-xl font-black px-8 shadow-xl hover:scale-105 transition-all text-[10px] border-none">
+                         <Button asChild className="bg-primary text-white h-16 rounded-2xl font-black px-12 shadow-2xl hover:scale-105 active:scale-95 transition-all text-base border-none">
                            <a href={activeContent?.url} target="_blank" rel="noopener noreferrer">
                              ABRIR LABORATÓRIO 
-                             <ArrowRight className="ml-2 h-3.5 w-3.5 text-accent" />
+                             <ArrowRight className="ml-3 h-5 w-5 text-accent" />
                            </a>
                          </Button>
                       </Card>
                     ) : (
-                      <div className="text-center py-10 bg-slate-100/50 rounded-2xl border-2 border-dashed border-slate-200 opacity-40">
-                        <HelpCircle className="h-8 w-8 mx-auto mb-3 text-slate-300" />
-                        <p className="text-[8px] font-black uppercase tracking-widest italic text-primary/40">Nenhum quiz vinculado</p>
+                      <div className="text-center py-20 bg-slate-100/50 rounded-[2.5rem] border-2 border-dashed border-slate-200 opacity-40">
+                        <HelpCircle className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+                        <p className="text-xs font-black uppercase tracking-[0.3em] italic text-primary/40">Nenhum exercício vinculado a este módulo</p>
                       </div>
                     )}
                   </div>
                </TabsContent>
 
-               <TabsContent value="attachments" className="mt-0 outline-none animate-in slide-in-from-bottom-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+               <TabsContent value="attachments" className="mt-0 outline-none animate-in slide-in-from-bottom-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
                     {activeContent?.type === 'pdf' || activeContent?.url?.includes('.pdf') ? (
-                      <Card className="p-3 border-none shadow-lg bg-white rounded-xl flex items-center gap-3 group hover:bg-primary transition-all duration-500 cursor-pointer overflow-hidden relative">
-                        <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-white/10 group-hover:text-white shadow-inner transition-all">
-                          <FileText className="h-4 w-4" />
+                      <Card className="p-6 border-none shadow-xl bg-white rounded-3xl flex items-center gap-6 group hover:bg-primary transition-all duration-500 cursor-pointer overflow-hidden relative">
+                        <div className="h-14 w-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-white/10 group-hover:text-white shadow-inner transition-all">
+                          <FileText className="h-7 w-7" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-black text-[7px] text-accent group-hover:text-white/60 uppercase tracking-widest mb-0.5">Apoio</p>
-                          <p className="text-[10px] font-black text-primary group-hover:text-white italic leading-tight truncate">Material Técnico.pdf</p>
+                          <p className="font-black text-[10px] text-accent group-hover:text-white/60 uppercase tracking-[0.2em] mb-1">Material de Apoio</p>
+                          <p className="text-base font-black text-primary group-hover:text-white italic leading-tight truncate">Fundamentos Técnicos.pdf</p>
                         </div>
-                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full text-primary group-hover:text-white hover:bg-white/20 shrink-0 border-none">
-                          <a href={activeContent?.url} target="_blank" rel="noopener noreferrer"><Paperclip className="h-3.5 w-3.5" /></a>
+                        <Button asChild variant="ghost" size="icon" className="h-12 w-12 rounded-full text-primary group-hover:text-white hover:bg-white/20 shrink-0 border-none">
+                          <a href={activeContent?.url} target="_blank" rel="noopener noreferrer"><Paperclip className="h-5 w-5" /></a>
                         </Button>
                       </Card>
                     ) : (
-                      <div className="col-span-full py-10 text-center opacity-20 border-2 border-dashed rounded-2xl">
-                        <p className="text-[10px] font-black italic">Sem anexos para este material.</p>
+                      <div className="col-span-full py-20 text-center opacity-20 border-2 border-dashed rounded-[2.5rem] bg-muted/5">
+                        <p className="text-sm font-black italic uppercase tracking-widest">Sem anexos pedagógicos para este material.</p>
                       </div>
                     )}
                   </div>
@@ -437,18 +439,20 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
           </Tabs>
         </main>
 
+        {/* EMENTA LATERAL (DIREITA - 20%) */}
         <aside className={`
-          absolute inset-y-0 right-0 w-full sm:w-64 lg:w-72 bg-white border-l z-30 transition-transform duration-300 ease-in-out transform
-          ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}
-          lg:relative flex flex-col shadow-2xl lg:shadow-none shrink-0
+          absolute inset-y-0 right-0 w-full sm:w-[320px] bg-white border-l z-30 transition-all duration-500 ease-in-out transform shadow-2xl
+          ${sidebarOpen ? 'translate-x-0' : 'translate-x-full opacity-0 pointer-events-none'}
+          lg:relative lg:translate-x-0 lg:opacity-100 lg:pointer-events-auto flex flex-col shrink-0
         `}>
-          <div className="p-4 bg-slate-50 border-b shrink-0">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[8px] font-black uppercase tracking-[0.2em] text-primary/40">Ementa da Jornada</h2>
-              <Badge className="bg-primary/5 text-primary text-[7px] font-black border-none px-1.5">{modules.length} Caps</Badge>
+          {/* SELETOR DE MÓDULOS */}
+          <div className="p-6 bg-slate-50 border-b shrink-0">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/40">Ementa da Jornada</h2>
+              <Badge className="bg-primary text-white text-[10px] font-black border-none px-3 h-6 rounded-full">{modules.length} Módulos</Badge>
             </div>
             
-            <div className="space-y-1 max-h-[35vh] overflow-y-auto pr-1 scrollbar-hide">
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary/10">
               {modules.map((module, idx) => (
                 <button 
                   key={module.id}
@@ -457,29 +461,30 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                     if (contents[module.id]?.length > 0) setActiveContentId(contents[module.id][0].id);
                     if (window.innerWidth < 1024) setSidebarOpen(false);
                   }}
-                  className={`w-full text-left p-2.5 rounded-xl transition-all border relative overflow-hidden group ${
+                  className={`w-full text-left p-4 rounded-2xl transition-all border-2 relative overflow-hidden group ${
                     activeModuleId === module.id 
-                      ? 'bg-primary text-white border-primary shadow-md' 
-                      : 'bg-white border-transparent hover:bg-slate-100 text-primary/60'
+                      ? 'bg-primary text-white border-primary shadow-xl' 
+                      : 'bg-white border-transparent hover:border-accent/20 text-primary/60'
                   }`}>
-                  <div className="flex items-center gap-2.5 relative z-10">
-                    <span className={`text-xs font-black italic ${activeModuleId === module.id ? 'text-accent' : 'text-primary/20'}`}>
+                  <div className="flex items-center gap-4 relative z-10">
+                    <span className={`text-base font-black italic transition-colors ${activeModuleId === module.id ? 'text-accent' : 'text-primary/20'}`}>
                       {(idx + 1).toString().padStart(2, '0')}
                     </span>
-                    <p className="font-black text-[8px] uppercase tracking-wider truncate flex-1">{module.title}</p>
+                    <p className="font-black text-xs uppercase tracking-wider truncate flex-1">{module.title}</p>
                   </div>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
-             <div className="flex items-center gap-1.5 mb-2">
-                <Layers className="h-2.5 w-2.5 text-accent" />
-                <h3 className="text-[8px] font-black text-primary uppercase tracking-[0.1em]">Materiais da Unidade</h3>
+          {/* MATERIAIS DO MÓDULO */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
+             <div className="flex items-center gap-2 mb-2">
+                <Layers className="h-4 w-4 text-accent" />
+                <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Materiais da Unidade</h3>
              </div>
              
-             <div className="space-y-1.5">
+             <div className="space-y-2">
                {contents[activeModuleId || ""]?.map((content) => (
                   <button 
                     key={content.id}
@@ -487,30 +492,30 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                       setActiveContentId(content.id);
                       if (window.innerWidth < 1024) setSidebarOpen(false);
                     }}
-                    className={`w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-2.5 border ${
+                    className={`w-full text-left p-4 rounded-2xl transition-all flex items-center gap-4 border-2 ${
                       activeContentId === content.id 
-                        ? 'bg-accent/5 border-accent/30 shadow-sm' 
+                        ? 'bg-accent/5 border-accent/40 shadow-sm' 
                         : 'bg-white border-slate-100 hover:border-accent/20 hover:bg-slate-50'
                     }`}>
-                      <div className={`h-6 w-6 rounded-lg flex items-center justify-center shrink-0 ${
-                        activeContentId === content.id ? 'bg-accent text-white' : 'bg-slate-100 text-primary/30'
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                        activeContentId === content.id ? 'bg-accent text-white shadow-lg' : 'bg-slate-100 text-primary/30'
                       }`}>
-                         {content.type === 'video' ? <PlayCircle className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+                         {content.type === 'video' ? <PlayCircle className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className={`font-black text-[8px] uppercase tracking-wider truncate ${
+                        <p className={`font-black text-xs uppercase tracking-wider truncate transition-colors ${
                           activeContentId === content.id ? 'text-primary' : 'text-primary/60'
                         }`}>{content.title}</p>
-                        <p className="text-[6px] font-bold text-muted-foreground uppercase opacity-60 leading-none mt-0.5">{content.type}</p>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60 leading-none mt-1">{content.type}</p>
                       </div>
                       {activeContentId === content.id && (
-                        <div className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                        <div className="h-2 w-2 rounded-full bg-accent animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
                       )}
                   </button>
                ))}
                {(!contents[activeModuleId || ""] || contents[activeModuleId || ""].length === 0) && (
-                 <div className="py-6 text-center border-2 border-dashed rounded-xl opacity-20 bg-muted/5">
-                    <p className="text-[7px] font-black uppercase italic">Sem Materiais</p>
+                 <div className="py-12 text-center border-4 border-dashed rounded-[2rem] opacity-20 bg-muted/5">
+                    <p className="text-[10px] font-black uppercase italic tracking-widest">Sem Materiais Vinculados</p>
                  </div>
                )}
              </div>
