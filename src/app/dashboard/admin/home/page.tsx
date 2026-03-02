@@ -42,7 +42,6 @@ export default function CoordinatorDashboard() {
   const { profile, loading: isUserLoading } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [isSeeding, setIsSeeding] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalStudents: 1250,
@@ -65,29 +64,6 @@ export default function CoordinatorDashboard() {
     fetchLogs();
   }, []);
 
-  const handleSeedDemoData = async () => {
-    setIsSeeding(true);
-    try {
-      const { data: trail, error: tError } = await supabase.from('trails').insert([{
-        title: "Redação Master: Rumo ao 1000",
-        category: "Linguagens",
-        description: "Domine a estrutura do texto dissertativo-argumentativo padrão ENEM.",
-        image_url: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800",
-        teacher_name: "Prof. Ana Lúcia",
-        status: "published",
-        target_audience: "all"
-      }]).select().single();
-
-      if (tError) throw tError;
-
-      toast({ title: "Dados de Demonstração Criados!", description: "As trilhas funcionais já estão disponíveis." });
-    } catch (e: any) {
-      toast({ title: "Erro ao gerar dados", description: e.message, variant: "destructive" });
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
   if (isUserLoading || loading) return (
     <div className="h-96 flex flex-col items-center justify-center gap-4">
       <Loader2 className="h-12 w-12 animate-spin text-accent" />
@@ -106,9 +82,6 @@ export default function CoordinatorDashboard() {
           <p className="text-muted-foreground font-medium text-sm md:text-lg italic">Inteligência de rede e auditoria em tempo real.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button onClick={handleSeedDemoData} disabled={isSeeding} variant="outline" className="rounded-xl h-12 border-dashed border-accent/40 bg-white hover:bg-accent/5 text-accent">
-            {isSeeding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />} Gerar Trilhas Demo
-          </Button>
           <Button className="rounded-xl h-12 bg-accent text-accent-foreground font-black shadow-xl" asChild>
             <Link href="/dashboard/teacher/analytics">Relatório Global</Link>
           </Button>
