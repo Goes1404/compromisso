@@ -63,11 +63,14 @@ export default function CoordinatorDashboard() {
         
         if (logData) setLogs(logData);
 
-        // 2. Contagem de Alunos (Qualquer um que não seja admin ou teacher)
-        const { count: studentCount } = await supabase
+        // 2. Contagem de Alunos (Filtro ajustado para ser mais permissivo)
+        const { count: studentCount, error: sError } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
-          .not('profile_type', 'in', '("teacher","admin")');
+          .not('profile_type', 'eq', 'teacher')
+          .not('profile_type', 'eq', 'admin');
+
+        if (sError) console.error("Erro count alunos:", sError);
 
         // 3. Contagem de Professores
         const { count: teacherCount } = await supabase
@@ -85,7 +88,7 @@ export default function CoordinatorDashboard() {
           avgCompletion = Math.round(progressData.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / progressData.length);
         }
 
-        // 5. Média Global de Simulados (Grade 0-10)
+        // 5. Média Global de Simulados
         const { data: scoreData } = await supabase
           .from('simulation_attempts')
           .select('score, total_questions');
