@@ -273,8 +273,8 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
 
       <div className="flex-1 flex overflow-hidden relative">
         
-        {/* CONTEÚDO PRINCIPAL (80%) */}
-        <main className="flex-1 flex flex-col bg-white overflow-hidden relative min-w-0 shadow-inner">
+        {/* CONTEÚDO PRINCIPAL (80% OU 100%) */}
+        <main className="flex-1 flex flex-col bg-white min-w-0 shadow-inner overflow-hidden relative">
           <div className="w-full aspect-video bg-black relative group shadow-2xl shrink-0 overflow-hidden">
             {activeContent?.type === 'video' ? (
               <div id="youtube-player" className="w-full h-full" />
@@ -289,7 +289,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
             )}
           </div>
 
-          {/* CONSOLE DE ESTUDOS */}
+          {/* CONSOLE DE ESTUDOS - ROLÁVEL */}
           <Tabs defaultValue="summary" className="flex-1 flex flex-col min-h-0 bg-white overflow-hidden">
             <TabsList className="grid w-full grid-cols-4 h-14 bg-slate-950 p-0 gap-0 shrink-0 shadow-2xl border-b border-white/5">
               {[
@@ -439,11 +439,11 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
           </Tabs>
         </main>
 
-        {/* EMENTA LATERAL (DIREITA - 20%) */}
+        {/* EMENTA LATERAL (DIREITA) - DINÂMICA */}
         <aside className={`
-          absolute inset-y-0 right-0 w-full sm:w-[320px] bg-white border-l z-30 transition-all duration-500 ease-in-out transform shadow-2xl
-          ${sidebarOpen ? 'translate-x-0' : 'translate-x-full opacity-0 pointer-events-none'}
-          lg:relative lg:translate-x-0 lg:opacity-100 lg:pointer-events-auto flex flex-col shrink-0
+          bg-white border-l transition-all duration-500 ease-in-out flex flex-col shrink-0 overflow-hidden
+          ${sidebarOpen ? 'w-full sm:w-[320px]' : 'w-0 border-l-0 opacity-0'}
+          absolute inset-y-0 right-0 z-30 lg:relative lg:inset-auto
         `}>
           {/* SELETOR DE MÓDULOS */}
           <div className="p-6 bg-slate-50 border-b shrink-0">
@@ -477,14 +477,14 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
             </div>
           </div>
 
-          {/* MATERIAIS DO MÓDULO */}
+          {/* MATERIAIS DO MÓDULO - ROLÁVEL */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
              <div className="flex items-center gap-2 mb-2">
                 <Layers className="h-4 w-4 text-accent" />
                 <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Materiais da Unidade</h3>
              </div>
              
-             <div className="space-y-2">
+             <div className="space-y-2 pb-10">
                {contents[activeModuleId || ""]?.map((content) => (
                   <button 
                     key={content.id}
