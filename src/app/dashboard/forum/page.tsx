@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -95,7 +94,7 @@ export default function ForumPage() {
     setIsSubmitting(false);
   };
 
-  // Lógica de Filtro Industrial para Polos
+  // Lógica de Filtro Industrial para Polos (Sincronizada com o Perfil)
   const filteredForums = forums?.filter(f => {
     const title = (f.name || '').toLowerCase();
     const desc = (f.description || '').toLowerCase();
@@ -105,7 +104,10 @@ export default function ForumPage() {
     // Filtro de Segurança por Polo: 
     // Alunos só veem fóruns da categoria "Polos" se o nome do fórum contiver a instituição deles
     if (f.category === "Polos" && !isStaff) {
-      const userInstitution = (profile?.institution || '').toLowerCase();
+      const userInstitution = (profile?.institution || '').toLowerCase().trim();
+      // Se o aluno não tem polo, ele não vê fóruns de polos
+      if (!userInstitution) return false;
+      // O nome do fórum deve conter o nome do polo do aluno
       if (!title.includes(userInstitution)) return false;
     }
 

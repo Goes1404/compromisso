@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,11 +16,11 @@ import {
   ArrowUpRight,
   PlusCircle,
   Database,
-  Star,
   Trash2,
   Settings2,
   Building2,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -149,40 +148,48 @@ export default function AdminStudentsPage() {
   };
 
   const handleUpdateStudentForum = async () => {
-    if (!editingStudent || !newInstitution.trim()) return;
+    const institutionClean = newInstitution.trim();
+    if (!editingStudent || !institutionClean) return;
+    
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
+      // 1. Atualizar Perfil do Aluno
+      const { error: profileErr } = await supabase
         .from('profiles')
-        .update({ institution: newInstitution })
+        .update({ institution: institutionClean })
         .eq('id', editingStudent.id);
 
-      if (error) throw error;
+      if (profileErr) throw profileErr;
 
-      // Garantir que o fórum exista
-      const forumName = `Comunidade: ${newInstitution}`;
+      // 2. Garantir que o fórum exista (Lógica Robusta)
+      const forumName = `Comunidade: ${institutionClean}`;
+      
       const { data: existingForum } = await supabase
         .from('forums')
         .select('id')
-        .eq('name', forumName)
+        .ilike('name', forumName)
         .maybeSingle();
 
       if (!existingForum) {
         await supabase.from('forums').insert({
           name: forumName,
-          description: `Fórum gerido pela rede para a unidade: ${newInstitution}`,
+          description: `Espaço oficial de debate e avisos para a unidade: ${institutionClean}.`,
           category: "Polos",
           author_id: user?.id,
-          author_name: "Administração",
+          author_name: "Gabinete de Gestão",
           is_teacher_only: false
         });
       }
 
-      toast({ title: "Unidade/Fórum Atualizado!", description: `${editingStudent.name} agora faz parte do grupo ${newInstitution}.` });
+      toast({ 
+        title: "Unidade Atualizada!", 
+        description: `${editingStudent.name} foi movido para o Polo ${institutionClean}.` 
+      });
+      
       setEditingStudent(null);
       fetchData();
     } catch (e: any) {
-      toast({ title: "Erro ao mover aluno", description: e.message, variant: "destructive" });
+      toast({ title: "Erro ao transferir", description: e.message, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -352,7 +359,7 @@ export default function AdminStudentsPage() {
                   </TableCell>
                   <TableCell className="text-right px-8">
                     <div className="flex items-center justify-end gap-2">
-                      {/* BOTÃO GERENCIAR FORUM/UNIDADE */}
+                      
                       <Dialog open={editingStudent?.id === student.id} onOpenChange={(open) => !open && setEditingStudent(null)}>
                         <DialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="rounded-xl text-primary" onClick={() => { setEditingStudent(student); setNewInstitution(student.institution || ""); }}>
@@ -362,17 +369,23 @@ export default function AdminStudentsPage() {
                         <DialogContent className="rounded-[2.5rem] p-10 bg-white max-w-sm border-none shadow-2xl">
                           <DialogHeader>
                             <DialogTitle className="text-xl font-black italic text-primary">Alterar Polo / Fórum</DialogTitle>
-                            <DialogDescription className="text-xs">Mudar a unidade do aluno o removerá da comunidade atual e o adicionará automaticamente na nova.</DialogDescription>
+                            <DialogDescription className="text-xs italic">Isso moverá o aluno para a nova comunidade do polo instantaneamente.</DialogDescription>
                           </DialogHeader>
                           <div className="py-6 space-y-4">
                             <div className="space-y-2">
-                              <Label className="text-[9px] font-black uppercase opacity-40 ml-2">Nova Instituição</Label>
+                              <Label className="text-[9px] font-black uppercase opacity-40 ml-2">Nova Instituição (Polo)</Label>
                               <Input value={newInstitution} onChange={(e) => setNewInstitution(e.target.value)} placeholder="Ex: ETEC Jorge Street" className="h-14 rounded-xl bg-muted/30 border-none font-bold italic" />
+                            </div>
+                            <div className="bg-accent/5 p-4 rounded-xl border border-accent/10 flex items-start gap-3">
+                              <Sparkles className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+                              <p className="text-[10px] font-medium italic text-primary/70 leading-relaxed">
+                                A Aurora criará o fórum do polo se ele ainda não existir.
+                              </p>
                             </div>
                           </div>
                           <DialogFooter>
-                            <Button onClick={handleUpdateStudentForum} disabled={isSubmitting} className="w-full h-14 bg-primary text-white font-black rounded-xl">
-                              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Transferir Aluno"}
+                            <Button onClick={handleUpdateStudentForum} disabled={isSubmitting} className="w-full h-14 bg-primary text-white font-black rounded-xl shadow-xl">
+                              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Transferir e Sincronizar"}
                             </Button>
                           </DialogFooter>
                         </DialogContent>

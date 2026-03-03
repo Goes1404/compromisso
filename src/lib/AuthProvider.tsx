@@ -1,4 +1,3 @@
-
 'use client';
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
@@ -93,7 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
         
         if (!error && data) {
-          // VERIFICAÇÃO DE SUSPENSÃO
           if (data.status === 'suspended') {
             setProfile(data as Profile);
             router.replace('/suspended');
@@ -119,6 +117,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (user) {
       fetchProfile();
+
+      // SINCRONIZAÇÃO EM TEMPO REAL: Se o adm mudar o polo do aluno, o portal dele atualiza na hora
+      const profileChannel = supabase
+        .channel(`profile_sync_${user.id}`)
+        .on('postgres_changes', { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'profiles', 
+          filter: `id=eq.${user.id}` 
+        }, (payload) => {
+          console.log("[AUTH SYNC] Perfil atualizado pela gestão:", payload.new);
+          setProfile(payload.new as Profile);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(profileChannel);
+      };
     }
   }, [user, router]);
 
