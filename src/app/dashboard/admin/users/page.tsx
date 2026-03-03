@@ -13,11 +13,10 @@ import {
   Loader2, 
   ShieldCheck, 
   UserCircle, 
-  MoreVertical,
-  Filter,
   Users as UsersIcon,
-  AlertTriangle,
-  Send
+  Send,
+  Ban,
+  CheckCircle2
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabase";
 import { useAuth } from "@/lib/AuthProvider";
@@ -41,7 +40,7 @@ export default function AdminUserDirectoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<any[]>([]);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -64,15 +63,51 @@ export default function AdminUserDirectoryPage() {
     fetchUsers();
   }, []);
 
+  const handleToggleStatus = async (id: string, currentStatus: string, name: string) => {
+    if (id === currentUser?.id) {
+      toast({ title: "Ação Negada", description: "Você não pode suspender seu próprio acesso.", variant: "destructive" });
+      return;
+    }
+
+    setProcessingId(id);
+    const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await supabase.from('activity_logs').insert({
+        user_id: currentUser?.id,
+        user_name: currentProfile?.name || 'Administrador',
+        action: `${newStatus === 'suspended' ? 'Suspendeu' : 'Reativou'} o acesso de: ${name}`,
+        entity_type: 'user',
+        entity_id: id
+      });
+
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, status: newStatus } : u));
+      toast({ 
+        title: newStatus === 'suspended' ? "Acesso Bloqueado" : "Acesso Restaurado", 
+        description: `O status de ${name} foi alterado para ${newStatus}.` 
+      });
+    } catch (err: any) {
+      toast({ title: "Erro na Operação", description: err.message, variant: "destructive" });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleDeleteUser = async (id: string, name: string) => {
     if (id === currentUser?.id) {
       toast({ title: "Ação Negada", description: "Você não pode excluir seu próprio perfil.", variant: "destructive" });
       return;
     }
 
-    setDeletingId(id);
+    setProcessingId(id);
     try {
-      // Registrar log antes de excluir
       await supabase.from('activity_logs').insert({
         user_id: currentUser?.id,
         user_name: currentProfile?.name || 'Administrador',
@@ -89,7 +124,7 @@ export default function AdminUserDirectoryPage() {
     } catch (err: any) {
       toast({ title: "Erro na Exclusão", description: err.message, variant: "destructive" });
     } finally {
-      setDeletingId(null);
+      setProcessingId(null);
     }
   };
 
@@ -132,28 +167,37 @@ export default function AdminUserDirectoryPage() {
                 <TableHeader className="bg-slate-50 border-b border-muted/10">
                   <TableRow className="border-none h-16">
                     <TableHead className="px-8 font-black uppercase text-[10px] tracking-widest text-primary/40">Nome Completo</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/40">Status de Acesso</TableHead>
                     <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/40">Classificação</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/40">Instituição</TableHead>
-                    <TableHead className="text-right px-8 font-black uppercase text-[10px] tracking-widest text-primary/40">Ações Críticas</TableHead>
+                    <TableHead className="text-right px-8 font-black uppercase text-[10px] tracking-widest text-primary/40">Ações de Gestão</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((u) => {
                     const isStaff = !['etec', 'uni', 'enem', 'cpop', 'student', 'aluno'].includes(u.profile_type?.toLowerCase() || '');
+                    const isSuspended = u.status === 'suspended';
+                    
                     return (
                       <TableRow key={u.id} className="border-b last:border-0 hover:bg-accent/5 transition-colors group h-20">
                         <TableCell className="px-8">
                           <div className="flex items-center gap-4">
                             <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-black italic shadow-md transition-all ${
-                              isStaff ? 'bg-accent text-white' : 'bg-primary text-white'
+                              isSuspended ? 'bg-slate-400 grayscale text-white' : (isStaff ? 'bg-accent text-white' : 'bg-primary text-white')
                             }`}>
                               {u.name?.charAt(0)}
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-black text-primary text-sm italic">{u.name}</span>
+                              <span className={`font-black text-sm italic ${isSuspended ? 'text-muted-foreground line-through' : 'text-primary'}`}>{u.name}</span>
                               <span className="text-[8px] font-black uppercase opacity-40">@{u.username || 'user'}</span>
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`border-none font-black text-[8px] uppercase px-3 h-6 ${
+                            isSuspended ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                          }`}>
+                            {isSuspended ? 'Acesso Suspenso' : 'Acesso Ativo'}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge className={`border-none font-black text-[8px] uppercase px-3 h-6 ${
@@ -162,21 +206,27 @@ export default function AdminUserDirectoryPage() {
                             {isStaff ? 'Staff / Mentor' : 'Estudante'}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <span className="text-xs font-bold text-muted-foreground italic truncate max-w-[150px] inline-block">
-                            {u.institution || 'Geral'}
-                          </span>
-                        </TableCell>
                         <TableCell className="text-right px-8">
                           <div className="flex items-center justify-end gap-2">
                             <Button variant="ghost" size="icon" className="rounded-xl text-accent" asChild>
                               <Link href={`/dashboard/chat/${u.id}`}><Send className="h-4 w-4" /></Link>
                             </Button>
+
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handleToggleStatus(u.id, u.status, u.name)}
+                              disabled={processingId === u.id}
+                              className={`rounded-xl ${isSuspended ? 'text-green-500 hover:bg-green-50' : 'text-amber-500 hover:bg-amber-50'}`}
+                              title={isSuspended ? "Reativar Usuário" : "Suspender Usuário"}
+                            >
+                              {processingId === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (isSuspended ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />)}
+                            </Button>
                             
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50">
-                                  {deletingId === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                  {processingId === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent className="rounded-[2rem] border-none shadow-2xl p-10 max-w-sm">

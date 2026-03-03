@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
@@ -11,6 +12,7 @@ type Profile = {
   email: string;
   profile_type: string;
   role?: string;
+  status?: string;
   [key: string]: any;
 };
 
@@ -37,7 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // 1. Efeito para carregar a sessão inicial o mais rápido possível
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setLoading(false);
@@ -50,7 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
         
-        // Se não houver sessão, para o carregamento global imediatamente
         if (!initialSession) {
           setLoading(false);
         }
@@ -71,10 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         router.replace('/login');
       }
-      
-      if (event === 'SIGNED_IN') {
-        // O perfil será carregado pelo outro useEffect
-      }
     });
 
     return () => {
@@ -82,7 +78,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
-  // 2. Efeito para carregar o perfil quando o usuário estiver logado
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) {
@@ -91,7 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        // Tenta buscar na tabela profiles
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -99,15 +93,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
         
         if (!error && data) {
+          // VERIFICAÇÃO DE SUSPENSÃO
+          if (data.status === 'suspended') {
+            setProfile(data as Profile);
+            router.replace('/suspended');
+            return;
+          }
           setProfile(data as Profile);
         } else {
-          // Fallback ultra-rápido para metadados se a tabela falhar
           setProfile({
             id: user.id,
             name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário',
             email: user.email || '',
             profile_type: user.user_metadata?.role || 'student',
-            role: user.user_metadata?.role || 'student'
+            role: user.user_metadata?.role || 'student',
+            status: 'active'
           });
         }
       } catch (error) {
@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) {
       fetchProfile();
     }
-  }, [user]);
+  }, [user, router]);
 
   const signOut = async () => {
     setLoading(true);
