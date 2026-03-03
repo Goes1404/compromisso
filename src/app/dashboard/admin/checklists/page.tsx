@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -281,7 +280,7 @@ export default function AdminChecklistAuditPage() {
               </DialogHeader>
               <div className="py-6 space-y-4">
                 <Label className="text-[10px] font-black uppercase opacity-40 ml-2">Conteúdo da Mensagem</Label>
-                <支配Textarea 
+                <Textarea 
                   placeholder="Olá! Notamos que sua documentação está pendente. Precisa de ajuda com algum item?" 
                   className="min-h-[150px] rounded-2xl bg-muted/30 border-none font-medium italic p-6"
                   value={bulkContent}
