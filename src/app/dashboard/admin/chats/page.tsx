@@ -17,7 +17,9 @@ import {
   Calendar,
   Filter,
   Users2,
-  Clock
+  Clock,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import {
   Select,
@@ -26,6 +28,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/app/lib/supabase";
 import { format, isToday, isWithinInterval, subDays, subMonths } from "date-fns";
 import Link from "next/link";
@@ -48,81 +61,108 @@ export default function AdminChatAuditPage() {
   const [dateFilter, setDateFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [threads, setThreads] = useState<Conversation[]>([]);
+  const [clearingId, setClearingId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function fetchThreads() {
-      setLoading(true);
-      try {
-        const { data: messages, error: mError } = await supabase
-          .from('direct_messages')
-          .select('*')
-          .order('created_at', { ascending: false });
+  const fetchThreads = async () => {
+    setLoading(true);
+    try {
+      const { data: messages, error: mError } = await supabase
+        .from('direct_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (mError) throw mError;
+      if (mError) throw mError;
 
-        if (!messages || messages.length === 0) {
-          setThreads([]);
-          return;
-        }
-
-        const userIds = Array.from(new Set(messages.flatMap(m => [m.sender_id, m.receiver_id])));
-
-        const { data: profiles, error: pError } = await supabase
-          .from('profiles')
-          .select('id, name, profile_type')
-          .in('id', userIds);
-
-        if (pError) throw pError;
-
-        const profileMap = new Map(profiles?.map(p => [p.id, p]));
-        const threadMap = new Map();
-        
-        messages.forEach(msg => {
-          const ids = [msg.sender_id, msg.receiver_id].sort();
-          const key = ids.join(':');
-          
-          if (!threadMap.has(key)) {
-            const u1 = profileMap.get(ids[0]);
-            const u2 = profileMap.get(ids[1]);
-
-            threadMap.set(key, {
-              u1_id: ids[0],
-              u2_id: ids[1],
-              u1_name: u1?.name || 'Usuário Externo',
-              u2_name: u2?.name || 'Usuário Externo',
-              u1_type: u1?.profile_type || 'student',
-              u2_type: u2?.profile_type || 'student',
-              last_message: msg.content,
-              last_date: msg.created_at
-            });
-          }
-        });
-
-        setThreads(Array.from(threadMap.values()));
-      } catch (err: any) {
-        console.error("Erro detalhado ao auditar chats:", err);
-        toast({
-          title: "Erro de Sincronização",
-          description: "Não foi possível carregar os logs de conversa.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
+      if (!messages || messages.length === 0) {
+        setThreads([]);
+        return;
       }
-    }
 
+      const userIds = Array.from(new Set(messages.flatMap(m => [m.sender_id, m.receiver_id])));
+
+      const { data: profiles, error: pError } = await supabase
+        .from('profiles')
+        .select('id, name, profile_type')
+        .in('id', userIds);
+
+      if (pError) throw pError;
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]));
+      const threadMap = new Map();
+      
+      messages.forEach(msg => {
+        const ids = [msg.sender_id, msg.receiver_id].sort();
+        const key = ids.join(':');
+        
+        if (!threadMap.has(key)) {
+          const u1 = profileMap.get(ids[0]);
+          const u2 = profileMap.get(ids[1]);
+
+          threadMap.set(key, {
+            u1_id: ids[0],
+            u2_id: ids[1],
+            u1_name: u1?.name || 'Usuário Externo',
+            u2_name: u2?.name || 'Usuário Externo',
+            u1_type: u1?.profile_type || 'student',
+            u2_type: u2?.profile_type || 'student',
+            last_message: msg.content,
+            last_date: msg.created_at
+          });
+        }
+      });
+
+      setThreads(Array.from(threadMap.values()));
+    } catch (err: any) {
+      console.error("Erro detalhado ao auditar chats:", err);
+      toast({
+        title: "Erro de Sincronização",
+        description: "Não foi possível carregar os logs de conversa.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchThreads();
   }, [toast]);
 
+  const handleClearChat = async (u1: string, u2: string) => {
+    setClearingId(`${u1}:${u2}`);
+    try {
+      const { error } = await supabase
+        .from('direct_messages')
+        .delete()
+        .or(`and(sender_id.eq.${u1},receiver_id.eq.${u2}),and(sender_id.eq.${u2},receiver_id.eq.${u1})`);
+
+      if (error) throw error;
+
+      toast({
+        title: "Histórico Limpo",
+        description: "As mensagens de teste foram removidas permanentemente."
+      });
+      
+      // Atualiza a lista removendo o thread
+      setThreads(prev => prev.filter(t => !(t.u1_id === u1 && t.u2_id === u2)));
+    } catch (err: any) {
+      toast({
+        title: "Falha na Limpeza",
+        description: err.message,
+        variant: "destructive"
+      });
+    } finally {
+      setClearingId(null);
+    }
+  };
+
   const filteredThreads = threads.filter(t => {
-    // 1. Busca por nome ou conteúdo
     const searchMatch = 
       t.u1_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       t.u2_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.last_message?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // 2. Filtro por Papel
     const staffKeywords = ['teacher', 'admin', 'mentor', 'coordenador'];
     const isU1Staff = staffKeywords.some(key => (t.u1_type || '').toLowerCase().includes(key));
     const isU2Staff = staffKeywords.some(key => (t.u2_type || '').toLowerCase().includes(key));
@@ -132,12 +172,11 @@ export default function AdminChatAuditPage() {
     if (roleFilter === 'student_staff') roleMatch = (isU1Staff && !isU2Staff) || (!isU1Staff && isU2Staff);
     if (roleFilter === 'staff_staff') roleMatch = isU1Staff && isU2Staff;
 
-    // 3. Filtro por Data
     let dateMatch = true;
     const msgDate = new Date(t.last_date);
     const now = new Date();
 
-    if (dateFilter === 'today') dateMatch = isToday(msgDate);
+    if (dateFilter === 'today') dateMatch = isToday(now) && isToday(msgDate);
     if (dateFilter === 'week') dateMatch = isWithinInterval(msgDate, { start: subDays(now, 7), end: now });
     if (dateFilter === 'month') dateMatch = isWithinInterval(msgDate, { start: subMonths(now, 1), end: now });
 
@@ -218,7 +257,7 @@ export default function AdminChatAuditPage() {
                     <TableHead className="px-8 font-black uppercase text-[10px] tracking-widest text-primary/40">Participantes</TableHead>
                     <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/40">Última Interação</TableHead>
                     <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary/40">Status</TableHead>
-                    <TableHead className="text-right px-8 font-black uppercase text-[10px] tracking-widest text-primary/40">Ações</TableHead>
+                    <TableHead className="text-right px-8 font-black uppercase text-[10px] tracking-widest text-primary/40">Ações de Gestão</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -254,11 +293,45 @@ export default function AdminChatAuditPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right px-8">
-                        <Button className="bg-primary text-white font-black text-[10px] uppercase h-10 px-6 rounded-xl shadow-lg hover:scale-105 transition-all" asChild>
-                          <Link href={`/dashboard/admin/chats/audit?u1=${thread.u1_id}&u2=${thread.u2_id}`}>
-                            <History className="h-3.5 w-3.5 mr-2" /> Abrir Log
-                          </Link>
-                        </Button>
+                        <div className="flex items-center justify-end gap-3">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50">
+                                {clearingId === `${thread.u1_id}:${thread.u2_id}` ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="rounded-[2rem] border-none shadow-2xl p-10 max-w-sm bg-white">
+                              <AlertDialogHeader>
+                                <div className="h-12 w-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-4">
+                                  <AlertTriangle className="h-6 w-6" />
+                                </div>
+                                <AlertDialogTitle className="text-2xl font-black italic text-primary">Limpar Chat?</AlertDialogTitle>
+                                <AlertDialogDescription className="font-medium text-sm">
+                                  Esta ação apagará <strong>todas</strong> as mensagens entre estes participantes. Esta operação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="gap-3 mt-6">
+                                <AlertDialogCancel className="rounded-xl font-bold border-none bg-muted/30 h-12">Cancelar</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleClearChat(thread.u1_id, thread.u2_id)} 
+                                  className="rounded-xl font-black bg-red-600 hover:bg-red-700 text-white h-12 px-8"
+                                >
+                                  Limpar Agora
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+
+                          <Button className="bg-primary text-white font-black text-[10px] uppercase h-10 px-6 rounded-xl shadow-lg hover:scale-105 transition-all" asChild>
+                            <Link href={`/dashboard/admin/chats/audit?u1=${thread.u1_id}&u2=${thread.u2_id}`}>
+                              <History className="h-3.5 w-3.5 mr-2" /> Abrir Log
+                            </Link>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
