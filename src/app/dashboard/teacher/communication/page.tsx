@@ -3,11 +3,28 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bell, PlusCircle, Megaphone, AlertOctagon, Info, Loader2, Trash2 } from 'lucide-react';
+import { 
+  Bell, 
+  PlusCircle, 
+  Megaphone, 
+  AlertOctagon, 
+  Info, 
+  Loader2, 
+  Trash2, 
+  Users, 
+  Target, 
+  Zap, 
+  FileCheck, 
+  MonitorPlay,
+  Clock,
+  Search,
+  Filter,
+  Sparkles
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/app/lib/supabase';
 import { useAuth } from '@/lib/AuthProvider';
@@ -20,26 +37,37 @@ interface Announcement {
   title: string;
   message: string;
   priority: 'low' | 'medium' | 'high';
+  target_group?: string;
   created_at: string;
+  author_name?: string;
 }
 
-type BadgeVariant = "secondary" | "destructive" | "default" | "outline";
-
-const priorityStyles: Record<'low' | 'medium' | 'high', { variant: BadgeVariant; icon: any; label: string }> = {
-  low: { variant: 'secondary', icon: Info, label: 'Normal' },
-  medium: { variant: 'default', icon: Megaphone, label: 'Importante' },
-  high: { variant: 'destructive', icon: AlertOctagon, label: 'Urgente' },
+const priorityStyles: Record<'low' | 'medium' | 'high', { variant: "secondary" | "destructive" | "default" | "outline"; icon: any; label: string; color: string; bg: string }> = {
+  low: { variant: 'secondary', icon: Info, label: 'Informativo', color: 'text-blue-600', bg: 'bg-blue-50' },
+  medium: { variant: 'default', icon: Megaphone, label: 'Importante', color: 'text-amber-600', bg: 'bg-amber-50' },
+  high: { variant: 'destructive', icon: AlertOctagon, label: 'Urgente', color: 'text-red-600', bg: 'bg-red-50' },
 };
+
+const QUICK_TEMPLATES = [
+  { title: "Sinal de Live Ativo", message: "Atenção: Nossa mentoria ao vivo está começando agora! Acesse o menu de Lives.", icon: MonitorPlay, priority: 'medium' },
+  { title: "Alerta de Documentação", message: "Prazo Crítico: O envio de documentos para o SiSU encerra em 24h. Verifique seu checklist.", icon: FileCheck, priority: 'high' },
+  { title: "Material Novo no Acervo", message: "Acabamos de liberar novos simulados e PDFs na Biblioteca Digital. Bons estudos!", icon: Zap, priority: 'low' },
+];
 
 export default function CommunicationPage() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newTitle, setNewTitle] = useState('');
-  const [newMessage, setNewMessage] = useState('');
-  const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('low');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+
+  const [formData, setFormData] = useState({
+    title: '',
+    message: '',
+    priority: 'low' as 'low' | 'medium' | 'high',
+    target_group: 'all'
+  });
 
   useEffect(() => {
     async function fetchAnnouncements() {
@@ -55,17 +83,19 @@ export default function CommunicationPage() {
     fetchAnnouncements();
   }, []);
 
-  const handleCreateAnnouncement = async () => {
-    if (!newTitle.trim() || !newMessage.trim() || !user) return;
+  const handleCreateAnnouncement = async (overrideData?: any) => {
+    const dataToSubmit = overrideData || formData;
+    if (!dataToSubmit.title.trim() || !dataToSubmit.message.trim() || !user) return;
 
     setIsCreating(true);
     try {
       const { data, error } = await supabase
         .from('announcements')
         .insert([{
-          title: newTitle,
-          message: newMessage,
-          priority: newPriority,
+          title: dataToSubmit.title,
+          message: dataToSubmit.message,
+          priority: dataToSubmit.priority,
+          target_group: dataToSubmit.target_group,
           author_id: user.id
         }])
         .select()
@@ -73,120 +103,231 @@ export default function CommunicationPage() {
 
       if (error) throw error;
 
-      // Registrar Log de Atividade
       await supabase.from('activity_logs').insert({
         user_id: user.id,
-        user_name: profile?.name || user.email,
-        action: `Publicou um comunicado: ${newTitle}`,
+        user_name: profile?.name || 'Mentor',
+        action: `Publicou aviso: ${dataToSubmit.title}`,
         entity_type: 'announcement',
         entity_id: data.id
       });
 
       setAnnouncements([data, ...announcements]);
-      setNewTitle('');
-      setNewMessage('');
-      setNewPriority('low');
-      toast({ title: "Comunicado Publicado!", description: "O aviso já está visível para todos os alunos." });
+      setFormData({ title: '', message: '', priority: 'low', target_group: 'all' });
+      toast({ title: "Comunicado Fixado!", description: "A rede foi notificada com sucesso." });
     } catch (e: any) {
-      toast({ title: "Erro ao publicar", description: e.message, variant: "destructive" });
+      toast({ title: "Falha na Publicação", description: e.message, variant: "destructive" });
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const applyTemplate = (template: typeof QUICK_TEMPLATES[0]) => {
+    setFormData({
+      title: template.title,
+      message: template.message,
+      priority: template.priority as any,
+      target_group: 'all'
+    });
+    toast({ title: "Template Aplicado", description: "Revise e publique quando estiver pronto." });
   };
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('announcements').delete().eq('id', id);
     if (!error) {
       setAnnouncements(announcements.filter(a => a.id !== id));
-      toast({ title: "Comunicado removido." });
+      toast({ title: "Aviso arquivado." });
     }
   };
 
+  const filtered = announcements.filter(a => 
+    a.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    a.message.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
-      <div className="lg:col-span-1 space-y-6">
-        <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
-          <CardHeader className="bg-primary/5 p-8 border-b border-dashed">
-            <CardTitle className="flex items-center gap-3 italic">
-              <PlusCircle className="h-6 w-6 text-accent" />
-              <span className="text-xl font-black text-primary">Novo Comunicado</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-8 space-y-4">
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-primary/40 mb-1 block px-2">Título do Aviso</label>
-              <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Ex: Aula extra de Redação" className="h-12 bg-muted/30 border-none rounded-xl font-bold" />
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-primary/40 mb-1 block px-2">Mensagem</label>
-              <Textarea value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Descreva os detalhes..." className="rounded-2xl min-h-[150px] bg-muted/30 border-none font-medium text-sm" />
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-primary/40 mb-1 block px-2">Prioridade</label>
-              <Select value={newPriority} onValueChange={(v: any) => setNewPriority(v)}>
-                <SelectTrigger className="h-12 bg-muted/30 border-none rounded-xl font-bold">
-                  <SelectValue placeholder="Defina a urgência" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-none shadow-2xl">
-                  <SelectItem value="low" className="font-bold">Normal</SelectItem>
-                  <SelectItem value="medium" className="font-bold">Importante</SelectItem>
-                  <SelectItem value="high" className="font-bold">Urgente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={handleCreateAnnouncement} disabled={isCreating || !newTitle.trim()} className="w-full h-14 bg-primary text-white font-black rounded-xl shadow-lg mt-4">
-              {isCreating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Bell className="mr-2 h-5 w-5" />} Publicar na Rede
-            </Button>
-          </CardContent>
-        </Card>
+    <div className="space-y-8 animate-in fade-in duration-700 pb-20 px-1">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-black text-primary italic leading-none">Mural de Avisos</h1>
+            <Megaphone className="h-6 w-6 text-accent" />
+          </div>
+          <p className="text-muted-foreground font-medium italic">Gestão de comunicados oficiais e alertas de rede.</p>
+        </div>
+        <div className="flex items-center gap-4 bg-white/50 backdrop-blur-sm p-4 rounded-2xl border shadow-sm">
+          <div className="text-center px-4">
+            <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Ativos</p>
+            <p className="text-xl font-black text-primary">{announcements.length}</p>
+          </div>
+          <div className="w-px h-8 bg-muted/20" />
+          <div className="text-center px-4">
+            <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Urgentes</p>
+            <p className="text-xl font-black text-red-600">{announcements.filter(a => a.priority === 'high').length}</p>
+          </div>
+        </div>
       </div>
 
-      <div className="lg:col-span-2 space-y-6">
-        <h2 className="text-xl font-black text-primary italic flex items-center gap-2">
-          <Megaphone className="h-5 w-5 text-accent" /> Histórico de Avisos
-        </h2>
-        
-        {loading ? (
-          <div className="py-20 flex justify-center"><Loader2 className="h-10 w-10 animate-spin text-accent" /></div>
-        ) : announcements.length === 0 ? (
-          <div className="py-20 text-center border-4 border-dashed rounded-[3rem] opacity-30">
-            <Bell className="h-12 w-12 mx-auto mb-4" />
-            <p className="font-black italic">Nenhum comunicado ativo</p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* COLUNA ESQUERDA: CRIAÇÃO */}
+        <div className="lg:col-span-4 space-y-6">
+          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
+            <CardHeader className="bg-primary/5 p-8 border-b border-dashed">
+              <CardTitle className="flex items-center gap-3 italic">
+                <PlusCircle className="h-6 w-6 text-accent" />
+                <span className="text-xl font-black text-primary uppercase tracking-tight">Nova Mensagem</span>
+              </CardTitle>
+              <CardDescription className="italic font-medium">Configure o alerta para a rede.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 px-2">Assunto Principal</label>
+                <Input 
+                  value={formData.title} 
+                  onChange={(e) => setFormData({...formData, title: e.target.value})} 
+                  placeholder="Título do aviso..." 
+                  className="h-12 bg-muted/30 border-none rounded-xl font-bold italic" 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 px-2">Corpo do Alerta</label>
+                <Textarea 
+                  value={formData.message} 
+                  onChange={(e) => setFormData({...formData, message: e.target.value})} 
+                  placeholder="Escreva os detalhes aqui..." 
+                  className="rounded-2xl min-h-[120px] bg-muted/30 border-none font-medium text-sm italic" 
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 px-2">Prioridade</label>
+                  <Select value={formData.priority} onValueChange={(v: any) => setFormData({...formData, priority: v})}>
+                    <SelectTrigger className="h-12 bg-muted/30 border-none rounded-xl font-bold italic">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-none shadow-2xl">
+                      <SelectItem value="low" className="font-bold">Informativo</SelectItem>
+                      <SelectItem value="medium" className="font-bold text-amber-600">Importante</SelectItem>
+                      <SelectItem value="high" className="font-bold text-red-600">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 px-2">Público Alvo</label>
+                  <Select value={formData.target_group} onValueChange={(v) => setFormData({...formData, target_group: v})}>
+                    <SelectTrigger className="h-12 bg-muted/30 border-none rounded-xl font-bold italic">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-none shadow-2xl">
+                      <SelectItem value="all" className="font-bold italic">Toda a Rede</SelectItem>
+                      <SelectItem value="etec" className="font-bold italic">Alunos ETEC</SelectItem>
+                      <SelectItem value="enem" className="font-bold italic">Alunos ENEM</SelectItem>
+                      <SelectItem value="teacher" className="font-bold italic">Apenas Staff</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Button onClick={() => handleCreateAnnouncement()} disabled={isCreating || !formData.title.trim()} className="w-full h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95 text-lg mt-4">
+                {isCreating ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Sparkles className="mr-2 h-6 w-6 text-accent" />} 
+                {isCreating ? "Publicando..." : "Fixar Comunicado"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 px-4">Atalhos Operacionais</p>
+            {QUICK_TEMPLATES.map((tpl, i) => (
+              <button 
+                key={i} 
+                onClick={() => applyTemplate(tpl)}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white border border-transparent hover:border-accent/20 hover:shadow-lg transition-all group text-left"
+              >
+                <div className="h-10 w-10 rounded-xl bg-accent/5 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all">
+                  <tpl.icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-primary italic leading-none">{tpl.title}</p>
+                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">Carregar Texto Padrão</p>
+                </div>
+              </button>
+            ))}
           </div>
-        ) : (
+        </div>
+
+        {/* COLUNA DIREITA: HISTÓRICO */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
+            <Input 
+              placeholder="Pesquisar por termo no histórico..." 
+              className="pl-12 h-14 bg-white border-none shadow-xl rounded-2xl italic font-medium focus-visible:ring-accent"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
           <div className="space-y-4">
-            {announcements.map((ann) => {
-              const styles = priorityStyles[ann.priority];
-              const Icon = styles.icon;
-              return (
-                <Card key={ann.id} className="border-none shadow-lg rounded-3xl bg-white overflow-hidden group hover:shadow-xl transition-all">
-                  <CardContent className="p-6 flex items-start gap-6">
-                    <div className={`mt-1 h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${ann.priority === 'high' ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-600'}`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="space-y-1">
-                          <h3 className="font-black text-primary italic text-lg leading-none">{ann.title}</h3>
-                          <p className="text-[10px] text-muted-foreground font-bold uppercase">
-                            Publicado em {format(new Date(ann.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge variant={styles.variant} className="font-black text-[8px] uppercase tracking-widest px-3">{styles.label}</Badge>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(ann.id)} className="h-8 w-8 rounded-full text-muted-foreground hover:text-red-600 hover:bg-red-50">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+            {loading ? (
+              <div className="py-32 flex flex-col items-center justify-center gap-4">
+                <Sparkles className="h-12 w-12 text-accent animate-pulse" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Sincronizando Mural...</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="py-32 text-center border-4 border-dashed rounded-[3rem] opacity-20 bg-muted/5">
+                <Bell className="h-16 w-16 mx-auto mb-4" />
+                <p className="font-black italic text-xl uppercase">Nenhum aviso localizado</p>
+              </div>
+            ) : (
+              filtered.map((ann) => {
+                const styles = priorityStyles[ann.priority] || priorityStyles.low;
+                const Icon = styles.icon;
+                return (
+                  <Card key={ann.id} className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden group hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
+                    <CardContent className="p-0">
+                      <div className="flex flex-col md:flex-row">
+                        <div className={`md:w-3 border-l-8 ${ann.priority === 'high' ? 'border-red-500' : ann.priority === 'medium' ? 'border-amber-500' : 'border-blue-500'}`} />
+                        <div className="flex-1 p-8">
+                          <div className="flex justify-between items-start gap-6">
+                            <div className="flex items-start gap-5">
+                              <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${styles.bg} ${styles.color}`}>
+                                <Icon className="h-7 w-7" />
+                              </div>
+                              <div className="space-y-1">
+                                <h3 className="font-black text-primary italic text-xl leading-tight group-hover:text-accent transition-colors">{ann.title}</h3>
+                                <div className="flex flex-wrap items-center gap-3">
+                                  <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                                    <Clock className="h-3 w-3" />
+                                    {format(new Date(ann.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                                  </div>
+                                  <Badge className={`${styles.bg} ${styles.color} border-none font-black text-[8px] uppercase px-3 h-5`}>
+                                    {styles.label}
+                                  </Badge>
+                                  {ann.target_group && ann.target_group !== 'all' && (
+                                    <Badge variant="outline" className="border-primary/10 text-primary/40 font-black text-[8px] uppercase px-3 h-5">
+                                      <Target className="h-2.5 w-2.5 mr-1" /> {ann.target_group}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(ann.id)} className="h-10 w-10 rounded-full text-muted-foreground hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="mt-6 p-6 rounded-3xl bg-slate-50 border border-slate-100 shadow-inner">
+                            <p className="text-sm md:text-base text-primary/80 leading-relaxed font-medium italic">"{ann.message}"</p>
+                          </div>
                         </div>
                       </div>
-                      <p className="text-sm text-primary/70 mt-4 leading-relaxed font-medium italic">"{ann.message}"</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
