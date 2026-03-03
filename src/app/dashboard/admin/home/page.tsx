@@ -18,7 +18,8 @@ import {
   WifiOff,
   Filter,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  HandHeart
 } from "lucide-react";
 import {
   Select,
@@ -45,7 +46,7 @@ export default function CoordinatorDashboard() {
     startedTrails: 0,
     finishedTrails: 0,
     avgFinishedPerStudent: 0,
-    avgScore: 0
+    eligibleStudents: 0
   });
 
   async function checkHealth() {
@@ -70,31 +71,26 @@ export default function CoordinatorDashboard() {
       // 1. Buscar Perfis para contagem de usuários
       const { data: allProfiles, error: pErr } = await supabase
         .from('profiles')
-        .select('id, profile_type, name');
+        .select('id, profile_type, name, is_financial_aid_eligible');
       
       let studentCount = 0;
       let teacherCount = 0;
+      let eligibleCount = 0;
 
       if (!pErr && allProfiles) {
-        // LÓGICA INDUSTRIAL: Definir quem é ALUNO. 
-        // Tipos conhecidos de estudantes. O resto (que não for vazio) é STAFF/DOCENTE.
         const studentKeywords = ['etec', 'uni', 'enem', 'cpop', 'student', 'aluno'];
         
         const classified = allProfiles.map(p => {
           const type = (p.profile_type || '').toLowerCase().trim();
-          
-          // Se o tipo for vazio, assumimos aluno por segurança (inclusivo)
           if (!type) return { ...p, isStaff: false };
-          
-          // Se o tipo NÃO contém nenhuma keyword de aluno, é staff
           const isStaff = !studentKeywords.some(key => type.includes(key));
           return { ...p, isStaff };
         });
 
         studentCount = classified.filter(p => !p.isStaff).length;
         teacherCount = classified.filter(p => p.isStaff).length;
+        eligibleCount = classified.filter(p => p.is_financial_aid_eligible === true).length;
 
-        // Log de Transparência para o Admin (F12)
         console.table(classified.map(p => ({ 
           Nome: p.name, 
           Tipo: p.profile_type, 
@@ -136,24 +132,13 @@ export default function CoordinatorDashboard() {
         avgFinished = studentCount > 0 ? Number((finished / studentCount).toFixed(2)) : 0;
       }
 
-      // 4. Média de Notas
-      const { data: scoreData } = await supabase
-        .from('simulation_attempts')
-        .select('score, total_questions');
-      
-      let avgScoreValue = 0;
-      if (scoreData && scoreData.length > 0) {
-        const sumGrades = scoreData.reduce((acc, curr) => acc + (curr.score / curr.total_questions), 0);
-        avgScoreValue = Number(((sumGrades / scoreData.length) * 10).toFixed(1));
-      }
-
       setStats({
         totalStudents: studentCount,
         totalTeachers: teacherCount,
         startedTrails: started,
         finishedTrails: finished,
         avgFinishedPerStudent: avgFinished,
-        avgScore: avgScoreValue
+        eligibleStudents: eligibleCount
       });
 
     } catch (err) {
@@ -236,7 +221,7 @@ export default function CoordinatorDashboard() {
           </CardContent>
         </Card>
 
-        {/* Card Taxa Conclusão (Otimizado para Trilhas Terminadas) */}
+        {/* Card Taxa Conclusão */}
         <Card className="border-none shadow-xl rounded-[2rem] bg-white overflow-hidden group hover:shadow-2xl transition-all duration-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -264,18 +249,18 @@ export default function CoordinatorDashboard() {
           </CardContent>
         </Card>
 
-        {/* Card Média Global */}
+        {/* Card Impacto Social (Elegibilidade de Isenção) */}
         <Card className="border-none shadow-xl rounded-[2rem] bg-white overflow-hidden group hover:shadow-2xl transition-all duration-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className={`p-3 rounded-2xl bg-orange-50 text-orange-600 shadow-sm group-hover:scale-110 transition-transform duration-500`}>
-                <TrendingUp className="h-6 w-6" />
+                <HandHeart className="h-6 w-6" />
               </div>
-              <Badge variant="secondary" className="bg-muted text-muted-foreground border-none font-black text-[8px]">NOTAS</Badge>
+              <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-none font-black text-[8px]">SOCIAL</Badge>
             </div>
             <div className="mt-4">
-              <p className="text-3xl font-black text-primary leading-none italic">{stats.avgScore}</p>
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-2">Média Global</p>
+              <p className="text-3xl font-black text-primary leading-none italic">{stats.eligibleStudents}</p>
+              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-2">Impacto Social (Isenções)</p>
             </div>
           </CardContent>
         </Card>
