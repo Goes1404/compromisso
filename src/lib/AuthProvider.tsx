@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
+import { supabase, isSupabaseConfigured, isUsingSecretKeyInBrowser } from '@/app/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 1. Inicialização de Auth (Simulado ou Real)
   useEffect(() => {
     const initAuth = async () => {
-      // Tentar recuperar sessão simulada (Prioridade para Desenvolvimento)
+      // Prioridade absoluta: Tentar recuperar sessão simulada
       const savedMock = typeof window !== 'undefined' ? localStorage.getItem('compromisso_mock_session') : null;
       if (savedMock) {
         try {
@@ -67,7 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      if (!isSupabaseConfigured) {
+      // Se não houver configuração do Supabase, paramos o loading para permitir o login via mock
+      if (!isSupabaseConfigured || isUsingSecretKeyInBrowser) {
         setLoading(false);
         return;
       }
@@ -81,14 +82,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         }
       } catch (e) {
-        console.warn("Supabase Auth initialization error, possibly due to keys:", e);
+        console.warn("Falha ao sintonizar Supabase Auth:", e);
         setLoading(false);
       }
     };
 
     initAuth();
 
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && !isUsingSecretKeyInBrowser) {
       const { data: authListener } = supabase.auth.onAuthStateChange((event, currentSession) => {
         if (!isMock) {
           setSession(currentSession);
@@ -100,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsMock(false);
           localStorage.removeItem('compromisso_mock_session');
           setLoading(false);
-          router.replace('/login');
+          router.replace('/');
         }
       });
 
@@ -130,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           setProfile(data as Profile);
         } else {
-          // Fallback para perfil básico se der erro no banco (ex: RLS ou chaves)
+          // Fallback para perfil básico via metadados
           setProfile({
             id: user.id,
             name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário',
@@ -141,7 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       } catch (error) {
-        console.error('Erro ao buscar perfil:', error);
+        console.error('Erro ao buscar perfil real:', error);
       } finally {
         setLoading(false);
       }
@@ -150,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user && !isMock) {
       fetchProfile();
 
-      if (isSupabaseConfigured) {
+      if (isSupabaseConfigured && !isUsingSecretKeyInBrowser) {
         const profileChannel = supabase
           .channel(`profile_sync_${user.id}`)
           .on('postgres_changes', { 
@@ -172,8 +173,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     setLoading(true);
-    if (!isMock && isSupabaseConfigured) {
-      await supabase.auth.signOut();
+    try {
+      if (!isMock && isSupabaseConfigured && !isUsingSecretKeyInBrowser) {
+        await supabase.auth.signOut();
+      }
+    } catch (e) {
+      // Ignora erro no logout
     }
     localStorage.removeItem('compromisso_mock_session');
     setUser(null);
@@ -181,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
     setIsMock(false);
     setLoading(false);
-    router.replace('/login');
+    router.replace('/');
   };
 
   const contextValue = useMemo(() => ({

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, ChevronRight, Loader2, Sparkles, UserCircle, Users, GraduationCap, AlertCircle, BookOpen, ShieldCheck } from "lucide-react";
+import { Shield, ChevronRight, Loader2, UserCircle, Users, GraduationCap, AlertCircle, BookOpen, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, isSupabaseConfigured, isUsingSecretKeyInBrowser } from "@/app/lib/supabase";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -28,14 +28,14 @@ export function LoginForm() {
     
     if (!email || !password) return;
     
-    // Se for uma das contas de demo, entra direto independente de erro no banco
+    // LOGICA DE BYPASS: Se for conta de demo, entra direto via mock
     if (email.includes('@compromisso.com.br')) {
       startMockSession(email);
       return;
     }
 
     if (!isSupabaseConfigured || isUsingSecretKeyInBrowser) {
-      setAuthError("Falha na conexão com o banco de dados. Use os botões de 'Acesso Rápido' para testar a interface.");
+      setAuthError("Erro de configuração no banco de dados. Por favor, utilize os botões de 'Acesso Rápido' abaixo para entrar.");
       return;
     }
 
@@ -45,7 +45,7 @@ export function LoginForm() {
 
       if (error) {
         setLoading(false);
-        setAuthError("E-mail ou senha incorretos.");
+        setAuthError(error.message || "E-mail ou senha incorretos.");
         return;
       }
 
@@ -58,25 +58,28 @@ export function LoginForm() {
       }
     } catch (err) {
       setLoading(false);
-      setAuthError("Erro na rede de autenticação.");
+      setAuthError("Falha na conexão com o servidor de autenticação.");
     }
   };
 
   const startMockSession = (emailAddr: string) => {
     setLoading(true);
     setIsRedirecting(true);
+    
+    // Determina o papel baseado no e-mail de demo
     const role = emailAddr.includes('gestor') ? 'admin' : emailAddr.includes('mentor') ? 'teacher' : 'student';
+    const name = role === 'admin' ? 'Gestor Master' : role === 'teacher' ? 'Mentor Expert' : 'Aluno Pro';
     
     localStorage.setItem('compromisso_mock_session', JSON.stringify({
-      id: `mock-${role}`,
+      id: `mock-${role}-${Date.now()}`,
       email: emailAddr,
       role,
-      name: role === 'admin' ? 'Gestor Master' : role === 'teacher' ? 'Mentor Expert' : 'Aluno Pro'
+      name
     }));
 
     toast({ 
-      title: "Modo Preview Ativado", 
-      description: `Entrando como ${role.toUpperCase()}. Algumas funções de banco podem estar limitadas.` 
+      title: "Modo de Demonstração Ativado", 
+      description: `Entrando como ${name}.` 
     });
     
     setTimeout(() => {
@@ -108,14 +111,14 @@ export function LoginForm() {
           <h1 className="font-headline text-4xl font-black tracking-tighter text-white drop-shadow-lg">
             Compro<span className="text-accent">misso</span>
           </h1>
-          <p className="text-white/70 font-medium italic">Acesso ao Portal</p>
+          <p className="text-white/70 font-medium italic">Painel de Acesso</p>
         </div>
       </div>
 
       <Card className="border-none shadow-2xl overflow-hidden backdrop-blur-2xl bg-white/95 rounded-[2.5rem]">
         <CardHeader className="space-y-1 pb-6 pt-8 text-center bg-primary/5 border-b border-dashed">
-          <CardTitle className="text-2xl font-black text-primary italic">Login</CardTitle>
-          <CardDescription className="font-medium italic">Entre com suas credenciais ou use o acesso rápido.</CardDescription>
+          <CardTitle className="text-2xl font-black text-primary italic">Entrar</CardTitle>
+          <CardDescription className="font-medium italic">Acesse seu ambiente de estudos ou gestão.</CardDescription>
         </CardHeader>
         <CardContent className="px-8 pt-8 space-y-6">
           {authError && (
@@ -135,13 +138,13 @@ export function LoginForm() {
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 bg-white rounded-xl border-muted/20" placeholder="••••••••" required disabled={loading} />
             </div>
             <Button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-black h-14 text-base shadow-xl rounded-2xl transition-all">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Entrar no Portal <ChevronRight className="h-5 w-5 ml-1" /></>}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Entrar Agora <ChevronRight className="h-5 w-5 ml-1" /></>}
             </Button>
           </form>
 
           <div className="pt-6 space-y-4 border-t border-dashed">
             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary/40">
-              <Users className="h-3 w-3" /> Acesso Rápido para Testes
+              <Users className="h-3 w-3" /> Acesso Rápido (Demonstração)
             </div>
             <div className="grid grid-cols-3 gap-2">
               <Button variant="outline" onClick={() => startMockSession('aluno@compromisso.com.br')} className="h-11 rounded-xl text-blue-700 font-black gap-1 text-[9px] justify-center px-2 border-blue-100 hover:bg-blue-50">

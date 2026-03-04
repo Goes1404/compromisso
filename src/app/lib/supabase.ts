@@ -3,7 +3,6 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 /**
  * Configuração Industrial do Cliente Supabase.
- * Detecta automaticamente se as chaves são válidas ou se há risco de segurança.
  */
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -21,19 +20,16 @@ export const isSupabaseConfigured = Boolean(
 
 /**
  * Alerta de Segurança: Detecta se a chave configurada é a secreta (service_role).
- * Chaves service_role costumam ser muito longas e nunca devem estar no NEXT_PUBLIC.
  */
 export const isUsingSecretKeyInBrowser = typeof window !== 'undefined' && supabaseAnonKey.length > 150;
 
-if (isUsingSecretKeyInBrowser) {
-  console.warn("⚠️ [SEGURANÇA] Chave 'service_role' detectada no navegador. O Supabase bloqueará o login real. O modo de simulação será ativado automaticamente para os botões de demo.");
-}
-
 /**
- * Função helper para criar novos clientes com tratamento de erro.
+ * Função helper para criar novos clientes com tratamento de erro agressivo.
+ * Se houver erro de chave, retorna um cliente placeholder para não quebrar o app.
  */
 export function createClient() {
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || isUsingSecretKeyInBrowser) {
+    // Retorna um mock minimalista para evitar erros de referência nula
     return createSupabaseClient('https://placeholder-project.supabase.co', 'placeholder-key')
   }
   
