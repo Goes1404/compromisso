@@ -4,15 +4,16 @@ import { googleAI } from '@genkit-ai/google-genai';
 
 /**
  * @fileOverview Configuração central do Genkit para o Compromisso.
- * Utiliza a chave funcional validada pelo usuário.
+ * Removida a chave hardcoded que foi reportada como vazada.
+ * A chave agora é lida prioritariamente das variáveis de ambiente (GEMINI_API_KEY).
  */
-
-const GEMINI_KEY = "AIzaSyAh2ClldUdbLvDXH9O3USELgPb3GCOrHBA";
 
 export const ai = genkit({
   plugins: [
     googleAI({
-      apiKey: GEMINI_KEY,
+      // O plugin googleAI procura automaticamente por GOOGLE_GENAI_API_KEY ou GEMINI_API_KEY.
+      // Definimos explicitamente aqui para garantir compatibilidade com o ambiente Firebase/Netlify.
+      apiKey: process.env.GEMINI_API_KEY,
     }),
   ],
 });

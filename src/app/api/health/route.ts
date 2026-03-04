@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
 import { ai } from '@/ai/genkit';
@@ -29,20 +30,20 @@ export async function GET() {
     }
   }
 
-  // 2. Testar Genkit (Migrado para Gemini 2.5 Flash devido ao limite de taxa do Gemini 3)
+  // 2. Testar Genkit (Migrado para Gemini 1.5 Flash para estabilidade industrial)
   try {
     const response = await ai.generate({
-      model: 'googleai/gemini-2.5-flash',
+      model: 'googleai/gemini-1.5-flash',
       prompt: 'Responda apenas "ok"',
       config: { maxOutputTokens: 5 }
     });
     if (response.text) {
-      diagnostics.genkit = { status: 'ok', details: 'Google AI Plugin operacional com Gemini 2.5 Flash.' };
+      diagnostics.genkit = { status: 'ok', details: 'Google AI Plugin operacional com Gemini 1.5 Flash.' };
     } else {
       throw new Error("Sem resposta do modelo.");
     }
   } catch (e: any) {
-    diagnostics.genkit = { status: 'error', details: e.message || 'Verifique se a GEMINI_API_KEY está correta ou se o limite de taxa foi atingido.' };
+    diagnostics.genkit = { status: 'error', details: e.message || 'Verifique se a GEMINI_API_KEY está configurada no ambiente.' };
   }
 
   const allOk = diagnostics.supabase.status === 'ok' && diagnostics.genkit.status === 'ok';
