@@ -19,31 +19,36 @@ export async function GET() {
 
   // 1. Testar Supabase
   if (!isSupabaseConfigured) {
-    diagnostics.supabase = { status: 'error', details: 'Variáveis de ambiente não configuradas ou incompletas.' };
+    diagnostics.supabase = { status: 'error', details: 'Variáveis NEXT_PUBLIC_SUPABASE_URL ou ANON_KEY ausentes.' };
   } else {
     try {
       const { error } = await supabase.from('profiles').select('id').limit(1);
       if (error) throw error;
-      diagnostics.supabase = { status: 'ok', details: 'Conexão ativa e permissão de leitura ok.' };
+      diagnostics.supabase = { status: 'ok', details: 'Conexão ativa com Supabase.' };
     } catch (e: any) {
-      diagnostics.supabase = { status: 'error', details: e.message || 'Erro ao consultar tabela profiles.' };
+      diagnostics.supabase = { status: 'error', details: e.message || 'Erro ao consultar banco de dados.' };
     }
   }
 
-  // 2. Testar Genkit (Utilizando Gemini 1.5 Flash para estabilidade industrial)
-  try {
-    const response = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash'),
-      prompt: 'Responda apenas "ok"',
-      config: { maxOutputTokens: 5 }
-    });
-    if (response.text) {
-      diagnostics.genkit = { status: 'ok', details: 'Google AI Plugin operacional com Gemini 1.5 Flash.' };
-    } else {
-      throw new Error("Sem resposta do modelo.");
+  // 2. Testar Genkit (GEMINI_API_KEY)
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    diagnostics.genkit = { status: 'error', details: 'GEMINI_API_KEY não configurada no ambiente.' };
+  } else {
+    try {
+      const response = await ai.generate({
+        model: googleAI.model('gemini-1.5-flash'),
+        prompt: 'Responda apenas "ok"',
+        config: { maxOutputTokens: 5 }
+      });
+      if (response.text) {
+        diagnostics.genkit = { status: 'ok', details: 'Aurora IA (Gemini 1.5 Flash) operacional.' };
+      } else {
+        throw new Error("Sem resposta do modelo.");
+      }
+    } catch (e: any) {
+      diagnostics.genkit = { status: 'error', details: 'A chave fornecida é inválida ou o limite de quota foi atingido.' };
     }
-  } catch (e: any) {
-    diagnostics.genkit = { status: 'error', details: e.message || 'Verifique se a GEMINI_API_KEY está configurada no ambiente.' };
   }
 
   const allOk = diagnostics.supabase.status === 'ok' && diagnostics.genkit.status === 'ok';
