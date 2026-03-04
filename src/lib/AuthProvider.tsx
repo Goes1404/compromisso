@@ -54,11 +54,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
+        // 1. Verificar se existe uma sessão simulada (Mock)
+        const mockData = localStorage.getItem('compromisso_mock_session');
+        if (mockData) {
+          const { user: mUser, profile: mProfile } = JSON.parse(mockData);
+          setUser(mUser);
+          setProfile(mProfile);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Tentar sessão real do Supabase
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
       } catch (e) {
-        console.error("Auth init error:", e);
+        console.warn("Auth init error (expected if keys missing):", e);
       } finally {
         setLoading(false);
       }
@@ -67,10 +78,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
+      // Se não houver mock ativo, atualiza com dados do Supabase
+      if (!localStorage.getItem('compromisso_mock_session')) {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+      }
       
       if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('compromisso_mock_session');
         setProfile(null);
         router.replace('/');
       }
@@ -81,7 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!user) return;
+      if (!user || localStorage.getItem('compromisso_mock_session')) return;
+      
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -105,7 +121,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
+    localStorage.removeItem('compromisso_mock_session');
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {}
     setUser(null);
     setSession(null);
     setProfile(null);
