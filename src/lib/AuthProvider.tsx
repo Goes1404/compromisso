@@ -44,10 +44,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Papel normalizado industrial
   const userRole = useMemo((): UserRole => {
-    if (!profile) return 'student';
-    const type = (profile.profile_type || '').toLowerCase().trim();
-    if (['admin', 'gestor', 'coordenador'].includes(type)) return 'admin';
-    if (['teacher', 'mentor', 'professor'].includes(type)) return 'teacher';
+    const rawType = (profile?.profile_type || '').toLowerCase().trim();
+    if (['admin', 'gestor', 'coordenador'].includes(rawType)) return 'admin';
+    if (['teacher', 'mentor', 'professor'].includes(rawType)) return 'teacher';
     return 'student';
   }, [profile]);
 
@@ -57,9 +56,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // 1. Verificar se existe uma sessão simulada (Mock)
         const mockData = localStorage.getItem('compromisso_mock_session');
         if (mockData) {
-          const { user: mUser, profile: mProfile } = JSON.parse(mockData);
-          setUser(mUser);
-          setProfile(mProfile);
+          const parsed = JSON.parse(mockData);
+          setUser(parsed.user);
+          setProfile(parsed.profile);
           setLoading(false);
           return;
         }
@@ -78,7 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      // Se não houver mock ativo, atualiza com dados do Supabase
       if (!localStorage.getItem('compromisso_mock_session')) {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
