@@ -25,7 +25,6 @@ export function LoginForm() {
   const handleQuickLogin = (role: 'student' | 'teacher' | 'admin') => {
     setIsRedirecting(true);
     
-    // Preenche os campos visualmente como solicitado
     const emailMap = {
       student: 'aluno@compromisso.com.br',
       teacher: 'professor@compromisso.com.br',
@@ -36,7 +35,7 @@ export function LoginForm() {
     setEmail(targetEmail);
     setPassword('123456');
 
-    // Simula uma sessão local para bypass de erros de infraestrutura (Secret Key no editor)
+    // Prepara a sessão simulada
     const mockUser = {
       id: `mock-${role}`,
       email: targetEmail,
@@ -45,11 +44,12 @@ export function LoginForm() {
     
     const mockProfile = {
       id: mockUser.id,
-      name: `Demonstração ${role.toUpperCase()}`,
+      name: role === 'admin' ? 'Coordenador Geral' : role === 'teacher' ? 'Mentor Pedagógico' : 'Estudante de Alta Performance',
       profile_type: role,
-      institution: "Polo de Demonstração"
+      institution: "Polo Central Compromisso"
     };
 
+    // Grava no localStorage para o AuthProvider ler no próximo reload
     localStorage.setItem('compromisso_mock_session', JSON.stringify({ user: mockUser, profile: mockProfile, role }));
     
     toast({ 
@@ -57,12 +57,12 @@ export function LoginForm() {
       description: `Entrando como ${role.toUpperCase()}.` 
     });
 
+    // Usa window.location.href para um redirecionamento "limpo" que força o AuthProvider a reiniciar
     setTimeout(() => {
-      if (role === 'admin') router.push("/dashboard/admin/home");
-      else if (role === 'teacher') router.push("/dashboard/teacher/home");
-      else router.push("/dashboard/home");
-      window.location.reload(); 
-    }, 800);
+      if (role === 'admin') window.location.href = "/dashboard/admin/home";
+      else if (role === 'teacher') window.location.href = "/dashboard/teacher/home";
+      else window.location.href = "/dashboard/home";
+    }, 500);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -81,9 +81,7 @@ export function LoginForm() {
 
       if (error) {
         setLoading(false);
-        console.error("Auth Error:", error.message);
-        
-        // Se for o erro de chave secreta no navegador, e for um dos e-mails padrão, faz o bypass
+        // Se for o erro de chave secreta e for um e-mail padrão, usa o fallback automático
         if (error.message.includes("secret API key") || error.status === 403) {
           if (email.includes('@compromisso.com.br')) {
             const role = email.split('@')[0] === 'aluno' ? 'student' : 
@@ -91,9 +89,9 @@ export function LoginForm() {
             handleQuickLogin(role as any);
             return;
           }
-          setAuthError("Erro de Chave: O editor está recebendo a 'service_role'. Use os botões de Acesso Rápido para testar o sistema agora.");
+          setAuthError("Erro de Configuração: O ambiente está usando a chave 'service_role'. Use o acesso rápido.");
         } else {
-          setAuthError("E-mail ou senha inválidos.");
+          setAuthError("E-mail ou senha incorretos.");
         }
         return;
       }
@@ -101,16 +99,16 @@ export function LoginForm() {
       if (data.user) {
         setIsRedirecting(true);
         const { data: profile } = await supabase.from('profiles').select('profile_type').eq('id', data.user.id).single();
-        const role = profile?.profile_type || 'student';
+        const role = (profile?.profile_type || 'student').toLowerCase();
         
-        if (['admin', 'gestor', 'coordenador'].includes(role.toLowerCase())) router.push("/dashboard/admin/home");
-        else if (['teacher', 'mentor', 'professor'].includes(role.toLowerCase())) router.push("/dashboard/teacher/home");
-        else router.push("/dashboard/home");
+        if (['admin', 'gestor', 'coordenador'].includes(role)) window.location.href = "/dashboard/admin/home";
+        else if (['teacher', 'mentor', 'professor'].includes(role)) window.location.href = "/dashboard/teacher/home";
+        else window.location.href = "/dashboard/home";
       }
 
     } catch (err: any) {
       setLoading(false);
-      setAuthError("Falha na rede ao conectar com o banco de dados.");
+      setAuthError("Erro de rede ao conectar com o servidor.");
     }
   };
 
@@ -152,19 +150,19 @@ export function LoginForm() {
         <CardContent className="px-8 pt-8 space-y-6">
           
           <div className="grid grid-cols-3 gap-3">
-            <button onClick={() => handleQuickLogin('student')} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-primary/20 hover:bg-white transition-all group shadow-sm">
+            <button type="button" onClick={() => handleQuickLogin('student')} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-primary/20 hover:bg-white transition-all group shadow-sm">
               <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <GraduationCap className="h-6 w-6" />
               </div>
               <span className="text-[8px] font-black uppercase text-primary/60 tracking-widest">Aluno</span>
             </button>
-            <button onClick={() => handleQuickLogin('teacher')} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-accent/20 hover:bg-white transition-all group shadow-sm">
+            <button type="button" onClick={() => handleQuickLogin('teacher')} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-accent/20 hover:bg-white transition-all group shadow-sm">
               <div className="h-10 w-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <User className="h-6 w-6" />
               </div>
               <span className="text-[8px] font-black uppercase text-primary/60 tracking-widest">Mentor</span>
             </button>
-            <button onClick={() => handleQuickLogin('admin')} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-primary/20 hover:bg-white transition-all group shadow-sm">
+            <button type="button" onClick={() => handleQuickLogin('admin')} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-primary/20 hover:bg-white transition-all group shadow-sm">
               <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
                 <ShieldCheck className="h-6 w-6" />
               </div>

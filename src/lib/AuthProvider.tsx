@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const userRole = useMemo((): UserRole => {
     const rawType = (profile?.profile_type || '').toLowerCase().trim();
     if (['admin', 'gestor', 'coordenador'].includes(rawType)) return 'admin';
-    if (['teacher', 'mentor', 'professor'].includes(rawType)) return 'teacher';
+    if (['teacher', 'mentor', 'professor', 'instrutor'].includes(rawType)) return 'teacher';
     return 'student';
   }, [profile]);
 
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       try {
         // 1. Verificar se existe uma sessão simulada (Mock)
-        const mockData = localStorage.getItem('compromisso_mock_session');
+        const mockData = typeof window !== 'undefined' ? localStorage.getItem('compromisso_mock_session') : null;
         if (mockData) {
           const parsed = JSON.parse(mockData);
           setUser(parsed.user);
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
       } catch (e) {
-        console.warn("Auth init error (expected if keys missing):", e);
+        console.warn("Auth init error:", e);
       } finally {
         setLoading(false);
       }
@@ -77,13 +77,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      if (!localStorage.getItem('compromisso_mock_session')) {
+      if (typeof window !== 'undefined' && !localStorage.getItem('compromisso_mock_session')) {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
       }
       
       if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('compromisso_mock_session');
+        if (typeof window !== 'undefined') localStorage.removeItem('compromisso_mock_session');
         setProfile(null);
         router.replace('/');
       }
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!user || localStorage.getItem('compromisso_mock_session')) return;
+      if (!user || (typeof window !== 'undefined' && localStorage.getItem('compromisso_mock_session'))) return;
       
       try {
         const { data, error } = await supabase
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     setLoading(true);
-    localStorage.removeItem('compromisso_mock_session');
+    if (typeof window !== 'undefined') localStorage.removeItem('compromisso_mock_session');
     try {
       await supabase.auth.signOut();
     } catch (e) {}
@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
     setProfile(null);
     setLoading(false);
-    router.replace('/');
+    window.location.href = "/"; // Força um reset total para a landing page
   };
 
   const contextValue = useMemo(() => ({
