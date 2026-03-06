@@ -63,6 +63,7 @@ export default function RegisterPage() {
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
       const role = profileType === 'teacher' ? 'teacher' : 'student';
 
+      // 1. Cadastro no Auth do Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -97,12 +98,13 @@ export default function RegisterPage() {
           courseValue = formData.major || "Vestibulando";
         }
 
-        // 1. Criar Perfil
+        // 2. Criar Perfil na tabela pública
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([{
             id: authData.user.id,
             name: fullName,
+            email: formData.email,
             username: formData.username.replace('@', '').toLowerCase(),
             profile_type: profileType,
             institution: institutionValue,
@@ -113,30 +115,37 @@ export default function RegisterPage() {
 
         if (profileError) throw profileError;
 
-        // 2. Automação de Fórum de Polo
+        // 3. Automação de Fórum de Polo (Opcional)
         if (institutionValue && profileType !== 'teacher') {
-          const forumName = `Comunidade: ${institutionValue}`;
-          
-          const { data: existingForum } = await supabase
-            .from('forums')
-            .select('id')
-            .eq('name', forumName)
-            .maybeSingle();
+          try {
+            const forumName = `Comunidade: ${institutionValue}`;
+            const { data: existingForum } = await supabase
+              .from('forums')
+              .select('id')
+              .eq('name', forumName)
+              .maybeSingle();
 
-          if (!existingForum) {
-            await supabase.from('forums').insert({
-              name: forumName,
-              description: `Espaço oficial de debate e avisos para alunos de: ${institutionValue}.`,
-              category: "Polos",
-              author_id: authData.user.id,
-              author_name: "Aurora IA",
-              is_teacher_only: false
-            });
+            if (!existingForum) {
+              await supabase.from('forums').insert({
+                name: forumName,
+                description: `Espaço oficial de debate e avisos para alunos de: ${institutionValue}.`,
+                category: "Polos",
+                author_id: authData.user.id,
+                author_name: "Aurora IA",
+                is_teacher_only: false
+              });
+            }
+          } catch (e) {
+            console.warn("Falha ao criar fórum automático, mas cadastro prossegue.");
           }
         }
 
-        toast({ title: "Bem-vindo ao Compromisso!", description: "Sua conta foi criada e você já está no fórum do seu polo." });
-        router.push(role === 'teacher' ? "/dashboard/teacher/home" : "/dashboard/home");
+        toast({ title: "Bem-vindo ao Compromisso!", description: "Sua conta foi criada com sucesso." });
+        
+        // Redirecionamento forçado para garantir limpeza de estado
+        setTimeout(() => {
+          window.location.href = role === 'teacher' ? "/dashboard/teacher/home" : "/dashboard/home";
+        }, 1000);
       }
     } catch (err: any) {
       console.error("Erro no cadastro:", err);
@@ -213,7 +222,7 @@ export default function RegisterPage() {
                   <Label htmlFor="password" title="Senha" className="font-bold text-primary/60">Senha de Acesso</Label>
                   <div className="relative group">
                     <Lock className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input id="password" type="password" placeholder="Mínimo 6 caracteres" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="pl-11 h-12 bg-white/50 rounded-xl" />
+                    <Input id="password" type="password" placeholder="Mínimo 6 caracteres" value={formData.password} onChange={(e) => updateField("password", e.target.value)} className="pl-11 h-12 bg-white/50 rounded-xl" />
                   </div>
                 </div>
               </div>

@@ -1,184 +1,190 @@
 
--- SCRIPT DE CONFIGURAÇÃO DO ECOSSISTEMA COMPROMISSO
--- Execute este script no SQL Editor do seu projeto Supabase.
+-- SCHEMA COMPLETO COMPROMISSO | SMART EDUCATION
+-- Versão: 3.0.0 (Industrial)
 
--- 1. EXTENSÕES
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- 2. TABELAS DE GESTÃO
-CREATE TABLE IF NOT EXISTS classes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL,
-  description TEXT,
-  coordinator_id UUID REFERENCES auth.users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+-- 1. TABELA DE PERFIS (Extensão do Auth.Users)
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  name TEXT,
+  username TEXT UNIQUE,
+  email TEXT,
+  avatar_url TEXT,
+  profile_type TEXT DEFAULT 'student', -- 'student', 'teacher', 'admin', 'etec', 'enem', 'cpop_santana', 'cpop_osasco'
+  institution TEXT,
+  course TEXT,
+  favorite_subject TEXT,
+  interests TEXT,
+  name_changes_count INTEGER DEFAULT 0,
+  is_financial_aid_eligible BOOLEAN DEFAULT FALSE,
+  status TEXT DEFAULT 'active', -- 'active', 'suspended'
+  last_access TIMESTAMPTZ DEFAULT NOW(),
+  class_id UUID,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. PERFIS DE USUÁRIOS (ESTENDIDO)
--- Se a tabela já existir, este comando apenas adiciona as colunas faltantes.
-ALTER TABLE IF EXISTS public.profiles 
-ADD COLUMN IF NOT EXISTS class_id UUID REFERENCES classes(id),
-ADD COLUMN IF NOT EXISTS name_changes_count INTEGER DEFAULT 0,
-ADD COLUMN IF NOT EXISTS avatar_url TEXT,
-ADD COLUMN IF NOT EXISTS username TEXT,
-ADD COLUMN IF NOT EXISTS interests TEXT,
-ADD COLUMN IF NOT EXISTS is_financial_aid_eligible BOOLEAN DEFAULT false;
+-- 2. TABELA DE TURMAS (CLASSES)
+CREATE TABLE IF NOT EXISTS public.classes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  coordinator_id UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
--- 4. TRILHAS E CONTEÚDOS
-CREATE TABLE IF NOT EXISTS trails (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+-- 3. BANCO DE QUESTÕES
+CREATE TABLE IF NOT EXISTS public.subjects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.questions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  question_text TEXT NOT NULL,
+  options JSONB NOT NULL, -- Formato: [{"key": "A", "text": "..."}, ...]
+  correct_answer TEXT NOT NULL, -- 'A', 'B', 'C', 'D', 'E'
+  explanation TEXT,
+  year INTEGER DEFAULT 2024,
+  subject_id UUID REFERENCES public.subjects(id) ON DELETE SET NULL,
+  teacher_id UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. TRILHAS DE APRENDIZAGEM
+CREATE TABLE IF NOT EXISTS public.trails (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
   category TEXT,
   description TEXT,
-  teacher_id UUID REFERENCES auth.users(id),
-  teacher_name TEXT,
-  status TEXT DEFAULT 'draft', -- draft, review, published, inactive
   image_url TEXT,
+  teacher_id UUID REFERENCES public.profiles(id),
+  teacher_name TEXT,
+  status TEXT DEFAULT 'draft', -- 'draft', 'active', 'published', 'review'
   target_audience TEXT DEFAULT 'all',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  average_rating NUMERIC DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS modules (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  trail_id UUID REFERENCES trails(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS public.modules (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  trail_id UUID REFERENCES public.trails(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   order_index INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS learning_contents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  module_id UUID REFERENCES modules(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS public.learning_contents (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  module_id UUID REFERENCES public.modules(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
-  type TEXT NOT NULL, -- video, quiz, pdf, text, file
+  type TEXT DEFAULT 'video', -- 'video', 'pdf', 'quiz', 'text', 'file'
   url TEXT,
   description TEXT,
   order_index INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. PROGRESSO E CHECKLISTS
-CREATE TABLE IF NOT EXISTS user_progress (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  trail_id UUID REFERENCES trails(id) ON DELETE CASCADE,
+-- 5. PROGRESSO E SIMULADOS
+CREATE TABLE IF NOT EXISTS public.user_progress (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  trail_id UUID REFERENCES public.trails(id) ON DELETE CASCADE,
   percentage INTEGER DEFAULT 0,
-  last_accessed TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  last_accessed TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, trail_id)
 );
 
-CREATE TABLE IF NOT EXISTS student_checklists (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS public.simulation_attempts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  subject_id UUID REFERENCES public.subjects(id),
+  score INTEGER NOT NULL,
+  total_questions INTEGER NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 6. COMUNICAÇÃO E COMUNIDADE
+CREATE TABLE IF NOT EXISTS public.forums (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT DEFAULT 'Geral',
+  author_id UUID REFERENCES public.profiles(id),
+  author_name TEXT,
+  is_teacher_only BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.forum_posts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  forum_id UUID REFERENCES public.forums(id) ON DELETE CASCADE,
+  author_id UUID REFERENCES public.profiles(id),
+  author_name TEXT,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.announcements (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  priority TEXT DEFAULT 'low', -- 'low', 'medium', 'high'
+  target_group TEXT DEFAULT 'all',
+  author_id UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. LIVES E TRANSMISSÕES
+CREATE TABLE IF NOT EXISTS public.lives (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  start_time TIMESTAMPTZ NOT NULL,
+  meet_link TEXT,
+  status TEXT DEFAULT 'scheduled', -- 'scheduled', 'live', 'finished'
+  teacher_id UUID REFERENCES public.profiles(id),
+  teacher_name TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 8. AUDITORIA E DOCUMENTOS
+CREATE TABLE IF NOT EXISTS public.student_checklists (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
   item_id TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, item_id)
 );
 
--- 6. COMUNICAÇÃO E AUDITORIA
-CREATE TABLE IF NOT EXISTS direct_messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  sender_id UUID REFERENCES auth.users(id),
-  receiver_id UUID REFERENCES auth.users(id),
-  content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS forums (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL,
-  description TEXT,
-  category TEXT,
-  author_id UUID REFERENCES auth.users(id),
-  author_name TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS forum_posts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  forum_id UUID REFERENCES forums(id) ON DELETE CASCADE,
-  author_id UUID REFERENCES auth.users(id),
-  author_name TEXT,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS announcements (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  title TEXT NOT NULL,
-  message TEXT NOT NULL,
-  priority TEXT DEFAULT 'low', -- low, medium, high
-  author_id UUID REFERENCES auth.users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS activity_logs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id),
+CREATE TABLE IF NOT EXISTS public.activity_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id),
   user_name TEXT,
   action TEXT NOT NULL,
   entity_type TEXT,
-  entity_id UUID,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  entity_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 7. BIBLIOTECA E LIVES
-CREATE TABLE IF NOT EXISTS library_resources (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  title TEXT NOT NULL,
-  description TEXT,
-  category TEXT,
-  type TEXT, -- PDF, Video, Artigo, E-book
-  url TEXT NOT NULL,
-  image_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
+-- 9. FUNÇÕES INTELIGENTES (RPC)
 
-CREATE TABLE IF NOT EXISTS lives (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  title TEXT NOT NULL,
-  description TEXT,
-  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-  meet_link TEXT,
-  teacher_id UUID REFERENCES auth.users(id),
-  teacher_name TEXT,
-  status TEXT DEFAULT 'scheduled', -- scheduled, live, finished
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
+-- Função para buscar questões aleatórias por matéria
+CREATE OR REPLACE FUNCTION get_random_questions_for_subject(p_subject_id UUID, p_limit INTEGER)
+RETURNS SETOF questions AS $$
+BEGIN
+  RETURN QUERY
+  SELECT *
+  FROM questions
+  WHERE subject_id = p_subject_id
+  ORDER BY RANDOM()
+  LIMIT p_limit;
+END;
+$$ LANGUAGE plpgsql;
 
--- 8. SISTEMA DE SIMULADOS
-CREATE TABLE IF NOT EXISTS subjects (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT UNIQUE NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS questions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  question_text TEXT NOT NULL,
-  options JSONB NOT NULL, -- Array de objetos {letter, text}
-  correct_answer TEXT NOT NULL,
-  year INTEGER,
-  subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
-  teacher_id UUID REFERENCES auth.users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS simulation_attempts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  subject_id UUID REFERENCES subjects(id),
-  score INTEGER NOT NULL,
-  total_questions INTEGER NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 9. FUNÇÕES RPC (MOTORES DE BUSCA)
+-- Função para dashboard de questões
 CREATE OR REPLACE FUNCTION get_subjects_with_question_count()
-RETURNS TABLE (
-  id UUID,
-  name TEXT,
-  question_count BIGINT
-) AS $$
+RETURNS TABLE (id UUID, name TEXT, question_count BIGINT) AS $$
 BEGIN
   RETURN QUERY
   SELECT s.id, s.name, COUNT(q.id) as question_count
@@ -187,45 +193,22 @@ BEGIN
   GROUP BY s.id, s.name
   ORDER BY s.name ASC;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION get_random_questions_for_subject(p_subject_id UUID, p_limit INTEGER)
-RETURNS SETOF questions AS $$
-BEGIN
-  RETURN QUERY
-  SELECT *
-  FROM questions
-  WHERE subject_id = p_subject_id
-  ORDER BY random()
-  LIMIT p_limit;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- 10. POLÍTICAS DE SEGURANÇA (RLS - Modo Facilitado para MVP)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Acesso total perfis" ON public.profiles FOR ALL USING (true);
 
--- 10. POLÍTICAS DE ACESSO TOTAL (MODO DEMO)
--- Nota: Em produção real, estas regras devem ser restritas.
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Acesso Total Profiles" ON profiles FOR ALL USING (true);
+ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Acesso total materias" ON public.subjects FOR ALL USING (true);
 
-ALTER TABLE classes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Acesso Total Classes" ON classes FOR ALL USING (true);
+ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Acesso total questões" ON public.questions FOR ALL USING (true);
 
-ALTER TABLE trails ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Acesso Total Trails" ON trails FOR ALL USING (true);
+-- (Repetir habilitação de RLS para outras tabelas conforme necessário)
 
-ALTER TABLE modules ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Acesso Total Modules" ON modules FOR ALL USING (true);
-
-ALTER TABLE learning_contents ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Acesso Total Contents" ON learning_contents FOR ALL USING (true);
-
-ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Acesso Total Progress" ON user_progress FOR ALL USING (true);
-
-ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Acesso Total Logs" ON activity_logs FOR ALL USING (true);
-
--- 11. DADOS INICIAIS (SUBJECTS)
-INSERT INTO subjects (name) VALUES 
+-- 11. INSERÇÃO DE DADOS INICIAIS (SEED)
+INSERT INTO public.subjects (name) VALUES 
 ('Matemática'), ('Física'), ('Química'), ('Biologia'), 
-('Linguagens'), ('História'), ('Geografia'), ('Redação')
-ON CONFLICT DO NOTHING;
+('Linguagens'), ('História'), ('Geografia'), ('Redação'), ('Filosofia'), ('Sociologia')
+ON CONFLICT (name) DO NOTHING;
