@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -41,6 +40,7 @@ import { useAuth } from "@/lib/AuthProvider";
 import { supabase } from "@/app/lib/supabase";
 import { formatDistanceToNow, subDays, subMonths, subYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useRouter } from "next/navigation";
 
 interface RiskAlert {
   id: string;
@@ -53,7 +53,8 @@ interface RiskAlert {
 }
 
 export default function CoordinatorDashboard() {
-  const { profile, loading: isUserLoading } = useAuth();
+  const { profile, userRole, loading: isUserLoading } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [networkStatus, setNetworkStatus] = useState({ db: 'checking', ai: 'checking' });
   const [logs, setLogs] = useState<any[]>([]);
@@ -70,6 +71,13 @@ export default function CoordinatorDashboard() {
   });
 
   const TEACHER_CODE = "COMPROMISSO2024";
+
+  // Guard de Papel: Apenas administradores entram aqui
+  useEffect(() => {
+    if (!isUserLoading && userRole !== 'admin') {
+      router.replace(userRole === 'teacher' ? "/dashboard/teacher/home" : "/dashboard/home");
+    }
+  }, [userRole, isUserLoading, router]);
 
   async function checkHealth() {
     try {
@@ -216,10 +224,10 @@ export default function CoordinatorDashboard() {
   }, []);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    if (userRole === 'admin') fetchDashboardData();
+  }, [fetchDashboardData, userRole]);
 
-  if (isUserLoading || loading) return (
+  if (isUserLoading || loading || userRole !== 'admin') return (
     <div className="h-96 flex flex-col items-center justify-center gap-4">
       <Loader2 className="h-10 w-10 animate-spin text-accent" />
       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Sincronizando Auditoria Global...</p>

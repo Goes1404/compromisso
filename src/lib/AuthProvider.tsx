@@ -1,4 +1,3 @@
-
 'use client';
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
@@ -42,11 +41,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Papel normalizado industrial
+  // Papel normalizado industrial com mapeamento rigoroso
   const userRole = useMemo((): UserRole => {
     const rawType = (profile?.profile_type || '').toLowerCase().trim();
-    if (['admin', 'gestor', 'coordenador'].includes(rawType)) return 'admin';
-    if (['teacher', 'mentor', 'professor', 'instrutor'].includes(rawType)) return 'teacher';
+    
+    // Mapeamento Admin: Apenas termos explicitamente administrativos
+    if (['admin', 'gestor', 'coordenador', 'coordenacao'].includes(rawType)) {
+      return 'admin';
+    }
+    
+    // Mapeamento Professor: Termos docentes e mentoria
+    if (['teacher', 'mentor', 'professor', 'instrutor', 'docente'].includes(rawType)) {
+      return 'teacher';
+    }
+    
+    // Padrão: Aluno
     return 'student';
   }, [profile]);
 
@@ -60,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(parsed.user);
           setProfile(parsed.profile);
           setLoading(false);
+          console.log(`[AUTH] Sessão Mock Ativa: ${parsed.role.toUpperCase()}`);
           return;
         }
 
@@ -94,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      // Se for mock, não busca no Supabase
       if (!user || (typeof window !== 'undefined' && localStorage.getItem('compromisso_mock_session'))) return;
       
       try {
@@ -108,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             router.replace('/suspended');
           }
           setProfile(data as Profile);
+          console.log(`[AUTH] Perfil Real Carregado: ${data.profile_type}`);
         }
       } catch (error) {
         console.error('Erro ao buscar perfil real:', error);
@@ -127,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
     setProfile(null);
     setLoading(false);
-    window.location.href = "/"; // Força um reset total para a landing page
+    window.location.href = "/";
   };
 
   const contextValue = useMemo(() => ({

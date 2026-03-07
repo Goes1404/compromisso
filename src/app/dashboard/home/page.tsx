@@ -37,6 +37,7 @@ import { supabase, isSupabaseConfigured } from "@/app/lib/supabase";
 import { formatDistanceToNow, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface LibraryItem {
   id: string;
@@ -60,8 +61,9 @@ const priorityStyles: Record<'low' | 'medium' | 'high', { icon: any; color: stri
 };
 
 export default function DashboardHome() {
-  const { user, profile, loading: isUserLoading } = useAuth();
+  const { user, profile, userRole, loading: isUserLoading } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   
   const [recommendedTrails, setRecommendedTrails] = useState<LibraryItem[]>([]);
   const [loadingTrails, setLoadingTrails] = useState(true);
@@ -77,9 +79,16 @@ export default function DashboardHome() {
   const [countdown, setCountdown] = useState(3);
   const [canCloseUrgent, setCanCloseUrgent] = useState(false);
 
+  // Guard de Papel: Alunos não podem ser professores
+  useEffect(() => {
+    if (!isUserLoading && userRole !== 'student') {
+      if (userRole === 'admin') router.replace("/dashboard/admin/home");
+      if (userRole === 'teacher') router.replace("/dashboard/teacher/home");
+    }
+  }, [userRole, isUserLoading, router]);
+
   const fetchProgress = useCallback(async () => {
-    // PROTEÇÃO: Não tenta buscar progresso se for uma sessão mock ou banco não configurado
-    if (!user || !isSupabaseConfigured || user.id.includes('mock')) {
+    if (!user || !isSupabaseConfigured || user.id.includes('00000000')) {
       setLoadingProgress(false);
       setRecentProgress([]);
       return;
@@ -126,12 +135,11 @@ export default function DashboardHome() {
 
   useEffect(() => {
     async function fetchHomeData() {
-      if (!user) return;
+      if (!user || userRole !== 'student') return;
 
       setLoadingAnnouncements(true);
       
-      // PROTEÇÃO: Se for mock, usa dados estáticos e não bate no banco
-      if (!isSupabaseConfigured || user.id.includes('mock')) {
+      if (!isSupabaseConfigured || user.id.includes('00000000')) {
         setAnnouncements([
           { id: '1', title: 'Modo Demonstração Ativo', message: 'Conecte seu Supabase para ver dados reais.', priority: 'medium' }
         ]);
@@ -204,9 +212,8 @@ export default function DashboardHome() {
       await fetchProgress();
     }
     fetchHomeData();
-  }, [user, profile, fetchProgress]);
+  }, [user, profile, userRole, fetchProgress]);
 
-  // Lógica do Timer do Alerta Urgente
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (urgentAlert && countdown > 0) {
@@ -219,10 +226,10 @@ export default function DashboardHome() {
     return () => clearInterval(timer);
   }, [urgentAlert, countdown]);
 
-  if (isUserLoading) return (
+  if (isUserLoading || userRole !== 'student') return (
     <div className="flex flex-col h-96 items-center justify-center gap-4">
       <Loader2 className="h-12 w-12 animate-spin text-accent" />
-      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Sintonizando Portal...</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Validando Acesso...</p>
     </div>
   );
 
@@ -238,7 +245,7 @@ export default function DashboardHome() {
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-700 px-1 relative">
       
-      {/* OVERLAY DE ALERTA URGENTE (FULLSCREEN) */}
+      {/* OVERLAY DE ALERTA URGENTE */}
       {urgentAlert && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-10 animate-in fade-in zoom-in-95 duration-500">
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl" />

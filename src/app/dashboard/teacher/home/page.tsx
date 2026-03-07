@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,22 +9,26 @@ import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recha
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function TeacherHomePage() {
-  const { profile, loading: isUserLoading } = useAuth();
+  const { profile, userRole, loading: isUserLoading } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const [diagLoading, setDiagLoading] = useState(false);
+
+  // Guard de Papel: Garantir que apenas professores/mentores acessem
+  useEffect(() => {
+    if (!isUserLoading && userRole !== 'teacher' && userRole !== 'admin') {
+      router.replace("/dashboard/home");
+    }
+  }, [userRole, isUserLoading, router]);
 
   const runDiagnostic = async () => {
     setDiagLoading(true);
     try {
       const response = await fetch('/api/health');
-      
-      // Proteção contra respostas vazias ou erro 500
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Falha na resposta do diagnóstico.');
-      }
+      if (!response.ok) throw new Error('Falha na resposta do diagnóstico.');
       
       const data = await response.json();
       
@@ -46,7 +49,7 @@ export default function TeacherHomePage() {
       console.error("Erro diagnóstico:", err);
       toast({ 
         title: "Erro de Comunicação", 
-        description: "Não foi possível contatar a API de diagnóstico ou o servidor retornou um erro.", 
+        description: "Não foi possível contatar a API de diagnóstico.", 
         variant: "destructive" 
       });
     } finally {
@@ -54,7 +57,7 @@ export default function TeacherHomePage() {
     }
   };
 
-  if (isUserLoading) {
+  if (isUserLoading || (userRole !== 'teacher' && userRole !== 'admin')) {
     return (
       <div className="h-96 flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-accent" />
@@ -67,8 +70,11 @@ export default function TeacherHomePage() {
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black tracking-tight text-primary italic">Painel de Gestão Docente</h1>
-          <p className="text-muted-foreground font-medium">Controle pedagógico do Compromisso em tempo real.</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-black tracking-tight text-primary italic">Painel de Gestão Docente</h1>
+            <Badge className="bg-primary text-white border-none font-black text-[10px] uppercase tracking-widest px-3">PROFESSOR</Badge>
+          </div>
+          <p className="text-muted-foreground font-medium italic">Controle pedagógico e mentoria em tempo real.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button 
