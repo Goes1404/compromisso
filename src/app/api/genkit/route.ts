@@ -8,8 +8,11 @@ import { essayEvaluatorFlow } from '@/ai/flows/essay-evaluator';
 import { trailStructureGeneratorFlow } from '@/ai/flows/trail-structure-generator';
 
 /**
- * @fileOverview Gateway de API para os fluxos da Aurora IA.
+ * @fileOverview Gateway de API Blindado para a Aurora IA.
+ * Garante que a GEMINI_API_KEY nunca saia do servidor.
  */
+
+export const maxDuration = 60; // Aumentado para lidar com gerações longas
 
 export async function POST(req: NextRequest) {
   try {
@@ -43,23 +46,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Executa o fluxo no ambiente seguro do servidor
     const result = await targetFlow(input);
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
     const errorMsg = error?.message || '';
     
-    // Tratamento industrial de erro de chave expirada
-    if (errorMsg.includes('API key expired') || errorMsg.includes('400 Bad Request')) {
+    // Tratamento especializado para erros de API Key
+    if (errorMsg.includes('API key expired') || errorMsg.includes('400 Bad Request') || errorMsg.includes('API_KEY_INVALID')) {
       return NextResponse.json(
-        { error: '⚠️ A chave da Aurora IA expirou. Por favor, gere uma nova chave no Google AI Studio e atualize suas variáveis de ambiente.' },
+        { error: '⚠️ A chave da Aurora IA é inválida ou expirou. Por favor, gere uma nova no Google AI Studio e atualize sua GEMINI_API_KEY.' },
         { status: 401 }
+      );
+    }
+
+    if (errorMsg.includes('quota')) {
+      return NextResponse.json(
+        { error: '⚠️ Limite de requisições atingido. Aguarde um minuto antes de tentar novamente.' },
+        { status: 429 }
       );
     }
 
     console.error(`[AURORA API ERROR]:`, error);
     return NextResponse.json(
-      { error: 'A Aurora encontrou uma instabilidade técnica. Verifique sua chave de API ou tente novamente em instantes.' },
+      { error: 'A Aurora encontrou uma instabilidade técnica. Tente novamente em alguns instantes.' },
       { status: 500 }
     );
   }

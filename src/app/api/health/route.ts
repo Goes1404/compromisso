@@ -3,8 +3,8 @@ import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
 import { ai } from '@/ai/genkit';
 
 /**
- * @fileOverview API de Diagnóstico do Compromisso.
- * Verifica a saúde do Supabase e do Genkit.
+ * @fileOverview API de Diagnóstico Blindada.
+ * Verifica a saúde da infraestrutura sem expor chaves.
  */
 
 export const dynamic = 'force-dynamic';
@@ -30,11 +30,12 @@ export async function GET() {
   }
 
   // 2. Testar Genkit (GEMINI_API_KEY)
-  const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
   if (!apiKey) {
-    diagnostics.genkit = { status: 'error', details: 'Chave de API (Gemini) não configurada no ambiente.' };
+    diagnostics.genkit = { status: 'error', details: 'Chave de API não configurada no ambiente.' };
   } else {
     try {
+      // Teste minimalista para validar a chave
       const response = await ai.generate({
         model: 'googleai/gemini-1.5-flash',
         prompt: 'ok',
@@ -48,10 +49,10 @@ export async function GET() {
       }
     } catch (e: any) {
       const msg = e.message || '';
-      if (msg.includes('API key expired')) {
-        diagnostics.genkit = { status: 'error', details: 'A chave configurada EXPIROU. Gere uma nova no Google AI Studio.' };
+      if (msg.includes('API key expired') || msg.includes('API_KEY_INVALID')) {
+        diagnostics.genkit = { status: 'error', details: 'Chave INVÁLIDA ou EXPIROU. Gere uma nova no Google AI Studio.' };
       } else {
-        diagnostics.genkit = { status: 'error', details: 'Erro na autenticação da IA. Verifique se a chave é válida.' };
+        diagnostics.genkit = { status: 'error', details: 'Erro de autenticação. Verifique se a GEMINI_API_KEY está correta.' };
       }
     }
   }
