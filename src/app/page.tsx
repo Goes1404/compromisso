@@ -93,11 +93,11 @@ export default function LandingPage() {
             <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-300">
               <div className="relative aspect-[4/5] md:aspect-square rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border-[12px] border-white group">
                 <Image 
-                  src="https://picsum.photos/seed/school-facade/1000/1200" 
-                  alt="Nossa Unidade" 
+                  src="https://picsum.photos/seed/modern-edu-hero/1000/1200" 
+                  alt="Educação do Futuro" 
                   fill 
                   className="object-cover group-hover:scale-110 transition-transform duration-1000"
-                  data-ai-hint="school building"
+                  data-ai-hint="modern education"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />
                 <div className="absolute top-10 right-10 p-8 bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 animate-bounce">
@@ -106,7 +106,7 @@ export default function LandingPage() {
                 <div className="absolute bottom-10 left-10 right-10 p-8 bg-primary/80 backdrop-blur-xl rounded-[2.5rem] text-white border border-white/10 shadow-2xl">
                   <div className="flex items-center gap-4 mb-2">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">Status: Ambiente Real</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">Status: Ambiente Digital</span>
                   </div>
                   <p className="text-lg font-black italic">"Nossa infraestrutura é o alicerce para o seu crescimento acadêmico e técnico."</p>
                 </div>
@@ -198,14 +198,14 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { title: "Salas Inteligentes", hint: "modern school classroom", color: "bg-blue-500" },
-                { title: "Laboratórios Digitais", hint: "science lab education", color: "bg-orange-500" },
-                { title: "Estúdios de Live", hint: "video broadcast studio", color: "bg-purple-500" },
-                { title: "Espaços de Mentoria", hint: "co-working study space", color: "bg-green-500" },
+                { title: "Salas Inteligentes", seed: "smart-classroom", hint: "smart classroom" },
+                { title: "Laboratórios Digitais", seed: "tech-lab", hint: "tech lab" },
+                { title: "Estúdios de Live", seed: "media-studio", hint: "media studio" },
+                { title: "Espaços de Mentoria", seed: "collab-space", hint: "collab space" },
               ].map((item, i) => (
                 <div key={i} className="group relative aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-700">
                   <Image 
-                    src={`https://picsum.photos/seed/school-${i}/600/800`} 
+                    src={`https://picsum.photos/seed/${item.seed}/600/800`} 
                     alt={item.title} 
                     fill 
                     className="object-cover group-hover:scale-110 transition-transform duration-1000"

@@ -2,40 +2,64 @@
 {
   "placeholderImages": [
     {
+      "id": "hero-educational",
+      "description": "Estudante em ambiente educacional moderno e tecnológico",
+      "imageUrl": "https://picsum.photos/seed/modern-edu-hero/1000/1200",
+      "imageHint": "modern education"
+    },
+    {
+      "id": "gallery-classroom",
+      "description": "Sala de aula inteligente com recursos digitais",
+      "imageUrl": "https://picsum.photos/seed/smart-classroom/600/800",
+      "imageHint": "smart classroom"
+    },
+    {
+      "id": "gallery-lab",
+      "description": "Laboratório de tecnologia e inovação",
+      "imageUrl": "https://picsum.photos/seed/tech-lab/600/800",
+      "imageHint": "tech lab"
+    },
+    {
+      "id": "gallery-studio",
+      "description": "Estúdio profissional para gravação de aulas",
+      "imageUrl": "https://picsum.photos/seed/media-studio/600/800",
+      "imageHint": "media studio"
+    },
+    {
+      "id": "gallery-study",
+      "description": "Espaço de estudo colaborativo e moderno",
+      "imageUrl": "https://picsum.photos/seed/collab-space/600/800",
+      "imageHint": "collab space"
+    },
+    {
       "id": "school-facade",
-      "description": "Fachada principal do Colégio Municipal",
+      "description": "Fachada principal moderna do colégio",
       "imageUrl": "https://picsum.photos/seed/school-facade/1000/1200",
-      "imageHint": "school building"
+      "imageHint": "modern school"
     },
     {
       "id": "trail-math",
-      "description": "Mathematics learning trail cover",
+      "description": "Capa para trilha de matemática",
       "imageUrl": "https://picsum.photos/seed/math/600/400",
       "imageHint": "mathematics education"
     },
     {
       "id": "trail-physics",
-      "description": "Physics learning trail cover",
+      "description": "Capa para trilha de física",
       "imageUrl": "https://picsum.photos/seed/physics/600/400",
-      "imageHint": "physics experiment"
+      "imageHint": "physics education"
     },
     {
       "id": "trail-tech",
-      "description": "Technology and AI trail cover",
+      "description": "Capa para trilha de tecnologia",
       "imageUrl": "https://picsum.photos/seed/tech/600/400",
-      "imageHint": "technology education"
+      "imageHint": "coding education"
     },
     {
       "id": "trail-biology",
-      "description": "Biology learning trail cover",
+      "description": "Capa para trilha de biologia",
       "imageUrl": "https://picsum.photos/seed/bio/600/400",
-      "imageHint": "biology nature"
-    },
-    {
-      "id": "video-poster",
-      "description": "Default video placeholder",
-      "imageUrl": "https://picsum.photos/seed/video/800/450",
-      "imageHint": "video tutorial"
+      "imageHint": "biology science"
     }
   ]
 }
