@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -146,13 +145,13 @@ export default function LiveClassesPage() {
                     <div className="min-w-0 flex-1 space-y-2">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-[9px] md:text-[11px] border-accent/20 text-accent font-black uppercase px-3 h-6 rounded-lg">AGENDADA</Badge>
-                        <Badge variant="ghost" className="text-[9px] font-black text-muted-foreground uppercase flex items-center gap-1">
+                        <Badge variant="outline" className="text-[9px] font-black text-muted-foreground uppercase flex items-center gap-1 border-none shadow-none bg-transparent">
                           <MapPin className="h-3 w-3" /> Transmissão Remota
                         </Badge>
                       </div>
                       <h3 className="font-black text-primary italic text-xl md:text-3xl leading-none truncate group-hover:text-accent transition-colors tracking-tight">{live.title}</h3>
                       <p className="text-[11px] md:text-base text-muted-foreground font-bold uppercase mt-3 tracking-wide flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                         Com o Mentor {live.teacher_name || "Especialista"}
                       </p>
                     </div>

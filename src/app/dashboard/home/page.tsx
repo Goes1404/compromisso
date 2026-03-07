@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -28,7 +27,8 @@ import {
   BrainCircuit,
   X,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  MapPin
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
