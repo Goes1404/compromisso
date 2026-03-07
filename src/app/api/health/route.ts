@@ -4,7 +4,7 @@ import { ai } from '@/ai/genkit';
 
 /**
  * @fileOverview API de Diagnóstico do Compromisso.
- * Verifica a saúde do Supabase e do Genkit utilizando modelos estáveis.
+ * Verifica a saúde do Supabase e do Genkit.
  */
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,7 @@ export async function GET() {
 
   // 1. Testar Supabase
   if (!isSupabaseConfigured) {
-    diagnostics.supabase = { status: 'error', details: 'Variáveis NEXT_PUBLIC_SUPABASE_URL ou ANON_KEY ausentes.' };
+    diagnostics.supabase = { status: 'error', details: 'Configuração NEXT_PUBLIC_SUPABASE_URL ou ANON_KEY ausente.' };
   } else {
     try {
       const { error } = await supabase.from('profiles').select('id').limit(1);
@@ -30,26 +30,29 @@ export async function GET() {
   }
 
   // 2. Testar Genkit (GEMINI_API_KEY)
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    diagnostics.genkit = { status: 'error', details: 'GEMINI_API_KEY não configurada no ambiente.' };
+    diagnostics.genkit = { status: 'error', details: 'Chave de API (Gemini) não configurada no ambiente.' };
   } else {
     try {
-      // Teste de geração utilizando a string direta do modelo para máxima compatibilidade
       const response = await ai.generate({
         model: 'googleai/gemini-1.5-flash',
-        prompt: 'Responda apenas "ok"',
-        config: { maxOutputTokens: 5 }
+        prompt: 'ok',
+        config: { maxOutputTokens: 2 }
       });
       
       if (response.text) {
-        diagnostics.genkit = { status: 'ok', details: 'Aurora IA (Gemini 1.5 Flash) operacional.' };
+        diagnostics.genkit = { status: 'ok', details: 'Aurora IA operacional.' };
       } else {
-        throw new Error("Sem resposta do modelo.");
+        throw new Error("Resposta vazia da IA.");
       }
     } catch (e: any) {
-      console.error("[HEALTH CHECK AI ERROR]:", e);
-      diagnostics.genkit = { status: 'error', details: 'A chave fornecida é inválida ou o motor da Aurora encontrou um erro de inicialização.' };
+      const msg = e.message || '';
+      if (msg.includes('API key expired')) {
+        diagnostics.genkit = { status: 'error', details: 'A chave configurada EXPIROU. Gere uma nova no Google AI Studio.' };
+      } else {
+        diagnostics.genkit = { status: 'error', details: 'Erro na autenticação da IA. Verifique se a chave é válida.' };
+      }
     }
   }
 

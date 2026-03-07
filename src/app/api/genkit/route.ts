@@ -9,7 +9,6 @@ import { trailStructureGeneratorFlow } from '@/ai/flows/trail-structure-generato
 
 /**
  * @fileOverview Gateway de API para os fluxos da Aurora IA.
- * Utiliza o modelo gemini-1.5-flash para estabilidade industrial e compatibilidade global.
  */
 
 export async function POST(req: NextRequest) {
@@ -25,9 +24,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Identificador do motor (flowId) é obrigatório.' }, { status: 400 });
     }
 
-    console.log(`[AURORA API] Acionando motor: ${flowId} com Gemini 1.5 Flash`);
-
-    // MAPA DE FLUXOS
     const flows: Record<string, any> = {
       conceptExplanationAssistant: conceptExplanationAssistantFlow,
       financialAidDetermination: financialAidDeterminationFlow,
@@ -41,7 +37,6 @@ export async function POST(req: NextRequest) {
     const targetFlow = flows[flowId];
 
     if (!targetFlow) {
-      console.error(`[AURORA API] Erro: Motor '${flowId}' não localizado no registro.`);
       return NextResponse.json(
         { error: `O motor '${flowId}' não está mapeado no servidor.` },
         { status: 404 }
@@ -52,9 +47,19 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    console.error(`[AURORA API] Erro Crítico durante a execução:`, error);
+    const errorMsg = error?.message || '';
+    
+    // Tratamento industrial de erro de chave expirada
+    if (errorMsg.includes('API key expired') || errorMsg.includes('400 Bad Request')) {
+      return NextResponse.json(
+        { error: '⚠️ A chave da Aurora IA expirou. Por favor, gere uma nova chave no Google AI Studio e atualize suas variáveis de ambiente.' },
+        { status: 401 }
+      );
+    }
+
+    console.error(`[AURORA API ERROR]:`, error);
     return NextResponse.json(
-      { error: error.message || 'A Aurora encontrou uma instabilidade na rede neural ao processar sua solicitação.' },
+      { error: 'A Aurora encontrou uma instabilidade técnica. Verifique sua chave de API ou tente novamente em instantes.' },
       { status: 500 }
     );
   }
