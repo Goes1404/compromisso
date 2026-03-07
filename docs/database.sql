@@ -1,5 +1,3 @@
--- SCRIPT DE CONFIGURAÇÃO MESTRE - COMPROMISSO SMART EDUCATION
--- Cole este código no SQL Editor do seu Supabase e clique em RUN.
 
 -- 1. EXTENSÕES
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -71,6 +69,14 @@ CREATE TABLE IF NOT EXISTS public.forum_posts (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.direct_messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  receiver_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS public.announcements (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
@@ -121,6 +127,16 @@ CREATE TABLE IF NOT EXISTS public.classes (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.activity_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES public.profiles(id),
+  user_name TEXT,
+  action TEXT NOT NULL,
+  entity_type TEXT,
+  entity_id UUID,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS public.lives (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
@@ -150,7 +166,31 @@ CREATE TABLE IF NOT EXISTS public.user_progress (
   UNIQUE(user_id, trail_id)
 );
 
--- 7. FUNÇÕES RPC (Motores do App)
+-- 7. FUNÇÕES RPC E GATILHOS
+
+-- Trigger para criar perfil automaticamente no SignUp
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, name, email, username, profile_type, institution, course, last_access)
+  VALUES (
+    new.id,
+    new.raw_user_meta_data->>'full_name',
+    new.email,
+    new.raw_user_meta_data->>'username',
+    new.raw_user_meta_data->>'profile_type',
+    new.raw_user_meta_data->>'institution',
+    new.raw_user_meta_data->>'course',
+    NOW()
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Função para pegar questões aleatórias
 CREATE OR REPLACE FUNCTION get_random_questions_for_subject(p_subject_id UUID, p_limit INTEGER)
@@ -180,51 +220,19 @@ $$ LANGUAGE plpgsql;
 -- 8. PERMISSÕES BÁSICAS (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Acesso Público Perfis" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Inserção Pública Perfis" ON public.profiles FOR INSERT WITH CHECK (true);
 CREATE POLICY "Update Próprio Perfil" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Inserção pelo Auth" ON public.profiles FOR INSERT WITH CHECK (true);
+
+ALTER TABLE public.direct_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Ver próprias mensagens" ON public.direct_messages FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
+CREATE POLICY "Enviar mensagens" ON public.direct_messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
+
+ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Leitura Pública Logs" ON public.activity_logs FOR SELECT USING (true);
+CREATE POLICY "Inserção Sistema Logs" ON public.activity_logs FOR INSERT WITH CHECK (true);
 
 ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Leitura Pública Subjects" ON public.subjects FOR SELECT USING (true);
-CREATE POLICY "Gestão Subjects" ON public.subjects FOR ALL USING (true);
 
 ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Leitura Pública Questions" ON public.questions FOR SELECT USING (true);
-CREATE POLICY "Gestão Questions" ON public.questions FOR ALL USING (true);
-
-ALTER TABLE public.simulation_attempts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Simulados Usuário" ON public.simulation_attempts FOR ALL USING (true);
-
-ALTER TABLE public.forums ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Leitura Pública Forums" ON public.forums FOR SELECT USING (true);
-CREATE POLICY "Escrita Pública Forums" ON public.forums FOR INSERT WITH CHECK (true);
-
-ALTER TABLE public.forum_posts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Leitura Pública Posts" ON public.forum_posts FOR SELECT USING (true);
-CREATE POLICY "Escrita Pública Posts" ON public.forum_posts FOR INSERT WITH CHECK (true);
-
-ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Leitura Pública Avisos" ON public.announcements FOR SELECT USING (true);
-
-ALTER TABLE public.trails ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Leitura Pública Trilhas" ON public.trails FOR SELECT USING (true);
-
-ALTER TABLE public.modules ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Leitura Pública Módulos" ON public.modules FOR SELECT USING (true);
-
-ALTER TABLE public.learning_contents ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Leitura Pública Conteúdos" ON public.learning_contents FOR SELECT USING (true);
-
-ALTER TABLE public.lives ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Leitura Pública Lives" ON public.lives FOR SELECT USING (true);
-
-ALTER TABLE public.student_checklists ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Checklist Usuário" ON public.student_checklists FOR ALL USING (true);
-
-ALTER TABLE public.user_progress ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Progresso Usuário" ON public.user_progress FOR ALL USING (true);
-
--- INSERIR MATÉRIAS PADRÃO
-INSERT INTO public.subjects (name) VALUES 
-('Matemática'), ('Física'), ('Química'), ('Biologia'), 
-('Linguagens'), ('História'), ('Geografia'), ('Redação'),
-('Não Categorizado') ON CONFLICT DO NOTHING;

@@ -12,6 +12,7 @@ import { GraduationCap, School, User, ArrowRight, Loader2, Mail, Lock, Sparkles,
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, isSupabaseConfigured } from "@/app/lib/supabase";
+import Link from "next/link";
 
 type Step = 1 | 2 | 3;
 type ProfileType = "etec" | "cpop_santana" | "cpop_osasco" | "enem" | "teacher";
@@ -42,7 +43,6 @@ export default function RegisterPage() {
   });
 
   const nextStep = () => {
-    // Validação básica por passo
     if (step === 1 && (!formData.email || !formData.password || !formData.firstName)) {
       toast({ title: "Dados Incompletos", description: "Preencha os campos obrigatórios.", variant: "destructive" });
       return;
@@ -95,7 +95,6 @@ export default function RegisterPage() {
         courseValue = formData.major || "Vestibulando";
       }
 
-      // Registro no Supabase Auth com metadata para o trigger criar o perfil
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -111,11 +110,22 @@ export default function RegisterPage() {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          toast({ 
+            title: "Conta já existe", 
+            description: "Este e-mail já está cadastrado. Tente fazer login.", 
+            variant: "default" 
+          });
+          router.push("/login");
+          return;
+        }
+        throw authError;
+      }
 
       toast({ 
         title: "Cadastro Realizado! 🚀", 
-        description: "Seu perfil foi criado. Acesse seu e-mail para confirmação se necessário." 
+        description: "Seu perfil foi criado com sucesso." 
       });
       
       setTimeout(() => {
