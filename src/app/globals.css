@@ -1,50 +1,48 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Paleta Santana de Parnaíba - Identidade Governamental */
-    --background: 165 8% 96%;    /* Branco Gelo #F4F7F6 */
-    --foreground: 212 100% 10%;  /* Marinho quase preto para texto */
+    /* Paleta Santana de Parnaíba - Edição Vibrante EduTech */
+    --background: 0 0% 100%;      /* Branco Puro para máxima clareza */
+    --foreground: 222 47% 11%;    /* Marinho Profundo para texto */
     
     --card: 0 0% 100%;
-    --card-foreground: 212 100% 10%;
+    --card-foreground: 222 47% 11%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 212 100% 10%;
+    --popover-foreground: 222 47% 11%;
     
-    --primary: 211 100% 18%;     /* Azul Marinho Profundo #002B5B */
-    --primary-foreground: 0 0% 100%;
+    --primary: 221 83% 45%;      /* Azul Royal Vibrante - Energia e Foco */
+    --primary-foreground: 210 40% 98%;
     
-    --secondary: 212 20% 90%;
-    --secondary-foreground: 211 100% 18%;
+    --secondary: 210 40% 96%;    /* Cinza Azulado muito leve */
+    --secondary-foreground: 222 47% 11%;
     
-    --muted: 212 15% 85%;
-    --muted-foreground: 212 30% 30%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
     
-    --accent: 39 48% 56%;        /* Dourado Envelhecido #C5A059 */
-    --accent-foreground: 212 100% 10%;
+    --accent: 45 93% 47%;        /* Ouro Solar Vibrante - Retenção de Atenção */
+    --accent-foreground: 222 47% 11%;
     
-    --destructive: 0 100% 27%;   /* Vermelho Nobre #8B0000 */
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;    /* Vermelho Vivo para Alertas Reais */
+    --destructive-foreground: 210 40% 98%;
     
-    --border: 212 20% 85%;
-    --input: 212 20% 85%;
-    --ring: 39 48% 56%;          /* Foco em Dourado */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 45%;         /* Foco no Azul Royal */
     
-    /* Geometria Robusta: 8px de arredondamento */
-    --radius: 0.5rem;
+    --radius: 0.75rem;           /* Arredondamento moderno e amigável */
 
-    --sidebar-background: 211 100% 18%;
-    --sidebar-foreground: 165 8% 96%;
-    --sidebar-primary: 39 48% 56%;
-    --sidebar-primary-foreground: 211 100% 18%;
-    --sidebar-accent: 211 100% 22%;
-    --sidebar-accent-foreground: 165 8% 96%;
-    --sidebar-border: 211 100% 25%;
-    --sidebar-ring: 39 48% 56%;
+    --sidebar-background: 221 83% 45%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 45 93% 47%;
+    --sidebar-primary-foreground: 221 83% 45%;
+    --sidebar-accent: 221 83% 40%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 221 83% 35%;
+    --sidebar-ring: 45 93% 47%;
   }
 
   * {
@@ -60,32 +58,32 @@
   }
 }
 
-/* Scrollbar Institucional */
+/* Scrollbar Moderna */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--background));
+  background: hsl(var(--secondary));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.3);
+  background: hsl(var(--primary) / 0.2);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--accent) / 0.6);
+  background: hsl(var(--accent));
 }
 
-/* Efeitos de Transição Nobre */
+/* Transições e Sombras Suaves */
 .animate-in {
   animation-fill-mode: forwards;
 }
 
 .shadow-noble {
-  box-shadow: 0 4px 6px -1px rgba(0, 43, 91, 0.05), 0 2px 4px -1px rgba(0, 43, 91, 0.03);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .border-prestige {
