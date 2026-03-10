@@ -95,6 +95,7 @@ export default function RegisterPage() {
         courseValue = formData.major || "Vestibulando";
       }
 
+      // FLUXO ATÔMICO: A criação do perfil agora é feita pelo Trigger no Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -127,6 +128,7 @@ export default function RegisterPage() {
         description: "Seu perfil foi criado com sucesso. Verifique seu e-mail." 
       });
       
+      // Pequeno delay para o trigger terminar de rodar no banco
       setTimeout(() => {
         window.location.href = profileType === 'teacher' ? "/dashboard/teacher/home" : "/dashboard/home";
       }, 2000);
@@ -219,7 +221,7 @@ export default function RegisterPage() {
                   <Label htmlFor="password" title="Senha" className="font-bold text-primary/60 ml-2">Senha de Segurança</Label>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
-                    <Input id="password" type="password" placeholder="Mínimo 6 caracteres" value={formData.password} onChange={(e) => updateField("password", e.target.value)} className="pl-12 h-12 bg-white/50 rounded-2xl border-muted/20" />
+                    <Input id="password" type="password" placeholder="Mínimo 6 caracteres" value={formData.password} onChange={(e) => setPassword(e.target.value)} className="pl-12 h-12 bg-white/50 rounded-2xl border-muted/20" />
                   </div>
                 </div>
               </div>
