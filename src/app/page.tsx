@@ -34,8 +34,9 @@ export default function LandingPage() {
                 src="https://sl.bing.net/k7fXDmA0vsq" 
                 alt="Logo Santana de Parnaíba" 
                 fill 
+                unoptimized
                 className="object-contain"
-                data-ai-hint="prefeitura logo"
+                data-ai-hint="city logo"
               />
             </div>
             <div className="flex flex-col">
@@ -75,7 +76,7 @@ export default function LandingPage() {
                 <span className="text-accent drop-shadow-sm">é o nosso Compromisso.</span>
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground font-medium italic leading-relaxed max-w-xl border-l-4 border-accent/30 pl-6">
-                Plataforma 360º de Santana de Parnaíba que integra IA e gestão de dados para o sucesso do aluno.
+                Plataforma 360º de Santana de Parnaíba que integra IA e gestão de dados para o success do aluno.
               </p>
               <div className="flex flex-col sm:flex-row gap-6 pt-4">
                 <Button asChild size="lg" className="h-20 px-12 bg-primary text-white font-black text-xl rounded-[2rem] shadow-[0_20px_50px_-10px_rgba(26,44,75,0.4)] hover:scale-105 active:scale-95 transition-all group">
@@ -206,8 +207,9 @@ export default function LandingPage() {
                   src="https://sl.bing.net/k7fXDmA0vsq" 
                   alt="Logo Santana de Parnaíba" 
                   fill 
+                  unoptimized
                   className="object-contain brightness-0 invert"
-                  data-ai-hint="prefeitura logo"
+                  data-ai-hint="city logo"
                 />
               </div>
               <span className="text-3xl font-black italic tracking-tighter">Compromisso</span>

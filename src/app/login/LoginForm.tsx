@@ -134,8 +134,9 @@ export function LoginForm() {
             src="https://sl.bing.net/k7fXDmA0vsq" 
             alt="Logo Prefeitura" 
             fill 
+            unoptimized
             className="object-contain p-2"
-            data-ai-hint="prefeitura logo"
+            data-ai-hint="city logo"
           />
         </Link>
         <div className="space-y-2">

@@ -95,7 +95,6 @@ export default function RegisterPage() {
         courseValue = formData.major || "Vestibulando";
       }
 
-      // FLUXO ATÔMICO: A criação do perfil agora é feita pelo Trigger no Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -128,7 +127,6 @@ export default function RegisterPage() {
         description: "Seu perfil foi criado com sucesso. Verifique seu e-mail." 
       });
       
-      // Pequeno delay para o trigger terminar de rodar no banco
       setTimeout(() => {
         window.location.href = profileType === 'teacher' ? "/dashboard/teacher/home" : "/dashboard/home";
       }, 2000);
@@ -161,8 +159,9 @@ export default function RegisterPage() {
               src="https://sl.bing.net/k7fXDmA0vsq" 
               alt="Logo Prefeitura" 
               fill 
+              unoptimized
               className="object-contain p-1"
-              data-ai-hint="prefeitura logo"
+              data-ai-hint="city logo"
             />
           </div>
           <h1 className="text-4xl font-black tracking-tight text-primary flex items-center justify-center gap-3 italic leading-none">

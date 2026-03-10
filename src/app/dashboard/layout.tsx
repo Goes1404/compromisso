@@ -158,8 +158,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 src="https://sl.bing.net/k7fXDmA0vsq" 
                 alt="Logo Santana de Parnaíba" 
                 fill 
+                unoptimized
                 className="object-contain"
-                data-ai-hint="prefeitura logo"
+                data-ai-hint="city logo"
               />
             </div>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
