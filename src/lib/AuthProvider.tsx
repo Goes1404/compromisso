@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '@/app/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
@@ -23,6 +23,7 @@ interface AuthContextType {
   userRole: UserRole;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -32,6 +33,7 @@ const AuthContext = createContext<AuthContextType>({
   userRole: 'student',
   loading: true,
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -41,42 +43,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Papel normalizado industrial com mapeamento rigoroso
   const userRole = useMemo((): UserRole => {
     const rawType = (profile?.profile_type || '').toLowerCase().trim();
-    
-    // Mapeamento Admin: Apenas termos explicitamente administrativos
-    if (['admin', 'gestor', 'coordenador', 'coordenacao'].includes(rawType)) {
-      return 'admin';
-    }
-    
-    // Mapeamento Professor: Termos docentes e mentoria
-    if (['teacher', 'mentor', 'professor', 'instrutor', 'docente'].includes(rawType)) {
-      return 'teacher';
-    }
-    
-    // Padrão: Aluno
+    if (['admin', 'gestor', 'coordenador', 'coordenacao'].includes(rawType)) return 'admin';
+    if (['teacher', 'mentor', 'professor', 'instrutor', 'docente'].includes(rawType)) return 'teacher';
     return 'student';
   }, [profile]);
 
+  const fetchProfile = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (!error && data) {
+        if (data.status === 'suspended') {
+          router.replace('/suspended');
+          return null;
+        }
+        return data as Profile;
+      }
+      return null;
+    } catch (error) {
+      console.error('Erro ao buscar perfil:', error);
+      return null;
+    }
+  }, [router]);
+
+  const refreshProfile = async () => {
+    if (user) {
+      const p = await fetchProfile(user.id);
+      if (p) setProfile(p);
+    }
+  };
+
   useEffect(() => {
     const initAuth = async () => {
+      setLoading(true);
       try {
-        // 1. Verificar se existe uma sessão simulada (Mock)
+        // 1. Verificar Mock Session
         const mockData = typeof window !== 'undefined' ? localStorage.getItem('compromisso_mock_session') : null;
         if (mockData) {
           const parsed = JSON.parse(mockData);
           setUser(parsed.user);
           setProfile(parsed.profile);
           setLoading(false);
-          console.log(`[AUTH] Sessão Mock Ativa: ${parsed.role.toUpperCase()}`);
           return;
         }
 
-        // 2. Tentar sessão real do Supabase
+        // 2. Verificar Sessão Real
         const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          const p = await fetchProfile(initialSession.user.id);
+          if (p) setProfile(p);
+        }
       } catch (e) {
         console.warn("Auth init error:", e);
       } finally {
@@ -86,48 +110,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initAuth();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      if (typeof window !== 'undefined' && !localStorage.getItem('compromisso_mock_session')) {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      if (typeof window !== 'undefined' && localStorage.getItem('compromisso_mock_session')) return;
+
+      if (currentSession) {
         setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+        setUser(currentSession.user);
+        const p = await fetchProfile(currentSession.user.id);
+        if (p) setProfile(p);
+      } else {
+        setSession(null);
+        setUser(null);
+        setProfile(null);
       }
       
       if (event === 'SIGNED_OUT') {
-        if (typeof window !== 'undefined') localStorage.removeItem('compromisso_mock_session');
-        setProfile(null);
         router.replace('/');
       }
     });
 
     return () => authListener?.subscription.unsubscribe();
-  }, [router]);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      // Se for mock, não busca no Supabase
-      if (!user || (typeof window !== 'undefined' && localStorage.getItem('compromisso_mock_session'))) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (!error && data) {
-          if (data.status === 'suspended') {
-            router.replace('/suspended');
-          }
-          setProfile(data as Profile);
-          console.log(`[AUTH] Perfil Real Carregado: ${data.profile_type}`);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar perfil real:', error);
-      }
-    };
-
-    if (user) fetchProfile();
-  }, [user, router]);
+  }, [fetchProfile, router]);
 
   const signOut = async () => {
     setLoading(true);
@@ -149,6 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userRole,
     loading,
     signOut,
+    refreshProfile,
   }), [user, session, profile, userRole, loading]);
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

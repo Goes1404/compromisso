@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarTrigger, SidebarInset, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
@@ -122,13 +121,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [userRole]);
 
   useEffect(() => {
-    if (hasHydrated && !isUserLoading && !user) router.replace("/login");
+    // Redireciona para o login APENAS se o carregamento terminou e não há usuário
+    if (hasHydrated && !isUserLoading && !user) {
+      router.replace("/login");
+    }
   }, [user, isUserLoading, router, hasHydrated]);
 
   const isFullBleedPage = useMemo(() => {
     return pathname.includes('/chat/') || pathname.includes('/forum/') || pathname.includes('/classroom/') || pathname.includes('/live/');
   }, [pathname]);
 
+  // Enquanto estiver carregando os dados iniciais, mostra a tela de loading unificada
   if (!hasHydrated || isUserLoading) return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-primary gap-4">
       <div className="relative">
@@ -137,10 +140,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         <Sparkles className="absolute -top-2 -right-2 h-6 w-6 text-accent animate-pulse" />
       </div>
-      <h2 className="text-sm font-black text-white italic tracking-tighter">Compromisso</h2>
+      <h2 className="text-sm font-black text-white italic tracking-tighter uppercase opacity-40">Sincronizando Rede...</h2>
     </div>
   );
 
+  // Se não houver usuário após o carregamento, não renderiza nada (o useEffect cuidará do redirecionamento)
   if (!user) return null;
 
   const userAvatar = profile?.avatar_url || `https://picsum.photos/seed/${user.id}/100/100`;
