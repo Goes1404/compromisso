@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -24,6 +23,7 @@ export function LoginForm() {
   const { toast } = useToast();
   
   const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
+  const bgUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Igreja_Matriz_de_Santana_de_Parna%C3%ADba.jpg/1280px-Igreja_Matriz_de_Santana_de_Parna%C3%ADba.jpg";
 
   const handleQuickLogin = (role: 'student' | 'teacher' | 'admin') => {
     setIsRedirecting(true);
@@ -117,7 +117,12 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 z-10 relative">
-      <div className="bg-santana-overlay" />
+      {/* Background Histórico (Ponto 2: Igreja Matriz) */}
+      <div 
+        className="bg-santana-fixed" 
+        style={{ backgroundImage: `url('${bgUrl}')` }} 
+      />
+
       {isRedirecting && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-primary text-white animate-in fade-in duration-300">
           <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-accent text-accent-foreground shadow-2xl mb-6 animate-bounce">

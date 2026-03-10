@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -24,10 +23,15 @@ import Image from "next/image";
 
 export default function LandingPage() {
   const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
+  const bgUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg/1280px-Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg";
 
   return (
     <div className="flex min-h-screen flex-col bg-white relative">
-      <div className="bg-santana-overlay" />
+      {/* Background Histórico (Ponto 1: Centro) */}
+      <div 
+        className="bg-santana-fixed" 
+        style={{ backgroundImage: `url('${bgUrl}')` }} 
+      />
       
       {/* HEADER */}
       <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-2xl border-b border-muted/20 shadow-sm">
@@ -115,7 +119,7 @@ export default function LandingPage() {
 
         {/* PILARES SECTION */}
         <section id="features" className="py-32 bg-primary text-white relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10 bg-[url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg/1920px-Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg')] bg-cover bg-center grayscale" />
+          <div className="absolute inset-0 opacity-10 bg-[url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg/1280px-Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg')] bg-cover bg-center grayscale" />
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="text-center max-w-3xl mx-auto mb-24 space-y-6">
               <div className="h-1.5 w-24 bg-accent mx-auto rounded-full" />

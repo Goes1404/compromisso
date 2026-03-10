@@ -1,11 +1,10 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Paleta Santana de Parnaíba - Edição EduTech Premium */
+    /* Paleta Santana de Parnaíba - EduTech Premium Vibrante */
     --background: 0 0% 100%;      
     --foreground: 222 47% 11%;    
     
@@ -34,7 +33,7 @@
     --input: 214 32% 91%;
     --ring: 215 100% 34%;
     
-    --radius: 0.5rem; /* Bordas mais sóbrias */
+    --radius: 0.5rem; 
 
     --sidebar-background: 215 100% 34%;
     --sidebar-foreground: 210 40% 98%;
@@ -59,15 +58,14 @@
   }
 }
 
-/* Camada de Detalhe do Marco Histórico */
-.bg-santana-overlay {
+/* Camadas de Fundo Histórico */
+.bg-santana-fixed {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.06;
+  opacity: 0.05;
   filter: grayscale(100%);
-  background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg/1920px-Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

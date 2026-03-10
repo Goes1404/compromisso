@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarTrigger, SidebarInset, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
@@ -115,6 +114,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [hasHydrated, setHasHydrated] = useState(false);
   
   const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
+  const bgUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Museu_Anhanguera_-_Santana_de_Parna%C3%ADba.jpg/1280px-Museu_Anhanguera_-_Santana_de_Parna%C3%ADba.jpg";
 
   useEffect(() => { setHasHydrated(true); }, []);
 
@@ -187,7 +187,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="bg-background flex flex-col h-screen overflow-hidden relative">
-        <div className="bg-santana-overlay" />
+        {/* Background Histórico (Ponto 3: Museu Anhanguera) */}
+        <div 
+          className="bg-santana-fixed" 
+          style={{ backgroundImage: `url('${bgUrl}')` }} 
+        />
+
         <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-xl px-4 md:px-6 shrink-0">
           <SidebarTrigger className="h-9 w-9 rounded-full hover:bg-muted" />
           <div className="flex-1" />
