@@ -113,6 +113,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const { user, profile, userRole, loading: isUserLoading, signOut } = useAuth();
   const [hasHydrated, setHasHydrated] = useState(false);
+  
+  const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
 
   useEffect(() => { setHasHydrated(true); }, []);
 
@@ -155,7 +157,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
            <div className="flex items-center gap-4">
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white p-1.5 shadow-lg">
               <Image 
-                src="https://sl.bing.net/k7fXDmA0vsq" 
+                src={logoUrl} 
                 alt="Logo Santana de Parnaíba" 
                 fill 
                 unoptimized

@@ -27,6 +27,8 @@ export default function RegisterPage() {
   const [teacherCode, setTeacherCode] = useState("");
   const router = useRouter();
   const { toast } = useToast();
+  
+  const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -156,8 +158,8 @@ export default function RegisterPage() {
         <div className="space-y-4 text-center">
           <div className="relative h-20 w-20 mx-auto overflow-hidden rounded-2xl shadow-xl bg-white p-2">
             <Image 
-              src="https://sl.bing.net/k7fXDmA0vsq" 
-              alt="Logo Prefeitura" 
+              src={logoUrl} 
+              alt="Logo Santana de Parnaíba" 
               fill 
               unoptimized
               className="object-contain p-1"

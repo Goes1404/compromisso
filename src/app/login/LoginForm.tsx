@@ -22,6 +22,8 @@ export function LoginForm() {
   const [authError, setAuthError] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
+  
+  const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
 
   const handleQuickLogin = (role: 'student' | 'teacher' | 'admin') => {
     setIsRedirecting(true);
@@ -34,7 +36,7 @@ export function LoginForm() {
     
     const targetEmail = emailMap[role];
     setEmail(targetEmail);
-    setPassword('123456');
+    password === "" && setPassword('123456');
 
     const mockIds = {
       admin: '00000000-0000-0000-0000-00000000000a',
@@ -131,8 +133,8 @@ export function LoginForm() {
       <div className="flex flex-col items-center gap-4 text-center">
         <Link href="/" className="relative h-24 w-24 overflow-hidden rounded-3xl shadow-2xl transition-all duration-500 hover:scale-110 bg-white p-2">
           <Image 
-            src="https://sl.bing.net/k7fXDmA0vsq" 
-            alt="Logo Prefeitura" 
+            src={logoUrl} 
+            alt="Logo Santana de Parnaíba" 
             fill 
             unoptimized
             className="object-contain p-2"
