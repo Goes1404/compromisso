@@ -1,3 +1,4 @@
+
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarTrigger, SidebarInset, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
@@ -8,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useMemo, memo, useRef, Suspense } from "react";
 import { useAuth } from "@/lib/AuthProvider"; 
+import Image from "next/image";
 
 const studentItems = [
   { icon: Home, label: "Página Inicial", href: "/dashboard/home" },
@@ -121,7 +123,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [userRole]);
 
   useEffect(() => {
-    // Redireciona para o login APENAS se o carregamento terminou E não há usuário detectado
     if (hasHydrated && !isUserLoading && !user) {
       router.replace("/login");
     }
@@ -131,7 +132,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return pathname.includes('/chat/') || pathname.includes('/forum/') || pathname.includes('/classroom/') || pathname.includes('/live/');
   }, [pathname]);
 
-  // Enquanto estiver carregando os dados iniciais, mostra a tela de loading industrial
   if (!hasHydrated || isUserLoading) return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-primary gap-4">
       <div className="relative">
@@ -144,7 +144,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   );
 
-  // Se não houver usuário após o carregamento, não renderiza o layout (o useEffect cuidará do redirecionamento)
   if (!user) return null;
 
   const userAvatar = profile?.avatar_url || `https://picsum.photos/seed/${user.id}/100/100`;
@@ -153,13 +152,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <SidebarProvider>
       <Sidebar side="left" collapsible="icon" className="bg-sidebar border-none">
         <SidebarHeader className="p-6">
-           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground shadow-lg">
-              <BookOpen className="h-5 w-5" />
+           <div className="flex items-center gap-4">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white p-1.5 shadow-lg">
+              <Image 
+                src="https://picsum.photos/seed/parnaiba-logo/400/400" 
+                alt="Logo Santana de Parnaíba" 
+                fill 
+                className="object-contain"
+                data-ai-hint="prefeitura logo"
+              />
             </div>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
               <span className="text-lg font-black text-white italic leading-none">Compromisso</span>
-              <span className="text-[8px] text-white/40 uppercase tracking-widest font-black">Educori 360</span>
+              <span className="text-[8px] text-white/40 uppercase tracking-widest font-black">Prefeitura de Santana</span>
             </div>
           </div>
         </SidebarHeader>

@@ -2,6 +2,12 @@
 {
   "placeholderImages": [
     {
+      "id": "prefeitura-logo",
+      "description": "Logomarca Oficial da Prefeitura de Santana de Parnaíba SP",
+      "imageUrl": "https://picsum.photos/seed/parnaiba-logo/400/400",
+      "imageHint": "prefeitura logo"
+    },
+    {
       "id": "hero-educational",
       "description": "Estudante em ambiente educacional moderno e tecnológico",
       "imageUrl": "https://picsum.photos/seed/modern-edu-hero/1000/1200",

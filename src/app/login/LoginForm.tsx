@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, ChevronRight, Loader2, Sparkles, AlertCircle, BookOpen, GraduationCap, User, ShieldCheck } from "lucide-react";
+import { ChevronRight, Loader2, Sparkles, AlertCircle, BookOpen, GraduationCap, User, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/app/lib/supabase";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
+import Image from "next/image";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -35,7 +36,6 @@ export function LoginForm() {
     setEmail(targetEmail);
     setPassword('123456');
 
-    // IDs em formato UUID para evitar erros de sintaxe no PostgreSQL
     const mockIds = {
       admin: '00000000-0000-0000-0000-00000000000a',
       teacher: '00000000-0000-0000-0000-00000000000b',
@@ -72,9 +72,7 @@ export function LoginForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-    
     if (!email || !password) return;
-    
     setLoading(true);
 
     try {
@@ -92,7 +90,7 @@ export function LoginForm() {
             handleQuickLogin(role as any);
             return;
           }
-          setAuthError("Erro de Configuração: O ambiente está usando a chave 'service_role'. Use o acesso rápido.");
+          setAuthError("Erro de segurança. Use o acesso rápido para testes.");
         } else {
           setAuthError("E-mail ou senha incorretos.");
         }
@@ -111,7 +109,7 @@ export function LoginForm() {
 
     } catch (err: any) {
       setLoading(false);
-      setAuthError("Erro de rede ao conectar com o servidor.");
+      setAuthError("Erro de rede.");
     }
   };
 
@@ -131,8 +129,14 @@ export function LoginForm() {
       )}
 
       <div className="flex flex-col items-center gap-4 text-center">
-        <Link href="/" className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-2xl rotate-3 hover:rotate-0 transition-all duration-500 group border border-white/10">
-          <Shield className="h-12 w-12 group-hover:scale-110 transition-transform" />
+        <Link href="/" className="relative h-24 w-24 overflow-hidden rounded-3xl shadow-2xl transition-all duration-500 hover:scale-110 bg-white p-2">
+          <Image 
+            src="https://picsum.photos/seed/parnaiba-logo/400/400" 
+            alt="Logo Prefeitura" 
+            fill 
+            className="object-contain p-2"
+            data-ai-hint="prefeitura logo"
+          />
         </Link>
         <div className="space-y-2">
           <h1 className="font-headline text-4xl font-black tracking-tighter text-white drop-shadow-lg">
@@ -140,7 +144,7 @@ export function LoginForm() {
           </h1>
           <p className="text-white/70 font-medium flex items-center justify-center gap-2 italic">
             <Sparkles className="h-4 w-4 text-accent animate-pulse" />
-            Portal de Acesso
+            Portal de Acesso Institucional
           </p>
         </div>
       </div>
@@ -148,7 +152,7 @@ export function LoginForm() {
       <Card className="border-none shadow-[0_30px_60px_rgba(0,0,0,0.5)] overflow-hidden backdrop-blur-2xl bg-white/95 rounded-[2.5rem]">
         <CardHeader className="space-y-1 pb-6 pt-8 text-center bg-primary/5 border-b border-dashed">
           <CardTitle className="text-2xl font-black text-primary italic">Entrar no Sistema</CardTitle>
-          <CardDescription className="font-medium text-muted-foreground italic">Selecione seu perfil para acesso rápido.</CardDescription>
+          <CardDescription className="font-medium text-muted-foreground italic">Portal Oficial de Santana de Parnaíba.</CardDescription>
         </CardHeader>
         <CardContent className="px-8 pt-8 space-y-6">
           
@@ -175,14 +179,14 @@ export function LoginForm() {
 
           <div className="relative flex items-center py-2">
             <div className="flex-grow border-t border-muted/20"></div>
-            <span className="flex-shrink mx-4 text-[8px] font-black uppercase text-muted-foreground tracking-[0.3em]">Ou use sua conta real</span>
+            <span className="flex-shrink mx-4 text-[8px] font-black uppercase text-muted-foreground tracking-[0.3em]">Autenticação de Rede</span>
             <div className="flex-grow border-t border-muted/20"></div>
           </div>
 
           {authError && (
             <Alert variant="destructive" className="bg-red-50 border-red-200">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs font-bold italic leading-tight">{authError}</AlertDescription>
+              <AlertDescription className="text-xs font-bold italic">{authError}</AlertDescription>
             </Alert>
           )}
 

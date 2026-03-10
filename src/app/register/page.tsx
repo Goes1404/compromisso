@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, isSupabaseConfigured } from "@/app/lib/supabase";
 import Link from "next/link";
+import Image from "next/image";
 
 type Step = 1 | 2 | 3;
 type ProfileType = "etec" | "cpop_santana" | "cpop_osasco" | "enem" | "teacher";
@@ -94,7 +95,6 @@ export default function RegisterPage() {
         courseValue = formData.major || "Vestibulando";
       }
 
-      // FLUXO ATÔMICO: A criação do perfil agora é feita pelo Trigger no Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -127,7 +127,6 @@ export default function RegisterPage() {
         description: "Seu perfil foi criado com sucesso. Verifique seu e-mail." 
       });
       
-      // Pequeno delay para o trigger terminar de rodar no banco
       setTimeout(() => {
         window.location.href = profileType === 'teacher' ? "/dashboard/teacher/home" : "/dashboard/home";
       }, 2000);
@@ -136,7 +135,7 @@ export default function RegisterPage() {
       console.error("Erro no cadastro:", err);
       toast({ 
         title: "Falha no Cadastro", 
-        description: err.message || "Ocorreu um erro no servidor. Verifique se o SQL foi aplicado.", 
+        description: err.message || "Erro no servidor.", 
         variant: "destructive" 
       });
     } finally {
@@ -154,12 +153,20 @@ export default function RegisterPage() {
       <div className="absolute bottom-[-10%] left-[-10%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
       
       <div className="w-full max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
-        <div className="space-y-2 text-center">
-          <h1 className="text-4xl font-black tracking-tight text-primary flex items-center justify-center gap-3 italic">
+        <div className="space-y-4 text-center">
+          <div className="relative h-20 w-20 mx-auto overflow-hidden rounded-2xl shadow-xl bg-white p-2">
+            <Image 
+              src="https://picsum.photos/seed/parnaiba-logo/400/400" 
+              alt="Logo Prefeitura" 
+              fill 
+              className="object-contain p-1"
+              data-ai-hint="prefeitura logo"
+            />
+          </div>
+          <h1 className="text-4xl font-black tracking-tight text-primary flex items-center justify-center gap-3 italic leading-none">
             Cadastro <span className="text-accent">Compromisso</span>
-            <Sparkles className="h-8 w-8 text-accent animate-pulse" />
           </h1>
-          <p className="text-muted-foreground text-lg font-medium italic">Sua rota de aprovação começa agora.</p>
+          <p className="text-muted-foreground text-lg font-medium italic">Inicie sua jornada oficial em Santana de Parnaíba.</p>
         </div>
 
         <div className="space-y-4">
@@ -202,7 +209,7 @@ export default function RegisterPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="font-bold text-primary/60 ml-2">E-mail Corporativo ou Pessoal</Label>
+                  <Label htmlFor="email" className="font-bold text-primary/60 ml-2">E-mail</Label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
                     <Input id="email" type="email" placeholder="nome@exemplo.com" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="pl-12 h-12 bg-white/50 rounded-2xl border-muted/20" />
@@ -261,7 +268,7 @@ export default function RegisterPage() {
                       <div>
                         <p className="font-black text-primary text-xs uppercase tracking-widest">Atenção Mentor</p>
                         <p className="text-xs font-medium italic text-primary/60 mt-1 leading-relaxed">
-                          Para validar seu acesso como docente, você deve inserir o código fornecido pela coordenação geral (Priscila).
+                          Para validar seu acesso como docente, você deve inserir o código fornecido pela coordenação geral.
                         </p>
                       </div>
                     </div>
@@ -274,10 +281,6 @@ export default function RegisterPage() {
                         onChange={(e) => setTeacherCode(e.target.value)} 
                         className="h-14 rounded-2xl bg-white border-2 border-accent/20 text-center font-black tracking-[0.5em] text-lg uppercase"
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="subject" className="font-bold text-primary/60 ml-2">Disciplina / Especialidade</Label>
-                      <Input id="subject" placeholder="Ex: Matemática, Física..." value={formData.subject} onChange={(e) => updateField("subject", e.target.value)} className="h-12 bg-white/50 rounded-xl" />
                     </div>
                   </div>
                 )}
@@ -293,19 +296,6 @@ export default function RegisterPage() {
                     <div className="space-y-2">
                       <Label htmlFor="course" className="font-bold text-primary/60 ml-2">Curso Atual ou Série</Label>
                       <Input id="course" placeholder="Ex: Informática ou 3º Ano Médio" value={formData.course} onChange={(e) => updateField("course", e.target.value)} className="h-12 bg-white/50 rounded-xl" />
-                    </div>
-                  </div>
-                )}
-
-                {profileType === "enem" && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="university" className="font-bold text-primary/60 ml-2">Instituição Alvo</Label>
-                      <Input id="university" placeholder="Ex: USP, FATEC, UNESP" value={formData.university} onChange={(e) => updateField("university", e.target.value)} className="h-12 bg-white/50 rounded-xl" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="major" className="font-bold text-primary/60 ml-2">Carreira Desejada</Label>
-                      <Input id="major" placeholder="Ex: Medicina, Engenharia..." value={formData.major} onChange={(e) => updateField("major", e.target.value)} className="h-12 bg-white/50 rounded-xl" />
                     </div>
                   </div>
                 )}
