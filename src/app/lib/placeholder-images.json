@@ -8,6 +8,12 @@
       "imageHint": "city logo"
     },
     {
+      "id": "santana-landmark",
+      "description": "Centro Histórico de Santana de Parnaíba para Background",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg/1920px-Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg",
+      "imageHint": "historic town"
+    },
+    {
       "id": "hero-educational",
       "description": "Estudante em ambiente educacional moderno e tecnológico",
       "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxlZHVjYXRpb24lMjB0ZWNobm9sb2d5fGVufDB8fHx8MTc3MDA4NTYwNXww&ixlib=rb-4.1.0&q=80&w=1080",
@@ -38,34 +44,10 @@
       "imageHint": "collab space"
     },
     {
-      "id": "school-facade",
-      "description": "Fachada principal moderna do colégio",
-      "imageUrl": "https://picsum.photos/seed/school-facade/1000/1200",
-      "imageHint": "modern school"
-    },
-    {
       "id": "trail-math",
       "description": "Mathematics learning trail cover",
       "imageUrl": "https://images.unsplash.com/photo-1613563696452-c7239f5ae99c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtYXRoZW1hdGljcyUyMGVkdWNhdGlvbnxlbnwwfHx8fDE3NzAwODU2MDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "mathematics education"
-    },
-    {
-      "id": "trail-physics",
-      "description": "Physics learning trail cover",
-      "imageUrl": "https://images.unsplash.com/photo-1690050070164-476021806d24?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwaHlzaWNzJTIwZXhwZXJpbWVudHxlbnwwfHx8fDE3Njk5ODMxOTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "physics experiment"
-    },
-    {
-      "id": "trail-tech",
-      "description": "Technology and AI trail cover",
-      "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxlZHVjYXRpb24lMjB0ZWNobm9sb2d5fGVufDB8fHx8MTc3MDA4NTYwNXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "technology education"
-    },
-    {
-      "id": "trail-biology",
-      "description": "Biology learning trail cover",
-      "imageUrl": "https://images.unsplash.com/photo-1600740073508-89a1726b3cf6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YmlvbG9neSUyMG5hdHVyZXxlbnwwfHx8fDE3NzAwODU2MDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "biology nature"
     }
   ]
 }

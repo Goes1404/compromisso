@@ -1,3 +1,4 @@
+
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarTrigger, SidebarInset, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
@@ -51,7 +52,7 @@ const adminItems = [
 ];
 
 function SwipeHandler({ children }: { children: React.ReactNode }) {
-  const { setOpenMobile, isMobile, openMobile } = useSidebar();
+  const { setOpenMobile, isMobile } = useSidebar();
   const touchStart = useRef({ x: 0, y: 0 });
   const touchEnd = useRef({ x: 0, y: 0 });
 
@@ -73,8 +74,8 @@ function SwipeHandler({ children }: { children: React.ReactNode }) {
     const absX = Math.abs(deltaX);
     const absY = Math.abs(deltaY);
     if (absX > absY * 1.5 && absX > 50) {
-      if (!openMobile && deltaX > 50) setOpenMobile(true);
-      else if (openMobile && deltaX < -50) setOpenMobile(false);
+      if (deltaX > 50) setOpenMobile(true);
+      else if (deltaX < -50) setOpenMobile(false);
     }
   };
 
@@ -91,7 +92,7 @@ const NavMenu = memo(({ items, pathname, unreadCount }: { items: any[], pathname
     <SidebarMenu className="gap-1">
       {items.map((item) => (
         <SidebarMenuItem key={item.label}>
-          <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label} className="h-11 rounded-xl data-[active=true]:bg-accent data-[active=true]:text-accent-foreground transition-all duration-200">
+          <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label} className="h-11 rounded-lg data-[active=true]:bg-accent data-[active=true]:text-accent-foreground transition-all duration-200">
             <Link href={item.href} onClick={() => isMobile && setOpenMobile(false)} className="flex items-center gap-3">
               <item.icon className="h-5 w-5" />
               <span className="font-bold text-sm">{item.label}</span>
@@ -136,7 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!hasHydrated || isUserLoading) return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-primary gap-4">
       <div className="relative">
-        <div className="h-16 w-16 rounded-[2rem] bg-white/5 flex items-center justify-center shadow-2xl animate-pulse">
+        <div className="h-16 w-16 rounded-2xl bg-white/5 flex items-center justify-center shadow-2xl animate-pulse">
           <BookOpen className="h-8 w-8 text-accent" />
         </div>
         <Sparkles className="absolute -top-2 -right-2 h-6 w-6 text-accent animate-pulse" />
@@ -154,19 +155,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar side="left" collapsible="icon" className="bg-sidebar border-none">
         <SidebarHeader className="p-6">
            <div className="flex items-center gap-4">
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white p-1.5 shadow-lg">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-white p-1.5 shadow-lg">
               <Image 
                 src={logoUrl} 
                 alt="Logo Santana de Parnaíba" 
                 fill 
                 unoptimized
                 className="object-contain"
-                data-ai-hint="city logo"
               />
             </div>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
               <span className="text-lg font-black text-white italic leading-none">Compromisso</span>
-              <span className="text-[8px] text-white/40 uppercase tracking-widest font-black">Prefeitura de Santana</span>
+              <span className="text-[8px] text-white/40 uppercase tracking-widest font-black">Santana de Parnaíba</span>
             </div>
           </div>
         </SidebarHeader>
@@ -178,7 +178,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <SidebarFooter className="p-4 border-t border-white/5">
            <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => signOut()} className="text-red-400 hover:bg-red-500/10 h-11 rounded-xl">
+              <SidebarMenuButton onClick={() => signOut()} className="text-red-400 hover:bg-red-500/10 h-11 rounded-lg">
                 <LogOut className="h-4 w-4" />
                 <span className="font-bold text-xs">Sair</span>
               </SidebarMenuButton>
@@ -186,7 +186,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="bg-background flex flex-col h-screen overflow-hidden bg-tech-blueprint">
+      <SidebarInset className="bg-background flex flex-col h-screen overflow-hidden relative">
+        <div className="bg-santana-overlay" />
         <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-xl px-4 md:px-6 shrink-0">
           <SidebarTrigger className="h-9 w-9 rounded-full hover:bg-muted" />
           <div className="flex-1" />
@@ -202,7 +203,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
         </header>
         <SwipeHandler>
-          <main className={`flex-1 flex flex-col min-h-0 overflow-y-auto ${isFullBleedPage ? 'p-0' : 'p-4 md:p-8'} bg-edu-pattern`}>
+          <main className={`flex-1 flex flex-col min-h-0 overflow-y-auto ${isFullBleedPage ? 'p-0' : 'p-4 md:p-8'}`}>
             <div className={isFullBleedPage ? 'flex-1 flex flex-col min-h-0' : 'max-w-7xl mx-auto w-full'}>
               <Suspense fallback={<div className="p-8 opacity-20 animate-pulse"><Sparkles className="h-10 w-10 text-accent" /></div>}>
                 {children}
