@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { GraduationCap, School, User, ArrowRight, Loader2, Mail, Lock, Sparkles, UserPlus, MapPin, ShieldCheck, AlertCircle } from "lucide-react";
+import { GraduationCap, School, User, ArrowRight, Loader2, Mail, Lock, Sparkles, UserPlus, MapPin, ShieldCheck, AlertCircle, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, isSupabaseConfigured } from "@/app/lib/supabase";
@@ -150,6 +150,16 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-blue-gradient p-4 sm:p-8 relative overflow-hidden">
+      {/* Botão de Voltar para a Home */}
+      <div className="absolute top-6 left-6 z-50">
+        <Button asChild variant="ghost" className="text-white hover:bg-white/10 font-black uppercase text-[10px] tracking-[0.3em] gap-2 rounded-xl transition-all active:scale-95">
+          <Link href="/">
+            <ChevronLeft className="h-4 w-4 text-accent" />
+            Página Inicial
+          </Link>
+        </Button>
+      </div>
+
       <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute inset-0 bg-[url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg/1280px-Centro_Hist%C3%B3rico_de_Santana_de_Parna%C3%ADba_-_SP.jpg')] bg-cover bg-center grayscale opacity-10 pointer-events-none"></div>
