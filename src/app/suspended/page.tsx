@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ export default function SuspendedPage() {
   const { signOut, profile } = useAuth();
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-primary p-6 relative overflow-hidden">
+    <div className="h-screen w-full flex items-center justify-center bg-primary p-6 relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-slate-950">
       <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-accent/20 rounded-full blur-[100px] animate-pulse" />
       <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-accent/10 rounded-full blur-[100px]" />
 
