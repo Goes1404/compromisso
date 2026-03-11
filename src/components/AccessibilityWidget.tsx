@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -85,15 +84,19 @@ export function AccessibilityWidget() {
   );
   
   return (
-    <div className={`fixed ${isInputHeavyPage ? 'bottom-28 md:bottom-10' : 'bottom-6'} right-6 z-[9999] flex flex-col gap-3 items-end transition-all duration-500`}>
+    <div 
+      className={`fixed ${isInputHeavyPage ? 'bottom-28 md:bottom-10' : 'bottom-6'} right-6 z-40 flex flex-col gap-3 items-end transition-all duration-500`}
+    >
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
            <button 
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-2xl transition-all hover:scale-110 active:scale-95 border-4 border-white group relative animate-in zoom-in duration-700"
+            className={`flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-2xl transition-all hover:scale-110 active:scale-95 border-4 border-white group relative animate-in zoom-in duration-700 ${
+              isOpen ? 'rotate-[360deg] shadow-primary/40' : ''
+            }`}
             title="Abrir Aurora IA"
           >
             <MessageCircle className="h-7 w-7 transition-transform group-hover:rotate-12 text-accent" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full border-2 border-white animate-bounce" />
+            {!isOpen && <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-50 rounded-full border-2 border-white animate-bounce" />}
           </button>
         </SheetTrigger>
         <SheetContent side="right" className="w-[90vw] sm:max-w-[400px] p-0 border-none rounded-l-[2rem] overflow-hidden bg-white flex flex-col shadow-2xl">
@@ -137,7 +140,14 @@ export function AccessibilityWidget() {
         </SheetContent>
       </Sheet>
 
-      <button className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-2xl transition-all hover:scale-110 active:scale-95 border-4 border-white group animate-in zoom-in duration-1000" title="Acessibilidade VLibras"><HandMetal className="h-6 w-6 transition-transform group-hover:rotate-12" /></button>
+      <button 
+        className={`flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-2xl transition-all hover:scale-110 active:scale-95 border-4 border-white group animate-in zoom-in duration-1000 ${
+          isOpen ? 'rotate-[-360deg] opacity-80' : ''
+        }`} 
+        title="Acessibilidade VLibras"
+      >
+        <HandMetal className="h-6 w-6 transition-transform group-hover:rotate-12" />
+      </button>
     </div>
   );
 }
