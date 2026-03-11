@@ -70,7 +70,7 @@ export default function LandingPage() {
 
       <main className="flex-1 pt-20">
         {/* HERO SECTION - Degrade do Azul Royal institucional para o Branco */}
-        <section className="relative py-24 md:py-40 overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-white">
+        <section className="relative py-24 md:py-40 overflow-hidden bg-gradient-to-b from-primary/15 via-primary/5 to-white">
           <div className="absolute top-0 right-0 w-[60%] h-[60%] bg-accent/5 rounded-full blur-[150px] -z-10 translate-x-1/2 -translate-y-1/2 animate-pulse" />
           
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
@@ -111,7 +111,7 @@ export default function LandingPage() {
                 <div className="absolute bottom-10 left-10 right-10 p-8 bg-white/90 backdrop-blur-xl rounded-[2rem] text-primary border border-white/10 shadow-2xl">
                   <div className="flex items-center gap-4 mb-2">
                     <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">Status: Ambiente de Estudo Ativo</span>
+                    <span className="text-[10px] font-black uppercase tracking-0.2em text-accent">Status: Ambiente de Estudo Ativo</span>
                   </div>
                   <p className="text-lg font-black italic uppercase leading-tight">"A história de Santana de Parnaíba é o alicerce para o conhecimento do futuro."</p>
                 </div>
@@ -165,8 +165,8 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* FOOTER - TEMA ESCURO INDUSTRIAL COM GRADIENTE DE TRANSIÇÃO */}
-      <footer className="bg-gradient-to-b from-slate-900 to-black py-20 text-white relative border-t border-white/5 overflow-hidden">
+      {/* FOOTER - TEMA ESCURO INDUSTRIAL */}
+      <footer className="bg-slate-950 py-20 text-white relative border-t border-white/5 overflow-hidden">
         {/* Glow de Profundidade */}
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[100px]" />
         

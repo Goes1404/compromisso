@@ -56,20 +56,20 @@
     overflow-y: auto !important;
     position: relative;
     
-    /* Efeito de Background Multinível com Gradientes de Transição */
+    /* Fundo Institucional Multinível */
     background-color: hsl(var(--background));
     background-image: 
-      /* Camada 1: Glow Azul Superior */
+      /* Glow Azul Superior */
       radial-gradient(at 0% 0%, hsla(215, 100% , 45%, 0.12) 0px, transparent 50%),
-      /* Camada 2: Glow Ouro Inferior */
+      /* Glow Ouro Inferior */
       radial-gradient(at 100% 100%, hsla(45, 100%, 50%, 0.1) 0px, transparent 50%),
-      /* Camada 3: Malha Técnica (Grid Dots) */
+      /* Malha Técnica (Grid Dots) */
       radial-gradient(circle at 2px 2px, rgba(0, 71, 171, 0.05) 1px, transparent 0);
     background-size: 100% 100%, 100% 100%, 32px 32px;
     background-attachment: fixed;
   }
 
-  /* Camada de Detalhe Histórico (Marca d'Água) */
+  /* Marca d'Água do Centro Histórico */
   body::before {
     content: "";
     position: fixed;
@@ -79,7 +79,7 @@
     background-size: cover;
     background-position: center;
     filter: grayscale(100%) brightness(0.95);
-    opacity: 0.05;
+    opacity: 0.06;
     pointer-events: none;
   }
 }
@@ -88,9 +88,15 @@
   animation-fill-mode: forwards;
 }
 
-/* Efeito de Vidro para Cards sobre o fundo texturizado */
-.card {
-  @apply bg-white/95 backdrop-blur-md shadow-xl border-white/20;
+.bg-santana-fixed {
+  @apply fixed inset-0 z-[-1] bg-cover bg-center grayscale opacity-[0.04] pointer-events-none;
+}
+
+.bg-tech-blueprint {
+  background-image: 
+    linear-gradient(rgba(0, 71, 171, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 71, 171, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 /* Scrollbar Industrial */

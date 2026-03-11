@@ -179,7 +179,7 @@ export default function RegisterPage() {
           <Progress value={(step / 3) * 100} className="h-2 bg-muted rounded-full overflow-hidden" />
         </div>
 
-        <Card className="shadow-[0_30px_80px_rgba(0,0,0,0.1)] border-none overflow-hidden bg-white/95 backdrop-blur-md rounded-[3rem] bg-edu-pattern">
+        <Card className="shadow-[0_30px_80px_rgba(0,0,0,0.1)] border-none overflow-hidden bg-white/95 backdrop-blur-md rounded-[3rem]">
           <CardHeader className="bg-primary/5 pb-8 pt-8 border-b border-dashed">
             <CardTitle className="text-xl font-bold text-primary flex items-center gap-3 italic">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-accent-foreground text-sm font-black shadow-lg">
@@ -221,7 +221,7 @@ export default function RegisterPage() {
                   <Label htmlFor="password" title="Senha" className="font-bold text-primary/60 ml-2">Senha de Segurança</Label>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
-                    <Input id="password" type="password" placeholder="Mínimo 6 caracteres" value={formData.password} onChange={(e) => setPassword(e.target.value)} className="pl-12 h-12 bg-white/50 rounded-2xl border-muted/20" />
+                    <Input id="password" type="password" placeholder="Mínimo 6 caracteres" value={formData.password} onChange={(e) => updateField("password", e.target.value)} className="pl-12 h-12 bg-white/50 rounded-2xl border-muted/20" />
                   </div>
                 </div>
               </div>
