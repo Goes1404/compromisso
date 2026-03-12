@@ -3,31 +3,31 @@
   "placeholderImages": [
     {
       "id": "hero-educational",
-      "description": "Estudantes em jornada de aprendizado em Santana de Parnaíba",
+      "description": "Jornada Literária e Educação em Santana de Parnaíba",
       "imageUrl": "https://i.postimg.cc/ZRCdsSjy/Whats-App-Image-2026-03-12-at-17-49-18.jpg",
-      "imageHint": "students learning"
+      "imageHint": "classroom students lecture"
     },
     {
-      "id": "gallery-classroom",
-      "description": "Nossas salas de aula em atividade",
+      "id": "gallery-1",
+      "description": "Cotidiano escolar - Santana de Parnaíba",
       "imageUrl": "https://i.postimg.cc/QMnBTzsK/4.jpg",
-      "imageHint": "classroom prep"
+      "imageHint": "student classroom"
     },
     {
-      "id": "gallery-study",
-      "description": "Espaço dedicado ao foco e aprendizado",
+      "id": "gallery-2",
+      "description": "Ambiente de estudo - Santana de Parnaíba",
       "imageUrl": "https://i.postimg.cc/mgvJgL14/Whats-App-Image-2026-03-12-at-17-48-36.jpg",
-      "imageHint": "student study"
+      "imageHint": "science lab education"
     },
     {
-      "id": "gallery-interaction",
-      "description": "Interação pedagógica e troca de conhecimentos",
+      "id": "gallery-3",
+      "description": "Interação acadêmica - Santana de Parnaíba",
       "imageUrl": "https://i.postimg.cc/Px4Ry13T/2.jpg",
       "imageHint": "group interaction"
     },
     {
-      "id": "gallery-mentorship",
-      "description": "Mentoria próxima e suporte ao aluno",
+      "id": "gallery-4",
+      "description": "Mentoria acadêmica - Santana de Parnaíba",
       "imageUrl": "https://i.postimg.cc/J0YdVMCd/Whats-App-Image-2026-03-12-at-2.jpg",
       "imageHint": "mentorship session"
     },

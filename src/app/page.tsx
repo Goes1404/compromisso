@@ -19,17 +19,16 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function LandingPage() {
   const heroImage = "https://i.postimg.cc/ZRCdsSjy/Whats-App-Image-2026-03-12-at-17-49-18.jpg";
   const cityLogo = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
 
   const galleryItems = [
-    { title: "Nossas Salas de Aula", url: "https://i.postimg.cc/QMnBTzsK/4.jpg", desc: "Ambientes preparados para o foco total." },
-    { title: "Espaço de Aprendizado", url: "https://i.postimg.cc/mgvJgL14/Whats-App-Image-2026-03-12-at-17-48-36.jpg", desc: "Onde a teoria se transforma em aprovação." },
-    { title: "Interação Pedagógica", url: "https://i.postimg.cc/Px4Ry13T/2.jpg", desc: "Alunos e professores em sinergia constante." },
-    { title: "Mentoria Especializada", url: "https://i.postimg.cc/J0YdVMCd/Whats-App-Image-2026-03-12-at-2.jpg", desc: "Suporte direto para cada desafio acadêmico." },
+    { url: "https://i.postimg.cc/QMnBTzsK/4.jpg" },
+    { url: "https://i.postimg.cc/mgvJgL14/Whats-App-Image-2026-03-12-at-17-48-36.jpg" },
+    { url: "https://i.postimg.cc/Px4Ry13T/2.jpg" },
+    { url: "https://i.postimg.cc/J0YdVMCd/Whats-App-Image-2026-03-12-at-2.jpg" },
   ];
 
   return (
@@ -211,15 +210,13 @@ export default function LandingPage() {
                 <div key={i} className="group relative aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-700 bg-slate-100">
                   <Image 
                     src={item.url} 
-                    alt={item.title} 
+                    alt="Cotidiano Compromisso" 
                     fill 
                     className="object-cover group-hover:scale-110 transition-transform duration-1000"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                   <div className="absolute bottom-8 left-8 right-8">
                     <p className="text-[9px] font-black text-accent uppercase tracking-[0.3em] mb-2">CURSINHO COMPROMISSO</p>
-                    <h4 className="text-xl font-black text-white italic leading-tight mb-1">{item.title}</h4>
-                    <p className="text-[10px] text-white/60 font-medium italic line-clamp-2">{item.desc}</p>
                   </div>
                 </div>
               ))}
