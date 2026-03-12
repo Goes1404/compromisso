@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase, isSupabaseConfigured } from "@/app/lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 type Step = 1 | 2 | 3;
 type ProfileType = "etec" | "cpop_santana" | "cpop_osasco" | "enem" | "teacher";
@@ -28,7 +29,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
+  const logoUrl = PlaceHolderImages.find(img => img.id === 'prefeitura-logo')?.imageUrl || "";
 
   const [formData, setFormData] = useState({
     firstName: "",

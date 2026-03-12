@@ -23,8 +23,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function LandingPage() {
+  const heroImage = PlaceHolderImages.find(img => img.id === 'hero-educational')?.imageUrl || "";
+  const cityLogo = PlaceHolderImages.find(img => img.id === 'prefeitura-logo')?.imageUrl || "";
+
   return (
     <div className="flex min-h-screen flex-col bg-white">
       {/* HEADER */}
@@ -33,7 +37,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <div className="relative h-12 w-12 overflow-hidden rounded-lg bg-white p-1 shadow-lg border border-muted/10">
               <Image 
-                src="https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG" 
+                src={cityLogo} 
                 alt="Prefeitura de Santana de Parnaíba" 
                 fill 
                 unoptimized
@@ -53,7 +57,7 @@ export default function LandingPage() {
             <Button asChild variant="ghost" className="text-xs font-black uppercase tracking-widest text-primary">
               <Link href="/login">Entrar</Link>
             </Button>
-            <Button asChild className="bg-primary text-white font-black px-8 h-12 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">
+            <Button asChild className="bg-primary text-white font-black px-8 h-12 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all border-none">
               <Link href="/register">Começar Agora</Link>
             </Button>
           </nav>
@@ -61,7 +65,7 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1 pt-20">
-        {/* HERO SECTION - Degradê Azul maestro para branco */}
+        {/* HERO SECTION */}
         <section className="relative py-24 md:py-40 overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-white">
           <div className="absolute top-0 right-0 w-[60%] h-[60%] bg-accent/10 rounded-full blur-[150px] -z-10 translate-x-1/2 -translate-y-1/2" />
           
@@ -103,11 +107,10 @@ export default function LandingPage() {
             <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-300">
               <div className="relative aspect-[4/5] md:aspect-square rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border-[12px] border-white group">
                 <Image 
-                  src="https://i.postimg.cc/ZRCdsSjy/Whats-App-Image-2026-03-12-at-17-49-18.jpg" 
+                  src={heroImage} 
                   alt="Educação Santana de Parnaíba" 
                   fill 
                   className="object-cover group-hover:scale-110 transition-transform duration-1000"
-                  data-ai-hint="classroom students lecture"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />
                 <div className="absolute top-10 right-10 p-8 bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 animate-bounce">
@@ -136,7 +139,6 @@ export default function LandingPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-              {/* JORNADA DO ALUNO */}
               <Card className="border-none shadow-2xl rounded-[3rem] bg-slate-800/50 backdrop-blur-xl p-12 space-y-10 hover:bg-slate-800 transition-all duration-500 hover:-translate-y-4 group ring-1 ring-white/5">
                 <div className="h-20 w-20 rounded-3xl bg-blue-600 text-white flex items-center justify-center shadow-[0_20px_40px_-10px_rgba(37,99,235,0.5)] group-hover:rotate-6 transition-all duration-500">
                   <GraduationCap className="h-10 w-10" />
@@ -154,7 +156,6 @@ export default function LandingPage() {
                 </ul>
               </Card>
 
-              {/* STUDIO MASTER */}
               <Card className="border-none shadow-2xl rounded-[3rem] bg-slate-800/50 backdrop-blur-xl p-12 space-y-10 hover:bg-slate-800 transition-all duration-500 hover:-translate-y-4 group ring-1 ring-white/5">
                 <div className="h-20 w-20 rounded-3xl bg-orange-600 text-white flex items-center justify-center shadow-[0_20px_40px_-10px_rgba(234,88,12,0.5)] group-hover:rotate-6 transition-all duration-500">
                   <School className="h-10 w-10" />
@@ -172,7 +173,6 @@ export default function LandingPage() {
                 </ul>
               </Card>
 
-              {/* GABINETE DE GESTÃO */}
               <Card className="border-none shadow-2xl rounded-[3rem] bg-slate-800/50 backdrop-blur-xl p-12 space-y-10 hover:bg-slate-800 transition-all duration-500 hover:-translate-y-4 group ring-1 ring-white/5">
                 <div className="h-20 w-20 rounded-3xl bg-white text-primary flex items-center justify-center shadow-[0_20px_40px_-10px_rgba(255,255,255,0.2)] group-hover:rotate-6 transition-all duration-500">
                   <BarChart3 className="h-10 w-10" />
@@ -194,12 +194,12 @@ export default function LandingPage() {
         </section>
 
         {/* EXEMPLOS ESCOLARES SECTION */}
-        <section className="py-32 bg-white">
+        <section id="impact" className="py-32 bg-white">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
               <div className="space-y-4 max-w-2xl">
                 <h2 className="text-5xl font-black text-primary italic tracking-tighter uppercase leading-none">Ambiente de <span className="text-accent">Alta Performance</span></h2>
-                <p className="text-slate-500 font-medium italic text-lg">Veja como nossa tecnologia transforma o cotidiano parnaibano.</p>
+                <p className="text-slate-500 font-medium italic text-lg">Conheça os pilares de infraestrutura do Projeto Compromisso.</p>
               </div>
               <Button asChild variant="outline" className="h-14 px-8 rounded-2xl border-2 border-primary/10 text-primary font-black uppercase text-xs tracking-widest hover:bg-slate-50">
                 <Link href="/register">Ver Demonstração Completa</Link>
@@ -208,10 +208,10 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { title: "Salas Inteligentes", url: "https://i.postimg.cc/QMnBTzsK/4.jpg", icon: School },
-                { title: "Laboratórios Digitais", url: "https://i.postimg.cc/mgvJgL14/Whats-App-Image-2026-03-12-at-17-48-36.jpg", icon: ShieldCheck },
-                { title: "Estúdios de Live", url: "https://i.postimg.cc/Px4Ry13T/2.jpg", icon: Video },
-                { title: "Espaços de Mentoria", url: "https://i.postimg.cc/J0YdVMCd/Whats-App-Image-2026-03-12-at-2.jpg", icon: HistoryIcon },
+                { title: "Salas de Performance", url: PlaceHolderImages.find(img => img.id === 'gallery-classroom')?.imageUrl || "" },
+                { title: "Laboratórios Digitais", url: PlaceHolderImages.find(img => img.id === 'gallery-lab')?.imageUrl || "" },
+                { title: "Estúdios de Live", url: PlaceHolderImages.find(img => img.id === 'gallery-3')?.imageUrl || "" },
+                { title: "Foco e Mentoria", url: PlaceHolderImages.find(img => img.id === 'gallery-4')?.imageUrl || "" },
               ].map((item, i) => (
                 <div key={i} className="group relative aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-700">
                   <Image 
@@ -222,7 +222,7 @@ export default function LandingPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute bottom-8 left-8 right-8">
-                    <p className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-2">INFRAESTRUTURA</p>
+                    <p className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-2">COMPROMISSO</p>
                     <h4 className="text-xl font-black text-white italic">{item.title}</h4>
                   </div>
                 </div>
@@ -240,7 +240,7 @@ export default function LandingPage() {
             <div className="flex items-center gap-4">
               <div className="relative h-16 w-16 overflow-hidden rounded-xl bg-white p-2 shadow-2xl">
                 <Image 
-                  src="https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG" 
+                  src={cityLogo} 
                   alt="Logo Santana de Parnaíba" 
                   fill 
                   unoptimized
