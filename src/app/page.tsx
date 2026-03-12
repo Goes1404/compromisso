@@ -19,11 +19,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function LandingPage() {
-  const heroImage = "https://i.postimg.cc/ZRCdsSjy/Whats-App-Image-2026-03-12-at-17-49-18.jpg";
-  const cityLogo = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
-
+  const heroData = PlaceHolderImages.find(img => img.id === 'hero-educational');
+  const cityLogo = PlaceHolderImages.find(img => img.id === 'prefeitura-logo')?.imageUrl || "";
+  
   const galleryItems = [
     { url: "https://i.postimg.cc/QMnBTzsK/4.jpg" },
     { url: "https://i.postimg.cc/mgvJgL14/Whats-App-Image-2026-03-12-at-17-48-36.jpg" },
@@ -109,9 +110,10 @@ export default function LandingPage() {
             <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-300">
               <div className="relative aspect-video lg:aspect-square rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border-[8px] md:border-[12px] border-white group">
                 <Image 
-                  src={heroImage} 
-                  alt="Alunos Santana de Parnaíba" 
+                  src={heroData?.imageUrl || ""} 
+                  alt={heroData?.description || "Alunos Santana de Parnaíba"} 
                   fill 
+                  priority
                   className="object-cover group-hover:scale-110 transition-transform duration-1000"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />
@@ -210,7 +212,7 @@ export default function LandingPage() {
                 <div key={i} className="group relative aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-700 bg-slate-100">
                   <Image 
                     src={item.url} 
-                    alt="Cotidiano Compromisso" 
+                    alt="Cotidiano Cursinho Compromisso" 
                     fill 
                     className="object-cover group-hover:scale-110 transition-transform duration-1000"
                   />
