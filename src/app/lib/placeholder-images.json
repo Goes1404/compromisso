@@ -3,33 +3,33 @@
   "placeholderImages": [
     {
       "id": "hero-educational",
-      "description": "Jornada Literária e Educação em Santana de Parnaíba",
+      "description": "Estudantes em jornada de aprendizado em Santana de Parnaíba",
       "imageUrl": "https://i.postimg.cc/ZRCdsSjy/Whats-App-Image-2026-03-12-at-17-49-18.jpg",
-      "imageHint": "classroom students lecture"
+      "imageHint": "students learning"
     },
     {
       "id": "gallery-classroom",
-      "description": "Alunos em sala de aula - Santana de Parnaíba",
+      "description": "Nossas salas de aula em atividade",
       "imageUrl": "https://i.postimg.cc/QMnBTzsK/4.jpg",
-      "imageHint": "student classroom"
+      "imageHint": "classroom prep"
     },
     {
-      "id": "gallery-lab",
-      "description": "Ambiente de estudo e tecnologia",
+      "id": "gallery-study",
+      "description": "Espaço dedicado ao foco e aprendizado",
       "imageUrl": "https://i.postimg.cc/mgvJgL14/Whats-App-Image-2026-03-12-at-17-48-36.jpg",
-      "imageHint": "science lab education"
+      "imageHint": "student study"
     },
     {
-      "id": "gallery-3",
-      "description": "Estudantes em atividade prática",
+      "id": "gallery-interaction",
+      "description": "Interação pedagógica e troca de conhecimentos",
       "imageUrl": "https://i.postimg.cc/Px4Ry13T/2.jpg",
-      "imageHint": "video broadcast studio"
+      "imageHint": "group interaction"
     },
     {
-      "id": "gallery-4",
-      "description": "Mentoria e foco acadêmico",
+      "id": "gallery-mentorship",
+      "description": "Mentoria próxima e suporte ao aluno",
       "imageUrl": "https://i.postimg.cc/J0YdVMCd/Whats-App-Image-2026-03-12-at-2.jpg",
-      "imageHint": "co-working study space"
+      "imageHint": "mentorship session"
     },
     {
       "id": "prefeitura-logo",
