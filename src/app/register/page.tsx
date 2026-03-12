@@ -29,7 +29,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const logoUrl = PlaceHolderImages.find(img => img.id === 'prefeitura-logo')?.imageUrl || "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
+  const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
 
   const [formData, setFormData] = useState({
     firstName: "",

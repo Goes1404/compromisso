@@ -3,6 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { 
   Shield, 
   BookOpen, 
@@ -32,7 +33,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-white relative overflow-x-hidden">
       {/* HEADER */}
       <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-2xl border-b border-muted/20 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -185,7 +186,7 @@ export default function LandingPage() {
         </section>
 
         {/* IMPACT SECTION */}
-        <section id="impact" className="py-24 bg-white">
+        <section id="impact" className="py-24 bg-white relative">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row items-center md:items-end justify-between mb-16 gap-8 text-center md:text-left">
               <div className="space-y-4 max-w-2xl">
