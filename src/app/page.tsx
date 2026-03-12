@@ -202,7 +202,7 @@ export default function LandingPage() {
                 <div key={i} className="group relative aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-700 bg-slate-100">
                   <Image 
                     src={item.url} 
-                    alt="Cotidiano Cursinho Compromisso" 
+                    alt="Projeto Compromisso Santana de Parnaíba" 
                     fill 
                     unoptimized
                     className="object-cover group-hover:scale-110 transition-transform duration-1000"

@@ -29,7 +29,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const logoUrl = PlaceHolderImages.find(img => img.id === 'prefeitura-logo')?.imageUrl || "";
+  const logoUrl = PlaceHolderImages.find(img => img.id === 'prefeitura-logo')?.imageUrl || "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -152,7 +152,6 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-blue-gradient p-4 sm:p-8 relative overflow-hidden">
-      {/* Botão de Voltar para a Home */}
       <div className="absolute top-4 left-4 md:top-8 md:left-8 z-50">
         <Button asChild className="bg-white text-primary hover:bg-white/90 font-black uppercase text-[10px] tracking-[0.2em] gap-2 rounded-xl shadow-2xl transition-all active:scale-95 border-none h-10 px-4 md:px-6">
           <Link href="/">

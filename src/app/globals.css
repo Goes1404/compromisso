@@ -64,7 +64,6 @@
     background-attachment: fixed;
   }
 
-  /* Marca d'Água Histórica de Santana de Parnaíba - Igreja Matriz Global */
   body::before {
     content: "";
     position: fixed;
