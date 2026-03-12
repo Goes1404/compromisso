@@ -1,3 +1,4 @@
+
 import { AuthProvider } from '@/lib/AuthProvider';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';

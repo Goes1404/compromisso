@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,7 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1 pt-20">
-        {/* HERO SECTION - FOCO NA CIDADE E EDUCAÇÃO */}
+        {/* HERO SECTION */}
         <section className="relative py-24 md:py-40 overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-white">
           <div className="absolute top-0 right-0 w-[60%] h-[60%] bg-accent/10 rounded-full blur-[150px] -z-10 translate-x-1/2 -translate-y-1/2" />
           
@@ -232,7 +233,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* FOOTER - TEMA ESCURO INDUSTRIAL */}
+      {/* FOOTER */}
       <footer className="bg-slate-950 py-20 text-white relative border-t border-white/5 overflow-hidden">
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[100px]" />
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 relative z-10">
