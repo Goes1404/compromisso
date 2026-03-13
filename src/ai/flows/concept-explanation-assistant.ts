@@ -3,6 +3,9 @@
 /**
  * @fileOverview Aurora - Assistente Pedagógica do Compromisso.
  * Fornece explicações e suporte utilizando Gemini 1.5 Flash.
+ * 
+ * Removido o try/catch interno para que erros de API (como chave inválida)
+ * cheguem ao front-end e possam ser diagnosticados pelo usuário.
  */
 
 import { ai } from '@/ai/genkit';
@@ -73,14 +76,9 @@ export const conceptExplanationAssistantFlow = ai.defineFlow(
     outputSchema: ConceptExplanationAssistantOutputSchema,
   },
   async (input) => {
-    try {
-      const { output } = await prompt(input);
-      if (!output) throw new Error("A IA retornou um resultado nulo.");
-      return output;
-    } catch (error: any) {
-      console.error("ERRO CRÍTICO AURORA IA:", error?.message || error);
-      return { response: `Olá! Notei uma pequena instabilidade técnica. Pode repetir sua dúvida?` };
-    }
+    const { output } = await prompt(input);
+    if (!output) throw new Error("A Aurora não conseguiu formular uma resposta para esta dúvida.");
+    return output;
   }
 );
 
