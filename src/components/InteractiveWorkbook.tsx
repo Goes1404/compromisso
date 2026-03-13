@@ -8,21 +8,18 @@ import {
   Loader2, 
   Pencil, 
   Eraser, 
-  Save, 
   ChevronLeft, 
   ChevronRight, 
   ChevronsLeft, 
   ChevronsRight,
   Cloud,
   AlertTriangle,
-  Maximize,
   Hash,
-  Trash2,
   ZoomIn,
   ZoomOut,
   Maximize2,
   Highlighter,
-  Palette
+  Hand
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/app/lib/supabase";
 import { useAuth } from "@/lib/AuthProvider";
 
-// Configurar o worker do PDF.js - Versão 4.x usa .mjs
+// Configurar o worker do PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface InteractiveWorkbookProps {
@@ -40,7 +37,7 @@ interface InteractiveWorkbookProps {
   userCpf: string;
 }
 
-type Tool = 'pencil' | 'highlighter' | 'eraser';
+type Tool = 'pencil' | 'highlighter' | 'eraser' | 'pan';
 
 export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userName, userCpf }: InteractiveWorkbookProps) {
   const { user } = useAuth();
@@ -58,7 +55,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
   const [zoom, setZoom] = useState(1.0);
   
   // Ferramentas
-  const [activeTool, setActiveTool] = useState<Tool>('pencil');
+  const [activeTool, setActiveTool] = useState<Tool>('pan');
   const [brushColor, setBrushColor] = useState("#FF0000");
   const [highlightColor, setHighlightColor] = useState("rgba(255, 255, 0, 0.3)");
   
@@ -95,11 +92,12 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
     if (!fabricCanvasRef.current) return;
 
     const objects = fabricCanvasRef.current.getObjects().map((obj: any) => {
-      return obj.toObject();
+      // Salvar posição relativa ao tamanho atual para permitir rescale posterior
+      const item = obj.toObject();
+      return item;
     });
 
     const pageData = {
-      version: "1.0",
       viewport: {
         width: fabricCanvasRef.current.getWidth(),
         height: fabricCanvasRef.current.getHeight()
@@ -193,7 +191,8 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
       const containerWidth = containerRef.current?.clientWidth || 800;
       const unscaledViewport = page.getViewport({ scale: 1 });
       const scale = (containerWidth - 60) / unscaledViewport.width;
-      const viewport = page.getViewport({ scale: scale * currentZoom }); 
+      const finalScale = scale * currentZoom;
+      const viewport = page.getViewport({ scale: finalScale }); 
 
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
@@ -222,25 +221,42 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
       const fCanvas = new fabric.Canvas('fabric-layer', {
         height: viewport.height,
         width: viewport.width,
-        isDrawingMode: activeTool !== 'eraser',
+        isDrawingMode: activeTool !== 'eraser' && activeTool !== 'pan',
         selection: activeTool === 'eraser'
       });
 
-      // Configurar Brush Inicial
+      // Carregar anotações e aplicar rescale
+      const draftStr = localStorage.getItem(`workbook_draft_${materialId}`);
+      const draft = draftStr ? JSON.parse(draftStr) : null;
+      const pageDraft = draft?.annotations?.[pageNum];
+
+      if (pageDraft) {
+        // Cálculo do fator de escala entre o que foi salvo e o viewport atual
+        const oldWidth = pageDraft.viewport.width;
+        const scaleFactor = viewport.width / oldWidth;
+
+        fCanvas.loadFromJSON(pageDraft, () => {
+          const objects = fCanvas.getObjects();
+          objects.forEach(obj => {
+            obj.scaleX = (obj.scaleX || 1) * scaleFactor;
+            obj.scaleY = (obj.scaleY || 1) * scaleFactor;
+            obj.left = (obj.left || 0) * scaleFactor;
+            obj.top = (obj.top || 0) * scaleFactor;
+            obj.setCoords();
+          });
+          fCanvas.renderAll();
+        });
+      }
+
+      // Configurar Brush Atual
       if (activeTool === 'pencil') {
         fCanvas.freeDrawingBrush = new fabric.PencilBrush(fCanvas);
         fCanvas.freeDrawingBrush.color = brushColor;
-        fCanvas.freeDrawingBrush.width = 3;
+        fCanvas.freeDrawingBrush.width = 3 * currentZoom;
       } else if (activeTool === 'highlighter') {
         fCanvas.freeDrawingBrush = new fabric.PencilBrush(fCanvas);
         fCanvas.freeDrawingBrush.color = highlightColor;
-        fCanvas.freeDrawingBrush.width = 20;
-      }
-
-      const draftStr = localStorage.getItem(`workbook_draft_${materialId}`);
-      const draft = draftStr ? JSON.parse(draftStr) : null;
-      if (draft?.annotations?.[pageNum]) {
-        fCanvas.loadFromJSON(draft.annotations[pageNum], () => fCanvas.renderAll());
+        fCanvas.freeDrawingBrush.width = 20 * currentZoom;
       }
 
       fCanvas.on('mouse:down', (options) => {
@@ -268,16 +284,16 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
     setActiveTool(tool);
     if (!fabricCanvasRef.current) return;
     
-    fabricCanvasRef.current.isDrawingMode = tool !== 'eraser';
+    fabricCanvasRef.current.isDrawingMode = tool !== 'eraser' && tool !== 'pan';
     
     if (tool === 'pencil') {
       fabricCanvasRef.current.freeDrawingBrush = new fabric.PencilBrush(fabricCanvasRef.current);
       fabricCanvasRef.current.freeDrawingBrush.color = brushColor;
-      fabricCanvasRef.current.freeDrawingBrush.width = 3;
+      fabricCanvasRef.current.freeDrawingBrush.width = 3 * zoom;
     } else if (tool === 'highlighter') {
       fabricCanvasRef.current.freeDrawingBrush = new fabric.PencilBrush(fabricCanvasRef.current);
       fabricCanvasRef.current.freeDrawingBrush.color = highlightColor;
-      fabricCanvasRef.current.freeDrawingBrush.width = 20;
+      fabricCanvasRef.current.freeDrawingBrush.width = 20 * zoom;
     }
   };
 
@@ -292,14 +308,24 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
   return (
     <div className="h-full flex flex-col bg-slate-900 overflow-hidden select-none relative">
       
-      {/* TOOLBAR SUPERIOR - RESPONSIVA */}
+      {/* TOOLBAR SUPERIOR */}
       <div className="bg-slate-950 border-b border-white/5 p-2 md:p-4 flex items-center justify-between gap-4 z-30 shadow-2xl overflow-x-auto scrollbar-hide">
         <div className="flex items-center gap-2 shrink-0">
+          <Button 
+            variant={activeTool === 'pan' ? "default" : "ghost"} 
+            size="icon" 
+            onClick={() => updateTool('pan')}
+            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${activeTool === 'pan' ? 'bg-accent text-accent-foreground scale-110 shadow-lg' : 'text-slate-400'}`}
+            title="Mover Página"
+          >
+            <Hand className="h-5 w-5" />
+          </Button>
           <Button 
             variant={activeTool === 'pencil' ? "default" : "ghost"} 
             size="icon" 
             onClick={() => updateTool('pencil')}
             className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${activeTool === 'pencil' ? 'bg-primary text-white scale-110 shadow-lg' : 'text-slate-400'}`}
+            title="Lápis"
           >
             <Pencil className="h-5 w-5" />
           </Button>
@@ -307,7 +333,8 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
             variant={activeTool === 'highlighter' ? "default" : "ghost"} 
             size="icon" 
             onClick={() => updateTool('highlighter')}
-            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${activeTool === 'highlighter' ? 'bg-accent text-accent-foreground scale-110 shadow-lg' : 'text-slate-400'}`}
+            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${activeTool === 'highlighter' ? 'bg-yellow-500 text-black scale-110 shadow-lg' : 'text-slate-400'}`}
+            title="Marca-Texto"
           >
             <Highlighter className="h-5 w-5" />
           </Button>
@@ -316,9 +343,11 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
             size="icon" 
             onClick={() => updateTool('eraser')}
             className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${activeTool === 'eraser' ? 'bg-red-600 text-white scale-110 shadow-lg' : 'text-slate-400'}`}
+            title="Borracha"
           >
             <Eraser className="h-5 w-5" />
           </Button>
+          
           <div className="w-px h-8 bg-white/10 mx-1" />
           
           <div className="flex gap-1.5 md:gap-2">
@@ -346,8 +375,8 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
         </div>
       </div>
 
-      {/* ÁREA DO DOCUMENTO - SUPORTE A PAN */}
-      <div ref={containerRef} className="flex-1 overflow-auto p-4 md:p-10 flex justify-center items-start bg-slate-900 scrollbar-hide no-swipe touch-pan-x touch-pan-y">
+      {/* ÁREA DO DOCUMENTO */}
+      <div ref={containerRef} className={`flex-1 overflow-auto p-4 md:p-10 flex justify-center items-start bg-slate-900 scrollbar-hide no-swipe ${activeTool === 'pan' ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
         <div className="relative shadow-[0_50px_100px_rgba(0,0,0,0.6)] rounded-sm bg-white overflow-hidden origin-top transition-transform duration-200">
           {loading && (
             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm gap-4">
@@ -356,7 +385,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
             </div>
           )}
           <canvas ref={canvasRef} className="block" />
-          <div className="absolute inset-0 z-10">
+          <div className={`absolute inset-0 z-10 ${activeTool === 'pan' ? 'pointer-events-none' : 'pointer-events-auto'}`}>
             <canvas id="fabric-layer" />
           </div>
         </div>
