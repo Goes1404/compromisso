@@ -12,7 +12,7 @@ if (typeof window !== 'undefined') {
   throw new Error("⚠️ [SEGURANÇA] A Aurora IA só pode ser operada no Gabinete de Gestão (Servidor).");
 }
 
-// Chave de API fornecida pelo usuário para o ambiente de teste
+// Chave de API de teste prioritária
 const apiKey = "AIzaSyA4H7VjPSXx6J8rS88Cx_65-EnBY-89tyc";
 
 export const ai = genkit({

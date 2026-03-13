@@ -29,13 +29,13 @@ export type BulkQuestionParserOutput = z.infer<typeof BulkQuestionParserOutputSc
 
 const prompt = ai.definePrompt({
   name: 'bulkQuestionParserPrompt',
-  model: 'gemini-1.5-flash',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: BulkQuestionParserInputSchema },
   output: { schema: BulkQuestionParserOutputSchema },
   config: { temperature: 0.2 },
   system: `Você é um assistente de digitalização pedagógica. 
   Sua missão é ler textos brutos de provas e extrair TODAS as questões de múltipla escolha.`,
-  prompt: `Analise o seguinte conteúdo e extraia as questões:
+  prompt: `Analise the following content and extract the questions:
   
   {{{rawText}}}`,
 });

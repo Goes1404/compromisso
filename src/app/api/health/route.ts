@@ -29,7 +29,7 @@ export async function GET() {
 
   try {
     const response = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
+      model: 'googleai/gemini-1.5-flash-latest',
       prompt: 'Responder apenas com OK',
       config: { maxOutputTokens: 5 }
     });

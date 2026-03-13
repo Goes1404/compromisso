@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview Gerador de Quizzes via IA para Professores utilizando Gemini 1.5 Flash.
+ * @fileOverview Gerador de Quizzes via IA para Professores utilizando Gemini 1.5 Flash Latest.
  */
 
 import { ai } from '@/ai/genkit';
@@ -28,7 +28,7 @@ export type QuizGeneratorOutput = z.infer<typeof QuizGeneratorOutputSchema>;
 
 const prompt = ai.definePrompt({
   name: 'generateQuizPrompt',
-  model: 'gemini-1.5-flash',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: QuizGeneratorInputSchema },
   output: { schema: QuizGeneratorOutputSchema },
   config: { temperature: 0.8 },

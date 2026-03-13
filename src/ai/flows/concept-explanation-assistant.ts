@@ -2,7 +2,7 @@
 
 /**
  * @fileOverview Aurora - Assistente Pedagógica do Compromisso.
- * Fornece explicações e suporte utilizando Gemini 1.5 Flash.
+ * Utiliza gemini-1.5-flash-latest para máxima estabilidade de rota.
  */
 
 import { ai } from '@/ai/genkit';
@@ -27,7 +27,7 @@ export type ConceptExplanationAssistantOutput = z.infer<typeof ConceptExplanatio
 
 const prompt = ai.definePrompt({
   name: 'conceptExplanationAssistantPrompt',
-  model: 'googleai/gemini-1.5-flash',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: ConceptExplanationAssistantInputSchema },
   output: { schema: ConceptExplanationAssistantOutputSchema },
   config: { temperature: 1.0 },
