@@ -87,11 +87,22 @@ function SwipeHandler({ children }: { children: React.ReactNode }) {
 
 const NavMenu = memo(({ items, pathname, unreadCount }: { items: any[], pathname: string, unreadCount: number }) => {
   const { setOpenMobile, isMobile } = useSidebar();
+
+  const isItemActive = (itemHref: string) => {
+    if (pathname === itemHref) return true;
+    if (pathname.startsWith(itemHref + '/')) return true;
+    
+    // Mapeamento especial para sub-páginas que não compartilham o prefixo exato
+    if (itemHref === '/dashboard/trails' && pathname.startsWith('/dashboard/classroom/')) return true;
+    
+    return false;
+  };
+
   return (
     <SidebarMenu className="gap-1">
       {items.map((item) => (
         <SidebarMenuItem key={item.label}>
-          <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label} className="h-11 rounded-lg data-[active=true]:bg-accent data-[active=true]:text-accent-foreground transition-all duration-200">
+          <SidebarMenuButton asChild isActive={isItemActive(item.href)} tooltip={item.label} className="h-11 rounded-lg data-[active=true]:bg-accent data-[active=true]:text-accent-foreground transition-all duration-200">
             <Link href={item.href} onClick={() => isMobile && setOpenMobile(false)} className="flex items-center gap-3">
               <item.icon className="h-5 w-5" />
               <span className="font-bold text-sm">{item.label}</span>
@@ -174,7 +185,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarHeader>
         <SidebarContent className="px-3">
           <SidebarGroup>
-            <NavMenu items={navItems} pathname={pathname} unreadCount={0} />
+            <NavMenu items={navItems} pathname={pathname || ''} unreadCount={0} />
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="p-4 border-t border-white/5">
