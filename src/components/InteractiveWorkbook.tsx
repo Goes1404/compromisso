@@ -193,9 +193,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
     try {
       const page = await pdfDoc.getPage(pageNum);
       
-      // Cálculo de escala industrial para preenchimento de tela
-      // Usamos clientWidth para garantir que a escala seja baseada no espaço real visível
-      const containerWidth = containerRef.current.clientWidth - 40; // 40px padding total
+      const containerWidth = containerRef.current.clientWidth - 40;
       const unscaledViewport = page.getViewport({ scale: 1 });
       const baseScale = containerWidth / unscaledViewport.width;
       const finalScale = baseScale * currentZoom;
@@ -354,8 +352,8 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
   return (
     <div className="h-full flex flex-col bg-slate-900 overflow-hidden select-none relative">
       
-      {/* TOOLBAR SUPERIOR */}
-      <div className="bg-slate-950 border-b border-white/5 p-2 md:p-4 flex items-center justify-between gap-4 z-30 shadow-2xl overflow-x-auto scrollbar-hide">
+      {/* TOOLBAR SUPERIOR - FIXO NO TOPO */}
+      <div className="sticky top-0 bg-slate-950 border-b border-white/5 p-2 md:p-4 flex items-center justify-between gap-4 z-40 shadow-2xl overflow-x-auto scrollbar-hide">
         <div className="flex items-center gap-2 shrink-0">
           <Button 
             variant={activeTool === 'pan' ? "default" : "ghost"} 
@@ -421,7 +419,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
         </div>
       </div>
 
-      {/* ÁREA DO DOCUMENTO - REFINADA PARA CENTRALIZAÇÃO E ESCALA */}
+      {/* ÁREA DO DOCUMENTO */}
       <div 
         ref={containerRef} 
         onMouseDown={handleMouseDown}
@@ -435,7 +433,6 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
           activeTool === 'pan' ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
         }`}
       >
-        {/* Container de escala estrito: display block e margin auto para centralizar quando menor que o container */}
         <div 
           className="relative shadow-[0_50px_100px_rgba(0,0,0,0.6)] rounded-sm bg-white overflow-hidden shrink-0 mx-auto"
           style={{ 
@@ -456,8 +453,8 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
         </div>
       </div>
 
-      {/* NAVEGAÇÃO INFERIOR */}
-      <div className="bg-slate-950/95 backdrop-blur-2xl border-t border-white/5 p-4 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10 z-30 shadow-2xl">
+      {/* NAVEGAÇÃO INFERIOR - FIXA NO RODAPÉ */}
+      <div className="sticky bottom-0 bg-slate-950/95 backdrop-blur-2xl border-t border-white/5 p-4 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10 z-40 shadow-2xl">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="text-white hover:bg-white/10 h-10 w-10"><ChevronsLeft className="h-5 w-5" /></Button>
           <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} className="text-white hover:bg-white/10 h-10 w-10"><ChevronLeft className="h-6 w-6" /></Button>

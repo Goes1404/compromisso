@@ -66,7 +66,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [showSimultaneousWorkbook, setShowSimultaneousWorkbook] = useState(false);
   
-  // Estados do Mini-Player Flutuante - Adaptados para Mobile
+  // Estados do Mini-Player Flutuante
   const [miniPlayerPos, setMiniPlayerPos] = useState({ x: 20, y: 20 });
   const [miniPlayerWidth, setMiniPlayerWidth] = useState(400);
   const [isDragging, setIsDragging] = useState(false);
@@ -82,7 +82,6 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
   const playerRef = useRef<any>(null);
   const progressInterval = useRef<any>(null);
 
-  // Efeito para ajustar player no mobile
   useEffect(() => {
     if (isMobile) {
       setMiniPlayerWidth(280);
@@ -262,7 +261,6 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
     };
   }, [initPlayer]);
 
-  // Lógica de Draggable
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
     setIsDragging(true);
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -313,7 +311,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
   const activeContent = contents[activeModuleId || ""]?.find(c => c.id === activeContentId);
 
   return (
-    <div className="flex flex-col bg-slate-50 animate-in fade-in duration-500 min-h-screen">
+    <div className="flex flex-col bg-slate-50 animate-in fade-in duration-500 min-h-screen overflow-hidden">
       <Script 
         src="https://www.youtube.com/iframe_api" 
         strategy="afterInteractive"
@@ -355,10 +353,10 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
         </div>
       </header>
 
-      <div className="flex flex-col lg:flex-row items-start relative min-h-[calc(100vh-64px)]">
+      <div className="flex flex-col lg:flex-row items-start relative h-[calc(100vh-64px)] overflow-hidden">
         
-        {/* ÁREA DE CONTEÚDO */}
-        <main className={`flex-1 flex flex-col bg-white min-w-0 transition-all duration-500`}>
+        {/* ÁREA DE CONTEÚDO - ALTURA CONTROLADA PARA EVITAR SCROLL DA PÁGINA */}
+        <main className={`flex-1 flex flex-col bg-white min-w-0 transition-all duration-500 h-full overflow-hidden`}>
           
           {/* PLAYER DE VÍDEO - MODO DINÂMICO */}
           <div 
@@ -410,7 +408,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
 
           {/* MODO APOSTILA INTERATIVA */}
           {showSimultaneousWorkbook && activeContent?.workbook_id ? (
-            <div className="flex-1 flex flex-col min-h-[calc(100vh-64px)] animate-in slide-in-from-bottom-8 duration-700 relative z-10">
+            <div className="flex-1 flex flex-col h-full animate-in slide-in-from-bottom-8 duration-700 relative z-10 overflow-hidden">
               <InteractiveWorkbook 
                 materialId={activeContent.workbook_id}
                 pdfUrl=""
@@ -426,8 +424,8 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
               )}
             </div>
           ) : (
-            /* CONSOLE DE ESTUDOS PADRÃO */
-            <Tabs defaultValue="summary" className="flex flex-col flex-1">
+            /* CONSOLE DE ESTUDOS PADRÃO - COM ROLAGEM INTERNA */
+            <Tabs defaultValue="summary" className="flex flex-col flex-1 overflow-hidden">
               <TabsList className="grid w-full grid-cols-4 h-14 bg-slate-900 p-0 gap-0 shadow-2xl border-b border-white/5 shrink-0">
                 {[
                   { id: "summary", label: "Roteiro", icon: BookOpen },
@@ -446,7 +444,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                 ))}
               </TabsList>
               
-              <div className="p-4 md:p-10 bg-slate-50/50 flex-1">
+              <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-10">
                 <TabsContent value="summary" className="mt-0 outline-none animate-in fade-in">
                     <div className="max-w-5xl mx-auto space-y-8">
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -569,7 +567,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
                  {contents[activeModuleId || ""]?.map((content) => (
                     <button 
                       key={content.id}
-                      onClick={() => { setActiveContentId(content.id); setShowSimultaneousWorkbook(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      onClick={() => { setActiveContentId(content.id); setShowSimultaneousWorkbook(false); }}
                       className={`w-full text-left p-4 rounded-[1.5rem] transition-all flex items-center gap-4 border-2 ${
                         activeContentId === content.id ? 'bg-accent/10 border-accent/40 shadow-xl' : 'bg-slate-50 border-transparent hover:bg-white'
                       }`}>
