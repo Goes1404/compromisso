@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,7 +11,6 @@ import {
   FileText, 
   Video, 
   BookOpen, 
-  ExternalLink, 
   Filter, 
   Loader2,
   PenLine
@@ -174,9 +172,6 @@ export default function LibraryPage() {
                         </a>
                       </Button>
                     )}
-                    <Button asChild variant="outline" className="h-12 w-12 rounded-xl border-2 border-muted/20 hover:border-accent hover:text-accent transition-all">
-                      <a href={item.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-5 w-5" /></a>
-                    </Button>
                   </div>
                 </CardFooter>
               </Card>
