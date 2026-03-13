@@ -24,6 +24,7 @@ import Image from "next/image";
 export default function LandingPage() {
   const cityLogo = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
   const heroImage = "https://i.postimg.cc/ZRCdsSjy/Whats-App-Image-2026-03-12-at-17-49-18.jpg";
+  const abstract3d = "https://picsum.photos/seed/3dabs/600/600";
   
   const galleryItems = [
     { url: "https://i.postimg.cc/QMnBTzsK/4.jpg" },
@@ -34,7 +35,7 @@ export default function LandingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white relative overflow-x-hidden">
-      {/* HEADER - AMPLIADO PARA h-24 */}
+      {/* HEADER - h-24 */}
       <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-2xl border-b border-muted/20 shadow-sm transition-all duration-500">
         <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
           <div className="flex items-center gap-5">
@@ -69,7 +70,7 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1 pt-24">
-        {/* HERO SECTION */}
+        {/* HERO SECTION - REESTRUTURADA COM EFEITO 3D */}
         <section className="relative py-16 md:py-32 overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-white">
           <div className="absolute top-0 right-0 w-[60%] h-[60%] bg-accent/10 rounded-full blur-[150px] -z-10 translate-x-1/2 -translate-y-1/2" />
           
@@ -98,8 +99,23 @@ export default function LandingPage() {
               </div>
             </div>
             
-            <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-300">
-              <div className="relative aspect-video lg:aspect-square rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border-[8px] md:border-[12px] border-white group">
+            <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-300 [perspective:2000px]">
+              {/* Elemento 3D Dissimulado ao fundo */}
+              <div className="absolute -top-24 -right-24 w-64 h-64 opacity-20 blur-3xl bg-accent rounded-full animate-pulse" />
+              <div className="absolute -bottom-20 -left-20 w-48 h-48 md:w-72 md:h-72 z-0 animate-[spin_20s_linear_infinite] opacity-30 mix-blend-multiply pointer-events-none">
+                <Image 
+                  src={abstract3d} 
+                  alt="3D Decorative Flourish" 
+                  width={400} 
+                  height={400}
+                  unoptimized
+                  className="object-contain"
+                  data-ai-hint="abstract 3d glass"
+                />
+              </div>
+
+              {/* Main Image Container com Tilt e Preserve-3D */}
+              <div className="relative aspect-video lg:aspect-square rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border-[8px] md:border-[12px] border-white group transition-all duration-700 hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(20px)] [transform-style:preserve-3d] z-10 bg-white">
                 <Image 
                   src={heroImage} 
                   alt="Educação Santana de Parnaíba" 
@@ -109,13 +125,20 @@ export default function LandingPage() {
                   className="object-cover group-hover:scale-110 transition-transform duration-1000"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6 md:bottom-10 md:left-10 md:right-10 p-6 md:p-8 bg-primary/80 backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] text-white border border-white/10 shadow-2xl">
+                
+                {/* Card Parallax (translateZ para profundidade real) */}
+                <div className="absolute bottom-6 left-6 right-6 md:bottom-10 md:left-10 md:right-10 p-6 md:p-8 bg-primary/80 backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] text-white border border-white/10 shadow-2xl [transform:translateZ(60px)] transition-transform duration-700 group-hover:[transform:translateZ(80px)]">
                   <div className="flex items-center gap-4 mb-2">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">Status: Ambiente de Estudo</span>
                   </div>
                   <p className="text-sm md:text-lg font-black italic">"A educação transforma vidas. Aqui, transformamos o seu esforço em resultado real."</p>
                 </div>
+              </div>
+
+              {/* Float decorativo extra */}
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 h-20 w-20 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 z-20 flex items-center justify-center animate-bounce [animation-duration:5s]">
+                <Zap className="h-10 w-10 text-accent fill-accent" />
               </div>
             </div>
           </div>

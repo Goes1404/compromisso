@@ -42,6 +42,12 @@
       "description": "Igreja Matriz de Santana de Parnaíba",
       "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Igreja_Matriz_de_Santana_de_Parna%C3%ADba.jpg/1280px-Igreja_Matriz_de_Santana_de_Parna%C3%ADba.jpg",
       "imageHint": "historic church"
+    },
+    {
+      "id": "abstract-3d-element",
+      "description": "Abstract 3D Shape for UI Depth",
+      "imageUrl": "https://picsum.photos/seed/3dabs/600/600",
+      "imageHint": "abstract 3d glass"
     }
   ]
 }
