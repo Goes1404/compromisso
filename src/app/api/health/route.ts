@@ -4,7 +4,6 @@ import { ai } from '@/ai/genkit';
 
 /**
  * @fileOverview API de Diagnóstico de Infraestrutura.
- * Verifica a saúde da conexão com Supabase e Aurora IA.
  */
 
 export const dynamic = 'force-dynamic';
@@ -16,9 +15,8 @@ export async function GET() {
     genkit: { status: 'unknown', details: '' },
   };
 
-  // 1. Testar Supabase
   if (!isSupabaseConfigured) {
-    diagnostics.supabase = { status: 'error', details: 'Configuração NEXT_PUBLIC_SUPABASE_URL ou ANON_KEY ausente no ambiente.' };
+    diagnostics.supabase = { status: 'error', details: 'Configuração NEXT_PUBLIC_SUPABASE_URL ou ANON_KEY ausente.' };
   } else {
     try {
       const { error } = await supabase.from('profiles').select('id').limit(1);
@@ -29,11 +27,9 @@ export async function GET() {
     }
   }
 
-  // 2. Testar Aurora IA (Genkit)
   try {
-    // Executa uma geração mínima para validar a chave e o ID do modelo
     const response = await ai.generate({
-      model: 'gemini-1.5-flash',
+      model: 'googleai/gemini-1.5-flash',
       prompt: 'Responder apenas com OK',
       config: { maxOutputTokens: 5 }
     });
@@ -44,8 +40,7 @@ export async function GET() {
       throw new Error("Resposta nula do motor de IA.");
     }
   } catch (e: any) {
-    const msg = e.message || '';
-    diagnostics.genkit = { status: 'error', details: 'Falha na engine de IA: ' + msg };
+    diagnostics.genkit = { status: 'error', details: 'Falha na engine de IA: ' + e.message };
   }
 
   const allOk = diagnostics.supabase.status === 'ok' && diagnostics.genkit.status === 'ok';

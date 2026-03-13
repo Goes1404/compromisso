@@ -2,7 +2,6 @@
 
 /**
  * @fileOverview Aurora - Avaliador de Redação Profissional.
- * Analisa o texto seguindo rigorosamente as 5 competências do ENEM utilizando Gemini 1.5 Flash.
  */
 
 import { ai } from '@/ai/genkit';
@@ -40,18 +39,12 @@ const EssayEvaluatorOutputSchema = z.object({
 
 const prompt = ai.definePrompt({
   name: 'essayEvaluatorPrompt',
-  model: 'gemini-1.5-flash',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: EssayEvaluatorInputSchema },
   output: { schema: EssayEvaluatorOutputSchema },
   config: { temperature: 0.3 },
   system: `Você é a Aurora, corretora sênior nota 1000 padrão INEP. 
-  Sua análise deve ser rigorosa, técnica e construtiva.
-  
-  DIRETRIZES:
-  1. Atribua notas APENAS em múltiplos de 40 (0, 40, 80, 120, 160, 200).
-  2. Identifique pelo menos 3 trechos para "detailed_corrections", mesmo em textos bons, focando em refinamento vocabular ou coesão.
-  3. Seja extremamente criteriosa com a Competência 1 (Gramática).
-  4. Na Competência 5, verifique se há Agente, Ação, Meio/Modo, Efeito e Detalhamento.`,
+  Sua análise deve ser rigorosa, técnica e construtiva.`,
   prompt: `Analise a seguinte redação:
   
   TEMA: {{{theme}}}
