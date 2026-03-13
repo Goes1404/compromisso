@@ -24,7 +24,6 @@ import Image from "next/image";
 export default function LandingPage() {
   const cityLogo = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
   const heroImage = "https://i.postimg.cc/ZRCdsSjy/Whats-App-Image-2026-03-12-at-17-49-18.jpg";
-  const abstract3d = "https://picsum.photos/seed/3dabs/600/600";
   
   const galleryItems = [
     { url: "https://i.postimg.cc/QMnBTzsK/4.jpg" },
@@ -70,7 +69,7 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1 pt-24">
-        {/* HERO SECTION - REESTRUTURADA COM EFEITO 3D */}
+        {/* HERO SECTION */}
         <section className="relative py-16 md:py-32 overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-white">
           <div className="absolute top-0 right-0 w-[60%] h-[60%] bg-accent/10 rounded-full blur-[150px] -z-10 translate-x-1/2 -translate-y-1/2" />
           
@@ -85,7 +84,7 @@ export default function LandingPage() {
                 <span className="text-accent drop-shadow-sm">é o nosso Compromisso.</span>
               </h1>
               <p className="text-lg md:text-2xl text-muted-foreground font-medium italic leading-relaxed max-w-xl border-l-0 lg:border-l-4 border-accent/30 pl-0 lg:pl-6 mx-auto lg:mx-0">
-                O portal oficial de apoio aos estudantes de Santana de Parnaíba. Tecnologia e mentoria unidas para o seu success.
+                O portal oficial de apoio aos estudantes de Santana de Parnaíba. Tecnologia e mentoria unidas para o seu sucesso.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
                 <Button asChild size="lg" className="h-16 md:h-20 px-10 md:px-12 bg-primary text-white font-black text-lg md:text-xl rounded-[2rem] shadow-[0_20px_50px_-10px_rgba(26,44,75,0.4)] hover:scale-105 active:scale-95 transition-all group border-none">
@@ -100,22 +99,10 @@ export default function LandingPage() {
             </div>
             
             <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-300 [perspective:2000px]">
-              {/* Elemento 3D Dissimulado ao fundo */}
               <div className="absolute -top-24 -right-24 w-64 h-64 opacity-20 blur-3xl bg-accent rounded-full animate-pulse" />
-              <div className="absolute -bottom-20 -left-20 w-48 h-48 md:w-72 md:h-72 z-0 animate-[spin_20s_linear_infinite] opacity-30 mix-blend-multiply pointer-events-none">
-                <Image 
-                  src={abstract3d} 
-                  alt="3D Decorative Flourish" 
-                  width={400} 
-                  height={400}
-                  unoptimized
-                  className="object-contain"
-                  data-ai-hint="abstract 3d glass"
-                />
-              </div>
 
-              {/* Main Image Container com Tilt e Preserve-3D - Moldura removida conforme pedido */}
-              <div className="relative aspect-video lg:aspect-square rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] group transition-all duration-700 hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(20px)] [transform-style:preserve-3d] z-10">
+              {/* Main Image Container com Moldura Restaurada e Sombra */}
+              <div className="relative aspect-video lg:aspect-square rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] group transition-all duration-700 hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(20px)] [transform-style:preserve-3d] z-10 border-[12px] border-white">
                 <Image 
                   src={heroImage} 
                   alt="Educação Santana de Parnaíba" 
@@ -126,7 +113,7 @@ export default function LandingPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />
                 
-                {/* Card Parallax (translateZ para profundidade real) */}
+                {/* Card Parallax */}
                 <div className="absolute bottom-6 left-6 right-6 md:bottom-10 md:left-10 md:right-10 p-6 md:p-8 bg-primary/80 backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] text-white border border-white/10 shadow-2xl [transform:translateZ(60px)] transition-transform duration-700 group-hover:[transform:translateZ(80px)]">
                   <div className="flex items-center gap-4 mb-2">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -136,7 +123,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Float decorativo extra */}
+              {/* Float decorativo */}
               <div className="absolute -top-10 left-1/2 -translate-x-1/2 h-20 w-20 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 z-20 flex items-center justify-center animate-bounce [animation-duration:5s]">
                 <Zap className="h-10 w-10 text-accent fill-accent" />
               </div>
