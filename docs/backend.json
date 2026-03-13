@@ -34,6 +34,21 @@
         "average_rating": { "type": "number" }
       }
     },
+    "LearningContent": {
+      "title": "LearningContent",
+      "type": "object",
+      "description": "Materiais didáticos vinculados aos módulos das trilhas.",
+      "properties": {
+        "id": { "type": "string" },
+        "module_id": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["video", "pdf", "quiz", "text", "file"] },
+        "url": { "type": "string" },
+        "description": { "type": "string" },
+        "workbook_id": { "type": "string", "description": "ID opcional de uma apostila da biblioteca." },
+        "order_index": { "type": "number" }
+      }
+    },
     "Class": {
       "title": "Class",
       "type": "object",

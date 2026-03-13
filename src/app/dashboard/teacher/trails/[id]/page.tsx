@@ -1,3 +1,4 @@
+
 'use client';
 
 /**
@@ -258,8 +259,9 @@ export default function TrailManagementPage() {
       setFile(null);
     }
 
+    const finalWorkbookId = contentForm.workbook_id === 'none' || !contentForm.workbook_id ? null : contentForm.workbook_id;
+
     if (editingContentId) {
-      // Direct update for single editing
       setIsSubmitting(true);
       try {
         const { error } = await supabase
@@ -269,7 +271,7 @@ export default function TrailManagementPage() {
             type: contentForm.type,
             url: fileUrl,
             description: contentForm.description,
-            workbook_id: contentForm.workbook_id || null,
+            workbook_id: finalWorkbookId,
           })
           .eq('id', editingContentId);
 
@@ -287,7 +289,7 @@ export default function TrailManagementPage() {
     } else {
       setPendingItems([
         ...pendingItems,
-        { ...contentForm, url: fileUrl, id: Date.now().toString() },
+        { ...contentForm, url: fileUrl, workbook_id: finalWorkbookId, id: Date.now().toString() },
       ]);
       setContentForm({ title: '', type: 'video', url: '', description: '', workbook_id: '' });
       setUploading(false);
@@ -309,7 +311,7 @@ export default function TrailManagementPage() {
       type: item.type,
       url: item.url,
       description: item.description,
-      workbook_id: item.workbook_id || null,
+      workbook_id: item.workbook_id,
       order_index: currentModuleContents.length + idx,
     }));
 
