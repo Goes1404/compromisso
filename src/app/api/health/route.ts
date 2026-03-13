@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
 import { ai } from '@/ai/genkit';
@@ -52,9 +53,9 @@ export async function GET() {
       if (msg.includes('API key expired') || msg.includes('API_KEY_INVALID')) {
         diagnostics.genkit = { status: 'error', details: 'Chave INVÁLIDA ou EXPIROU. Gere uma nova no Google AI Studio.' };
       } else if (msg.includes('404')) {
-        diagnostics.genkit = { status: 'error', details: 'Erro de Modelo (404). Verifique se o Gemini 1.5 Flash está habilitado para sua conta.' };
+        diagnostics.genkit = { status: 'error', details: 'Erro de Modelo (404). Verifique se o Gemini 1.5 Flash está habilitado para sua conta e região.' };
       } else {
-        diagnostics.genkit = { status: 'error', details: `Falha técnica: ${msg.substring(0, 100)}` };
+        diagnostics.genkit = { status: 'error', details: `Falha técnica: ${msg.substring(0, 150)}` };
       }
     }
   }

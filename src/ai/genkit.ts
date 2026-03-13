@@ -1,3 +1,4 @@
+
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
@@ -12,7 +13,7 @@ if (typeof window !== 'undefined') {
   throw new Error("⚠️ [SEGURANÇA] A Aurora IA só pode ser operada no Gabinete de Gestão (Servidor).");
 }
 
-// Prioriza a chave do ambiente, usa a nova chave do AI Studio como fallback seguro
+// Sintonização de Chave: Prioriza .env para máxima conformidade industrial
 const apiKey = process.env.GEMINI_API_KEY || "AIzaSyBSKWVh8V9HsDXUhLBuIAoSSBRPetzV-gM";
 
 export const ai = genkit({
