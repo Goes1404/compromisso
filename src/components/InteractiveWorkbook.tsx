@@ -16,7 +16,8 @@ import {
   Cloud,
   AlertTriangle,
   Maximize,
-  Hash
+  Hash,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,8 +137,9 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
         if (draftStr) {
           const draft = JSON.parse(draftStr);
           if (draft.lastPage) {
-            setCurrentPage(draft.lastPage);
-            setInputPage(draft.lastPage.toString());
+            const pageToLoad = Math.min(draft.lastPage, pdf.numPages);
+            setCurrentPage(pageToLoad);
+            setInputPage(pageToLoad.toString());
           }
         }
       } catch (err) {
@@ -191,11 +193,12 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
       const fCanvas = new fabric.Canvas('fabric-layer', {
         height: viewport.height,
         width: viewport.width,
-        isDrawingMode: !isEraser
+        isDrawingMode: !isEraser,
+        selection: !isEraser // Permite selecionar apenas se não for desenho
       });
 
       fCanvas.freeDrawingBrush.color = brushColor;
-      fCanvas.freeDrawingBrush.width = 2;
+      fCanvas.freeDrawingBrush.width = 3;
 
       // Carregar anotações existentes para esta página
       const draftStr = localStorage.getItem(`workbook_draft_${materialId}`);
@@ -203,6 +206,14 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
       if (draft?.annotations?.[pageNum]) {
         fCanvas.loadFromJSON(draft.annotations[pageNum], () => fCanvas.renderAll());
       }
+
+      // Logica da Borracha: Se clicar em um traço no modo borracha, remove ele
+      fCanvas.on('mouse:down', (options) => {
+        if (isEraser && options.target) {
+          fCanvas.remove(options.target);
+          savePageDraft();
+        }
+      });
 
       fCanvas.on('path:created', () => savePageDraft());
       fabricCanvasRef.current = fCanvas;
@@ -230,18 +241,37 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
 
   const jumpToPage = (e: React.FormEvent) => {
     e.preventDefault();
-    const target = parseInt(inputPage);
-    if (!isNaN(target) && target >= 1 && target <= numPages) {
-      setCurrentPage(target);
-    } else {
+    let target = parseInt(inputPage);
+    
+    if (isNaN(target)) {
       setInputPage(currentPage.toString());
+      return;
     }
+
+    // Lógica de limite solicitada
+    if (target > numPages) {
+      target = numPages;
+    } else if (target < 1) {
+      target = 1;
+    }
+
+    setCurrentPage(target);
+    setInputPage(target.toString());
   };
 
   const toggleTool = (eraser: boolean) => {
     setIsEraser(eraser);
     if (fabricCanvasRef.current) {
       fabricCanvasRef.current.isDrawingMode = !eraser;
+      // Cursor de borracha ou caneta
+      fabricCanvasRef.current.defaultCursor = eraser ? 'cell' : 'crosshair';
+    }
+  };
+
+  const clearCurrentPage = () => {
+    if (confirm("Deseja apagar todas as anotações desta página?")) {
+      fabricCanvasRef.current?.clear();
+      savePageDraft();
     }
   };
 
@@ -264,7 +294,8 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
             variant={!isEraser ? "default" : "ghost"} 
             size="icon" 
             onClick={() => toggleTool(false)}
-            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl ${!isEraser ? 'bg-primary text-white' : 'text-slate-400'}`}
+            title="Caneta de Anotação"
+            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${!isEraser ? 'bg-primary text-white scale-110 shadow-lg' : 'text-slate-400'}`}
           >
             <Pencil className="h-5 w-5" />
           </Button>
@@ -272,9 +303,19 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
             variant={isEraser ? "default" : "ghost"} 
             size="icon" 
             onClick={() => toggleTool(true)}
-            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl ${isEraser ? 'bg-accent text-accent-foreground' : 'text-slate-400'}`}
+            title="Borracha (Clique no traço para apagar)"
+            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${isEraser ? 'bg-accent text-accent-foreground scale-110 shadow-lg' : 'text-slate-400'}`}
           >
             <Eraser className="h-5 w-5" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={clearCurrentPage}
+            title="Limpar Página Inteira"
+            className="h-10 w-10 md:h-12 md:w-12 rounded-xl text-red-400 hover:text-red-500 hover:bg-red-500/10"
+          >
+            <Trash2 className="h-5 w-5" />
           </Button>
           <div className="w-px h-8 bg-white/10 mx-1 hidden sm:block" />
           <div className="flex gap-2">
@@ -282,7 +323,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
               <button 
                 key={color} 
                 onClick={() => { setBrushColor(color); toggleTool(false); }}
-                className={`h-6 w-6 md:h-8 md:w-8 rounded-full border-2 transition-all ${brushColor === color ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
+                className={`h-6 w-6 md:h-8 md:w-8 rounded-full border-2 transition-all ${brushColor === color ? 'border-white scale-110' : 'border-transparent opacity-50 hover:opacity-100'}`}
                 style={{ backgroundColor: color }}
               />
             ))}
@@ -290,7 +331,14 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={syncWithSupabase} disabled={isSaving} className="text-slate-400 hover:text-white">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={syncWithSupabase} 
+            disabled={isSaving} 
+            title="Salvar na Nuvem"
+            className="text-slate-400 hover:text-accent transition-colors"
+          >
             {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Cloud className="h-5 w-5" />}
           </Button>
         </div>
@@ -298,7 +346,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
 
       {/* ÁREA DO DOCUMENTO */}
       <div ref={containerRef} className="flex-1 overflow-auto p-4 md:p-8 flex justify-center items-start bg-slate-900 scrollbar-hide no-swipe">
-        <div className="relative shadow-[0_50px_100px_rgba(0,0,0,0.6)] rounded-sm bg-white overflow-hidden">
+        <div className="relative shadow-[0_50px_100px_rgba(0,0,0,0.6)] rounded-sm bg-white overflow-hidden transition-all duration-500">
           {loading && (
             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm gap-4">
               <Loader2 className="h-12 w-12 animate-spin text-accent" />
@@ -312,7 +360,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
         </div>
       </div>
 
-      {/* NAVEGAÇÃO INFERIOR - VIRTUALIZADA */}
+      {/* NAVEGAÇÃO INFERIOR */}
       <div className="bg-slate-950/90 backdrop-blur-2xl border-t border-white/5 p-4 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 z-30 shadow-[0_-20px_50px_rgba(0,0,0,0.3)]">
         <div className="flex items-center gap-1 md:gap-2">
           <Button variant="ghost" size="icon" onClick={() => changePage(-currentPage)} disabled={currentPage === 1} className="text-white hover:bg-white/10 h-10 w-10">
@@ -323,11 +371,12 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
           </Button>
         </div>
 
-        <form onSubmit={jumpToPage} className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10">
+        <form onSubmit={jumpToPage} className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 group focus-within:border-accent/50 transition-all">
           <Hash className="h-3 w-3 text-accent" />
           <Input 
             value={inputPage}
             onChange={(e) => setInputPage(e.target.value)}
+            onBlur={jumpToPage}
             className="w-12 h-8 bg-transparent border-none text-center font-black text-white p-0 focus-visible:ring-0 text-lg italic"
           />
           <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">DE {numPages}</span>
@@ -345,7 +394,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl, userName, userCpf }: I
 
         <div className="hidden lg:flex items-center gap-2 text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">
           <Maximize className="h-3 w-3" />
-          Auto-Fit Ativo
+          Renderização Protegida
         </div>
       </div>
     </div>
