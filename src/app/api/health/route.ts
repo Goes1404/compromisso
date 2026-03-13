@@ -29,21 +29,34 @@ export async function GET() {
     }
   }
 
-  // 2. Testar Genkit
-  try {
-    const response = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
-      prompt: 'ok',
-      config: { maxOutputTokens: 2 }
-    });
-    
-    if (response.text) {
-      diagnostics.genkit = { status: 'ok', details: 'Aurora IA operacional.' };
-    } else {
-      throw new Error("Resposta vazia da IA.");
+  // 2. Testar Genkit (GEMINI_API_KEY)
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
+  if (!apiKey) {
+    diagnostics.genkit = { status: 'error', details: 'Chave de API não configurada no ambiente.' };
+  } else {
+    try {
+      // Teste minimalista com ID de versão fixa para evitar erros de alias (404)
+      const response = await ai.generate({
+        model: 'googleai/gemini-1.5-flash-001',
+        prompt: 'ok',
+        config: { maxOutputTokens: 2 }
+      });
+      
+      if (response.text) {
+        diagnostics.genkit = { status: 'ok', details: 'Aurora IA operacional.' };
+      } else {
+        throw new Error("Resposta vazia da IA.");
+      }
+    } catch (e: any) {
+      const msg = e.message || '';
+      if (msg.includes('API key expired') || msg.includes('API_KEY_INVALID')) {
+        diagnostics.genkit = { status: 'error', details: 'Chave INVÁLIDA ou EXPIROU. Gere uma nova no Google AI Studio.' };
+      } else if (msg.includes('not found') || msg.includes('404')) {
+        diagnostics.genkit = { status: 'error', details: 'Modelo 1.5-flash-001 não localizado para esta chave de projeto.' };
+      } else {
+        diagnostics.genkit = { status: 'error', details: `Falha no motor: ${msg.substring(0, 100)}` };
+      }
     }
-  } catch (e: any) {
-    diagnostics.genkit = { status: 'error', details: `Falha no motor: ${e.message}` };
   }
 
   const allOk = diagnostics.supabase.status === 'ok' && diagnostics.genkit.status === 'ok';
