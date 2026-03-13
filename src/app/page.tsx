@@ -85,7 +85,7 @@ export default function LandingPage() {
                 <span className="text-accent drop-shadow-sm">é o nosso Compromisso.</span>
               </h1>
               <p className="text-lg md:text-2xl text-muted-foreground font-medium italic leading-relaxed max-w-xl border-l-0 lg:border-l-4 border-accent/30 pl-0 lg:pl-6 mx-auto lg:mx-0">
-                O portal oficial de apoio aos estudantes de Santana de Parnaíba. Tecnologia e mentoria unidas para o seu sucesso.
+                O portal oficial de apoio aos estudantes de Santana de Parnaíba. Tecnologia e mentoria unidas para o seu success.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
                 <Button asChild size="lg" className="h-16 md:h-20 px-10 md:px-12 bg-primary text-white font-black text-lg md:text-xl rounded-[2rem] shadow-[0_20px_50px_-10px_rgba(26,44,75,0.4)] hover:scale-105 active:scale-95 transition-all group border-none">
@@ -114,8 +114,8 @@ export default function LandingPage() {
                 />
               </div>
 
-              {/* Main Image Container com Tilt e Preserve-3D */}
-              <div className="relative aspect-video lg:aspect-square rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border-[8px] md:border-[12px] border-white group transition-all duration-700 hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(20px)] [transform-style:preserve-3d] z-10 bg-white">
+              {/* Main Image Container com Tilt e Preserve-3D - Moldura removida conforme pedido */}
+              <div className="relative aspect-video lg:aspect-square rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] group transition-all duration-700 hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(20px)] [transform-style:preserve-3d] z-10">
                 <Image 
                   src={heroImage} 
                   alt="Educação Santana de Parnaíba" 
