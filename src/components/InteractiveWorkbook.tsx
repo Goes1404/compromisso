@@ -194,7 +194,8 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
       const page = await pdfDoc.getPage(pageNum);
       
       // Cálculo de escala industrial para preenchimento de tela
-      const containerWidth = containerRef.current.clientWidth - 80;
+      // Usamos clientWidth para garantir que a escala seja baseada no espaço real visível
+      const containerWidth = containerRef.current.clientWidth - 40; // 40px padding total
       const unscaledViewport = page.getViewport({ scale: 1 });
       const baseScale = containerWidth / unscaledViewport.width;
       const finalScale = baseScale * currentZoom;
@@ -277,7 +278,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
     } finally {
       setLoading(false);
     }
-  }, [pdfDoc, userName, userCpf, materialId, brushColor, highlightColor, activeTool, savePageDraft]);
+  }, [pdfDoc, userName, userCpf, materialId, brushColor, highlightColor, activeTool, savePageDraft, zoom]);
 
   useEffect(() => {
     if (pdfDoc) renderPage(currentPage, zoom);
@@ -420,7 +421,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
         </div>
       </div>
 
-      {/* ÁREA DO DOCUMENTO - REFINADA PARA SCROLL NATIVO */}
+      {/* ÁREA DO DOCUMENTO - REFINADA PARA CENTRALIZAÇÃO E ESCALA */}
       <div 
         ref={containerRef} 
         onMouseDown={handleMouseDown}
@@ -434,9 +435,9 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
           activeTool === 'pan' ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
         }`}
       >
-        {/* Este div garante que o tamanho total (zoom) seja percebido pelo container overflow-auto */}
+        {/* Container de escala estrito: display block e margin auto para centralizar quando menor que o container */}
         <div 
-          className="relative shadow-[0_50px_100px_rgba(0,0,0,0.6)] rounded-sm bg-white overflow-hidden shrink-0"
+          className="relative shadow-[0_50px_100px_rgba(0,0,0,0.6)] rounded-sm bg-white overflow-hidden shrink-0 mx-auto"
           style={{ 
             width: canvasRef.current?.width || 'auto',
             height: canvasRef.current?.height || 'auto'
