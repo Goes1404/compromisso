@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase, isSupabaseConfigured } from "@/app/lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 type Step = 1 | 2 | 3;
 type ProfileType = "etec" | "cpop_santana" | "cpop_osasco" | "enem" | "teacher";
