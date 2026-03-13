@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/tabs";
 import { 
   FileCheck, 
   ExternalLink, 
@@ -27,7 +27,10 @@ import {
   FileWarning,
   Scale,
   Sparkles,
-  ClipboardList
+  ClipboardList,
+  FileSearch,
+  Clock,
+  LayoutList
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -74,12 +77,10 @@ export default function StudentAdmissionCentral() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   
-  // Estados do Checklist
   const [loadingDocs, setLoadingDocs] = useState(true);
   const [savingDoc, setSavingDoc] = useState(false);
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
 
-  // Estados do Cálculo de Renda
   const [loadingCalc, setLoadingCalc] = useState(false);
   const [members, setFamilyMembers] = useState<FamilyMember[]>([
     { id: '1', label: 'Você', income: '' }
@@ -95,7 +96,6 @@ export default function StudentAdmissionCentral() {
   const MIN_WAGE = 1621;
   const THRESHOLD = MIN_WAGE * 1.5;
 
-  // Carregamento Inicial
   useEffect(() => {
     async function loadData() {
       if (!user) return;
@@ -117,7 +117,6 @@ export default function StudentAdmissionCentral() {
     loadData();
   }, [user]);
 
-  // Lógica do Checklist
   const toggleItem = async (itemId: string) => {
     if (!user || savingDoc) return;
     const isChecked = checkedItems.includes(itemId);
@@ -137,7 +136,6 @@ export default function StudentAdmissionCentral() {
     }
   };
 
-  // Lógica do Cálculo de Renda
   const totalFamilyIncome = useMemo(() => {
     return members.reduce((acc, m) => acc + (Number(m.income) || 0), 0);
   }, [members]);
@@ -179,7 +177,6 @@ export default function StudentAdmissionCentral() {
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 px-1">
-      {/* HEADER INDUSTRIAL */}
       <section className="bg-primary p-8 md:p-12 rounded-[2.5rem] text-white relative overflow-hidden shadow-2xl">
         <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
         <div className="relative z-10 space-y-4">
@@ -212,7 +209,6 @@ export default function StudentAdmissionCentral() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ABA CHECKLIST */}
         <TabsContent value="checklist" className="animate-in slide-in-from-left-4 duration-500">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             <div className="lg:col-span-2 space-y-8">
@@ -273,6 +269,34 @@ export default function StudentAdmissionCentral() {
                   </Button>
                 </CardContent>
               </Card>
+
+              <Card className="border-none shadow-xl bg-white rounded-[2rem] p-8 space-y-4">
+                <h3 className="text-[10px] font-black text-primary/40 uppercase tracking-widest flex items-center gap-2">
+                  <FileSearch className="h-3.5 w-3.5 text-accent" /> Qualidade da Imagem
+                </h3>
+                <p className="text-xs font-medium italic text-primary/70 leading-relaxed">
+                  "Evite fotos com sombras ou reflexos de luz. Se o texto não estiver legível, sua inscrição poderá ser indeferida pela universidade."
+                </p>
+              </Card>
+
+              <Card className="border-none shadow-xl bg-white rounded-[2rem] p-8 space-y-4">
+                <h3 className="text-[10px] font-black text-primary/40 uppercase tracking-widest flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5 text-accent" /> Validade dos Papéis
+                </h3>
+                <p className="text-xs font-medium italic text-primary/70 leading-relaxed">
+                  "Comprovantes de residência devem ter no máximo 90 dias. Certidões não podem ter rasuras ou remendos."
+                </p>
+              </Card>
+
+              <Card className="border-none shadow-xl bg-white rounded-[2rem] p-8 space-y-4">
+                <h3 className="text-[10px] font-black text-primary/40 uppercase tracking-widest flex items-center gap-2">
+                  <LayoutList className="h-3.5 w-3.5 text-accent" /> Organização Maestro
+                </h3>
+                <p className="text-xs font-medium italic text-primary/70 leading-relaxed">
+                  "Renomeie seus arquivos como 'RG_FRENTE.pdf' ou 'HISTORICO_MEDIO.pdf'. Isso agiliza a conferência do tutor e evita erros de envio."
+                </p>
+              </Card>
+
               <Card className="border-none shadow-xl bg-white rounded-[2rem] p-8 space-y-4">
                 <h3 className="text-[10px] font-black text-primary/40 uppercase tracking-widest flex items-center gap-2">
                   <ShieldCheck className="h-3 w-3 text-accent" /> Dica de Segurança
@@ -285,7 +309,6 @@ export default function StudentAdmissionCentral() {
           </div>
         </TabsContent>
 
-        {/* ABA CÁLCULO DE RENDA */}
         <TabsContent value="exemption" className="animate-in slide-in-from-right-4 duration-500">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-4 space-y-6">
