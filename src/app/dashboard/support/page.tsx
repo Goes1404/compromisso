@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 interface Message {
   role: "assistant" | "user";
   content: string;
+  isError?: boolean;
 }
 
 export default function AuroraSupportPage() {
@@ -70,7 +71,6 @@ export default function AuroraSupportPage() {
         content: m.content
       }));
 
-      // SEGURANÇA: Usando o Gateway de API em vez de chamar o fluxo diretamente no cliente
       const response = await fetch('/api/genkit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,25 +83,25 @@ export default function AuroraSupportPage() {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Falha na comunicação com a Aurora');
-      }
-
       const data = await response.json();
       
-      if (data.success && data.result?.response) {
+      if (response.ok && data.success && data.result?.response) {
         setMessages(prev => [...prev, { role: "assistant", content: data.result.response }]);
       } else {
-        throw new Error("A Aurora retornou uma resposta inesperada.");
+        // SURFAR ERRO NO CHAT
+        setMessages(prev => [...prev, { 
+          role: "assistant", 
+          content: data.error || "A Aurora encontrou um erro técnico inesperado.",
+          isError: true 
+        }]);
       }
     } catch (error: any) {
       console.error("Erro Aurora Chat:", error);
-      toast({
-        title: "Atenção",
-        description: error.message || "Houve uma oscilação na rede. Tente reenviar.",
-        variant: "destructive"
-      });
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: `⚠️ [FALHA CRÍTICA]: ${error.message || "Erro na infraestrutura de rede."}`,
+        isError: true 
+      }]);
     } finally {
       setLoading(false);
     }
@@ -193,7 +193,9 @@ export default function AuroraSupportPage() {
                   </Avatar>
                   <div className={`p-5 md:p-6 rounded-[1.5rem] text-sm leading-relaxed shadow-sm max-w-[85%] md:max-w-[75%] font-medium ${
                     msg.role === 'assistant' 
-                      ? 'bg-muted/20 text-foreground rounded-tl-none' 
+                      ? msg.isError 
+                        ? 'bg-red-50 text-red-700 border border-red-100 rounded-tl-none font-black italic'
+                        : 'bg-muted/20 text-foreground rounded-tl-none' 
                       : 'bg-primary text-white rounded-tr-none'
                   }`}>
                     {msg.content}

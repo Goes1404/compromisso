@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -13,6 +12,7 @@ import { usePathname } from "next/navigation";
 interface Message {
   role: "assistant" | "user";
   content: string;
+  isError?: boolean;
 }
 
 export function AccessibilityWidget() {
@@ -25,7 +25,6 @@ export function AccessibilityWidget() {
   const { toast } = useToast();
   const pathname = usePathname();
 
-  // Detectar páginas onde o widget deve subir para não cobrir o botão de enviar
   const isInputHeavyPage = 
     pathname.includes('/chat/') || 
     pathname.includes('/support') || 
@@ -57,16 +56,24 @@ export function AccessibilityWidget() {
         })
       });
 
-      if (!response.ok) {
-        throw new Error('Serviço temporariamente indisponível.');
-      }
-
       const data = await response.json();
-      if (data.success && data.result.response) {
+
+      if (response.ok && data.success && data.result.response) {
         setMessages(prev => [...prev, { role: "assistant", content: data.result.response }]);
+      } else {
+        // EXIBIR ERRO DETALHADO NO CHAT
+        setMessages(prev => [...prev, { 
+          role: "assistant", 
+          content: data.error || "Houve um erro inesperado ao conectar com a Aurora.",
+          isError: true 
+        }]);
       }
     } catch (err: any) {
-      toast({ title: "Aurora está analisando dados agora", description: err.message || "Tente novamente.", variant: "destructive" });
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: `⚠️ [ERRO REDE]: ${err.message || "Tente novamente mais tarde."}`,
+        isError: true 
+      }]);
     } finally {
       setLoading(false);
     }
@@ -77,7 +84,9 @@ export function AccessibilityWidget() {
       <div className={`max-w-[85%] p-4 rounded-2xl text-xs md:text-sm font-medium leading-relaxed shadow-sm ${
         msg.role === 'user' 
           ? 'bg-primary text-white rounded-tr-none' 
-          : 'bg-white text-primary rounded-tl-none border border-primary/5'
+          : msg.isError
+            ? 'bg-red-50 text-red-700 border border-red-100 rounded-tl-none italic font-black'
+            : 'bg-white text-primary rounded-tl-none border border-primary/5'
       }`}>
         {msg.content}
       </div>

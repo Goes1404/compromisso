@@ -9,8 +9,7 @@ import { trailStructureGeneratorFlow } from '@/ai/flows/trail-structure-generato
 
 /**
  * @fileOverview Gateway de API Blindado para a Aurora IA.
- * Este endpoint é o único ponto de entrada para a IA, garantindo que as chaves 
- * permaneçam protegidas no ambiente seguro do servidor.
+ * Este endpoint centraliza as chamadas para a IA e retorna erros detalhados para o front-end.
  */
 
 export const maxDuration = 60; 
@@ -52,27 +51,27 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    const errorMsg = error?.message || '';
+    const errorMsg = error?.message || 'Erro desconhecido no servidor de IA.';
     
     console.error(`[AURORA ERROR LOG]:`, errorMsg);
 
-    // Identificação de problemas de chave vazada, inválida ou de cota
-    if (errorMsg.includes('API key expired') || errorMsg.includes('400 Bad Request') || errorMsg.includes('API_KEY_INVALID')) {
+    // Identificação de problemas específicos de chave e cota para reportar ao usuário
+    if (errorMsg.includes('API key expired') || errorMsg.includes('API_KEY_INVALID') || errorMsg.includes('400')) {
       return NextResponse.json(
-        { error: '⚠️ Conexão interrompida com a Aurora. Se você estiver em um repositório público, a chave pode ter sido revogada automaticamente pelo Google.' },
+        { error: `⚠️ FALHA DE CREDENCIAL: A chave de API fornecida parece inválida ou expirou. Detalhe: ${errorMsg}` },
         { status: 401 }
       );
     }
 
     if (errorMsg.includes('quota') || errorMsg.includes('429')) {
       return NextResponse.json(
-        { error: '⚠️ A Aurora atingiu o limite de testes gratuitos para este minuto. Aguarde um instante para continuar.' },
+        { error: '⚠️ LIMITE DE COTA: A Aurora atingiu o limite de requisições gratuitas. Aguarde um minuto.' },
         { status: 429 }
       );
     }
 
     return NextResponse.json(
-      { error: 'A Aurora encontrou uma instabilidade técnica. Tente novamente em alguns instantes.' },
+      { error: `⚠️ INSTABILIDADE TÉCNICA: ${errorMsg}` },
       { status: 500 }
     );
   }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -57,7 +56,7 @@ export default function DirectChatPage() {
             setContact({ name: "Mentor da Rede", institution: "Educori 360" });
           }
 
-          // Carregar Histórico de Mensagens - Filtro Robusto
+          // Carregar Histórico de Mensagens
           const { data: msgs, error: msgsError } = await supabase
             .from('direct_messages')
             .select('*')
@@ -80,7 +79,7 @@ export default function DirectChatPage() {
 
     loadChatData();
 
-    // Inscrição Real-time robusta
+    // Inscrição Real-time
     if (!isAurora && user) {
       const channel = supabase
         .channel(`chat_realtime_${contactId}`)
@@ -89,7 +88,6 @@ export default function DirectChatPage() {
           schema: 'public', 
           table: 'direct_messages'
         }, (payload) => {
-          // Verifica se a mensagem pertence a esta conversa
           const isFromCurrentChat = 
             (payload.new.sender_id === user.id && payload.new.receiver_id === contactId) ||
             (payload.new.sender_id === contactId && payload.new.receiver_id === user.id);
@@ -146,19 +144,33 @@ export default function DirectChatPage() {
           }),
         });
 
-        if (!response.ok) throw new Error('Falha na Engine de IA');
-
         const data = await response.json();
-        if (data.success && data.result?.response) {
+
+        if (response.ok && data.success && data.result?.response) {
           setMessages(prev => [...prev, {
             id: `ai-${Date.now()}`,
             sender_id: "aurora-ai",
             content: data.result.response,
             created_at: new Date().toISOString(),
           }]);
+        } else {
+          // EXIBIR ERRO NO CHAT CONFORME SOLICITADO
+          setMessages(prev => [...prev, {
+            id: `ai-error-${Date.now()}`,
+            sender_id: "aurora-ai",
+            content: data.error || "Houve um erro desconhecido ao processar sua dúvida.",
+            created_at: new Date().toISOString(),
+            isError: true
+          }]);
         }
-      } catch (err) {
-        toast({ title: "Aurora processando...", description: "Houve uma oscilação na rede.", variant: "destructive" });
+      } catch (err: any) {
+        setMessages(prev => [...prev, {
+          id: `ai-crit-${Date.now()}`,
+          sender_id: "aurora-ai",
+          content: `⚠️ [ERRO CRÍTICO]: ${err.message || "Oscilação na rede detectada."}`,
+          created_at: new Date().toISOString(),
+          isError: true
+        }]);
       } finally {
         setIsAiThinking(false);
       }
@@ -173,7 +185,6 @@ export default function DirectChatPage() {
 
         if (error) throw error;
         
-        // Se a inserção foi rápida, o real-time pode já ter adicionado, por isso checamos duplicatas
         setMessages(prev => {
           if (prev.some(m => m.id === data.id)) return prev;
           return [...prev, data];
@@ -234,6 +245,7 @@ export default function DirectChatPage() {
           <div className="flex flex-col gap-6 py-10 px-4 md:px-16 max-w-5xl mx-auto w-full">
             {messages.map((msg, i) => {
               const isMe = msg.sender_id === user?.id;
+              const isError = msg.isError;
               return (
                 <div key={msg.id || i} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 duration-300`}>
                   <div className="flex items-center gap-3 mb-1.5 px-3">
@@ -243,7 +255,9 @@ export default function DirectChatPage() {
                   <div className={`px-6 py-4 rounded-[2rem] text-sm leading-relaxed font-medium shadow-sm max-w-[90%] md:max-w-[75%] transition-all border ${
                       isMe 
                         ? 'bg-primary text-white border-transparent rounded-tr-none shadow-primary/10' 
-                        : 'bg-white text-primary border-slate-100 rounded-tl-none'
+                        : isError 
+                          ? 'bg-red-50 text-red-700 border-red-100 rounded-tl-none font-black italic' 
+                          : 'bg-white text-primary border-slate-100 rounded-tl-none'
                     }`}>
                      {msg.content}
                   </div>
