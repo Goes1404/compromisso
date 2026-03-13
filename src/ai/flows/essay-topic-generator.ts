@@ -26,7 +26,7 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash',
   input: { schema: EssayTopicInputSchema },
   output: { schema: EssayTopicOutputSchema },
-  system: `Você é a Aurora, mentora de redação nota 1000. 
+  system: `Você é la Aurora, mentora de redação nota 1000. 
   Sua missão é criar propostas de redação IDÊNTICAS às do ENEM.`,
   prompt: `Gere uma proposta de redação desafiadora{{#if category}} focada em {{{category}}}{{/if}}.`,
 });
