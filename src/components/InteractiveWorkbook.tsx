@@ -18,7 +18,11 @@ import {
   Maximize,
   Hash,
   Trash2,
-  RefreshCw
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Highlighter,
+  Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,10 +35,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 
 interface InteractiveWorkbookProps {
   materialId: string;
-  pdfUrl?: string; // Tornar opcional para permitir carregamento via materialId
+  pdfUrl?: string;
   userName: string;
   userCpf: string;
 }
+
+type Tool = 'pencil' | 'highlighter' | 'eraser';
 
 export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userName, userCpf }: InteractiveWorkbookProps) {
   const { user } = useAuth();
@@ -49,14 +55,18 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
   const [currentPage, setCurrentPage] = useState(1);
   const [inputPage, setInputPage] = useState("1");
   const [loading, setLoading] = useState(true);
+  const [zoom, setZoom] = useState(1.0);
+  
+  // Ferramentas
+  const [activeTool, setActiveTool] = useState<Tool>('pencil');
   const [brushColor, setBrushColor] = useState("#FF0000");
-  const [isEraser, setIsEraser] = useState(false);
+  const [highlightColor, setHighlightColor] = useState("rgba(255, 255, 0, 0.3)");
+  
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { toast } = useToast();
 
-  // Carregar dados do material se a URL não for fornecida
   useEffect(() => {
     async function fetchMaterialUrl() {
       if (initialPdfUrl) {
@@ -75,30 +85,18 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
         if (error) throw error;
         if (data?.url) setCurrentPdfUrl(data.url);
       } catch (err) {
-        console.error("Erro ao buscar URL da apostila:", err);
         setError("Não foi possível localizar o arquivo da apostila.");
       }
     }
     fetchMaterialUrl();
   }, [materialId, initialPdfUrl]);
 
-  // Salva anotações da página atual no LocalStorage
   const savePageDraft = useCallback(() => {
     if (!fabricCanvasRef.current) return;
 
     const objects = fabricCanvasRef.current.getObjects().map((obj: any) => {
-      if (obj.type === 'path') {
-        return {
-          type: 'path',
-          left: obj.left,
-          top: obj.top,
-          stroke: obj.stroke,
-          strokeWidth: obj.strokeWidth,
-          path: obj.path
-        };
-      }
-      return null;
-    }).filter(Boolean);
+      return obj.toObject();
+    });
 
     const pageData = {
       version: "1.0",
@@ -119,7 +117,6 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
     localStorage.setItem(`workbook_draft_${materialId}`, JSON.stringify(draft));
   }, [materialId, currentPage]);
 
-  // Sincronização final com Supabase
   const syncWithSupabase = useCallback(async () => {
     if (isSaving || !user || !materialId) return;
     setIsSaving(true);
@@ -146,12 +143,11 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
 
       if (syncError) throw syncError;
       
-      toast({ title: "Progresso Salvo!", description: "Anotações sincronizadas com a nuvem." });
+      toast({ title: "Sincronizado! ☁️", description: "Suas anotações estão seguras na nuvem." });
     } catch (e: any) {
-      console.error("Erro sincronização:", e.message || e);
       toast({ 
         title: "Erro ao sincronizar", 
-        description: "Houve um problema ao salvar na nuvem, mas seu rascunho local está seguro.", 
+        description: "Rascunho local mantido.", 
         variant: "destructive" 
       });
     } finally {
@@ -159,7 +155,6 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
     }
   }, [materialId, currentPage, numPages, isSaving, toast, user]);
 
-  // Carregar PDF inicial
   useEffect(() => {
     async function loadPdf() {
       if (!currentPdfUrl) return;
@@ -188,19 +183,17 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
     loadPdf();
   }, [currentPdfUrl, materialId]);
 
-  // Renderizar Página Atual
-  const renderPage = useCallback(async (pageNum: number) => {
+  const renderPage = useCallback(async (pageNum: number, currentZoom: number) => {
     if (!pdfDoc || !canvasRef.current) return;
     setLoading(true);
 
     try {
       const page = await pdfDoc.getPage(pageNum);
       
-      // Cálculo de Escala Responsiva
       const containerWidth = containerRef.current?.clientWidth || 800;
       const unscaledViewport = page.getViewport({ scale: 1 });
-      const scale = (containerWidth - 40) / unscaledViewport.width;
-      const viewport = page.getViewport({ scale: Math.min(scale, 2) }); 
+      const scale = (containerWidth - 60) / unscaledViewport.width;
+      const viewport = page.getViewport({ scale: scale * currentZoom }); 
 
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
@@ -212,30 +205,37 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
       renderTaskRef.current = renderTask;
       await renderTask.promise;
 
-      // Injetar Marca d'água
-      context!.font = "bold 12px Inter";
-      context!.fillStyle = "rgba(0, 0, 0, 0.04)";
+      // Marca d'água robusta
+      context!.font = "bold 14px Inter";
+      context!.fillStyle = "rgba(0, 0, 0, 0.05)";
       context!.save();
       context!.rotate(-Math.PI / 4);
-      for(let x=-500; x<canvas.width; x+=200) {
-        for(let y=-500; y<canvas.height; y+=150) {
+      for(let x=-canvas.width; x<canvas.width*2; x+=250) {
+        for(let y=-canvas.height; y<canvas.height*2; y+=180) {
           context!.fillText(`${userName} • ${userCpf}`, x, y);
         }
       }
       context!.restore();
 
-      // Configurar Camada de Desenho (Fabric)
       if (fabricCanvasRef.current) fabricCanvasRef.current.dispose();
       
       const fCanvas = new fabric.Canvas('fabric-layer', {
         height: viewport.height,
         width: viewport.width,
-        isDrawingMode: !isEraser,
-        selection: !isEraser 
+        isDrawingMode: activeTool !== 'eraser',
+        selection: activeTool === 'eraser'
       });
 
-      fCanvas.freeDrawingBrush.color = brushColor;
-      fCanvas.freeDrawingBrush.width = 3;
+      // Configurar Brush Inicial
+      if (activeTool === 'pencil') {
+        fCanvas.freeDrawingBrush = new fabric.PencilBrush(fCanvas);
+        fCanvas.freeDrawingBrush.color = brushColor;
+        fCanvas.freeDrawingBrush.width = 3;
+      } else if (activeTool === 'highlighter') {
+        fCanvas.freeDrawingBrush = new fabric.PencilBrush(fCanvas);
+        fCanvas.freeDrawingBrush.color = highlightColor;
+        fCanvas.freeDrawingBrush.width = 20;
+      }
 
       const draftStr = localStorage.getItem(`workbook_draft_${materialId}`);
       const draft = draftStr ? JSON.parse(draftStr) : null;
@@ -244,7 +244,7 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
       }
 
       fCanvas.on('mouse:down', (options) => {
-        if (isEraser && options.target) {
+        if (activeTool === 'eraser' && options.target) {
           fCanvas.remove(options.target);
           savePageDraft();
         }
@@ -254,130 +254,105 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
       fabricCanvasRef.current = fCanvas;
 
     } catch (err: any) {
-      if (err.name !== 'RenderingCancelledException') {
-        console.error("Erro render:", err);
-      }
+      if (err.name !== 'RenderingCancelledException') console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [pdfDoc, userName, userCpf, materialId, brushColor, isEraser, savePageDraft]);
+  }, [pdfDoc, userName, userCpf, materialId, brushColor, highlightColor, activeTool, savePageDraft]);
 
   useEffect(() => {
-    if (pdfDoc) renderPage(currentPage);
-  }, [currentPage, pdfDoc, renderPage]);
+    if (pdfDoc) renderPage(currentPage, zoom);
+  }, [currentPage, zoom, pdfDoc, renderPage]);
 
-  const changePage = (offset: number) => {
-    const next = Math.max(1, Math.min(numPages, currentPage + offset));
-    if (next !== currentPage) {
-      setCurrentPage(next);
-      setInputPage(next.toString());
+  const updateTool = (tool: Tool) => {
+    setActiveTool(tool);
+    if (!fabricCanvasRef.current) return;
+    
+    fabricCanvasRef.current.isDrawingMode = tool !== 'eraser';
+    
+    if (tool === 'pencil') {
+      fabricCanvasRef.current.freeDrawingBrush = new fabric.PencilBrush(fabricCanvasRef.current);
+      fabricCanvasRef.current.freeDrawingBrush.color = brushColor;
+      fabricCanvasRef.current.freeDrawingBrush.width = 3;
+    } else if (tool === 'highlighter') {
+      fabricCanvasRef.current.freeDrawingBrush = new fabric.PencilBrush(fabricCanvasRef.current);
+      fabricCanvasRef.current.freeDrawingBrush.color = highlightColor;
+      fabricCanvasRef.current.freeDrawingBrush.width = 20;
     }
   };
 
-  const jumpToPage = (e: React.FormEvent) => {
-    e.preventDefault();
-    let target = parseInt(inputPage);
-    if (isNaN(target)) {
-      setInputPage(currentPage.toString());
-      return;
-    }
-    if (target > numPages) target = numPages;
-    else if (target < 1) target = 1;
-    setCurrentPage(target);
-    setInputPage(target.toString());
-  };
-
-  const toggleTool = (eraser: boolean) => {
-    setIsEraser(eraser);
-    if (fabricCanvasRef.current) {
-      fabricCanvasRef.current.isDrawingMode = !eraser;
-      fabricCanvasRef.current.defaultCursor = eraser ? 'cell' : 'crosshair';
-    }
-  };
-
-  const clearCurrentPage = () => {
-    if (confirm("Deseja apagar todas as anotações desta página?")) {
-      fabricCanvasRef.current?.clear();
-      savePageDraft();
-    }
-  };
-
-  if (error) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-8 bg-slate-900 text-white gap-4">
-        <AlertTriangle className="h-12 w-12 text-red-500" />
-        <p className="font-bold italic">{error}</p>
-        <Button onClick={() => window.location.reload()} variant="outline">Tentar Novamente</Button>
-      </div>
-    );
-  }
+  if (error) return (
+    <div className="h-full flex flex-col items-center justify-center p-8 bg-slate-900 text-white gap-4">
+      <AlertTriangle className="h-12 w-12 text-red-500" />
+      <p className="font-bold italic text-center">{error}</p>
+      <Button onClick={() => window.location.reload()} variant="outline" className="border-white/20 text-white">Tentar Novamente</Button>
+    </div>
+  );
 
   return (
-    <div className="h-full flex flex-col bg-slate-900 overflow-hidden select-none">
-      {/* TOOLBAR SUPERIOR */}
-      <div className="bg-slate-950 border-b border-white/5 p-2 md:p-4 flex flex-wrap items-center justify-between gap-4 z-30 shadow-2xl">
-        <div className="flex items-center gap-2">
+    <div className="h-full flex flex-col bg-slate-900 overflow-hidden select-none relative">
+      
+      {/* TOOLBAR SUPERIOR - RESPONSIVA */}
+      <div className="bg-slate-950 border-b border-white/5 p-2 md:p-4 flex items-center justify-between gap-4 z-30 shadow-2xl overflow-x-auto scrollbar-hide">
+        <div className="flex items-center gap-2 shrink-0">
           <Button 
-            variant={!isEraser ? "default" : "ghost"} 
+            variant={activeTool === 'pencil' ? "default" : "ghost"} 
             size="icon" 
-            onClick={() => toggleTool(false)}
-            title="Caneta de Anotação"
-            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${!isEraser ? 'bg-primary text-white scale-110 shadow-lg' : 'text-slate-400'}`}
+            onClick={() => updateTool('pencil')}
+            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${activeTool === 'pencil' ? 'bg-primary text-white scale-110 shadow-lg' : 'text-slate-400'}`}
           >
             <Pencil className="h-5 w-5" />
           </Button>
           <Button 
-            variant={isEraser ? "default" : "ghost"} 
+            variant={activeTool === 'highlighter' ? "default" : "ghost"} 
             size="icon" 
-            onClick={() => toggleTool(true)}
-            title="Borracha"
-            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${isEraser ? 'bg-accent text-accent-foreground scale-110 shadow-lg' : 'text-slate-400'}`}
+            onClick={() => updateTool('highlighter')}
+            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${activeTool === 'highlighter' ? 'bg-accent text-accent-foreground scale-110 shadow-lg' : 'text-slate-400'}`}
+          >
+            <Highlighter className="h-5 w-5" />
+          </Button>
+          <Button 
+            variant={activeTool === 'eraser' ? "default" : "ghost"} 
+            size="icon" 
+            onClick={() => updateTool('eraser')}
+            className={`h-10 w-10 md:h-12 md:w-12 rounded-xl transition-all ${activeTool === 'eraser' ? 'bg-red-600 text-white scale-110 shadow-lg' : 'text-slate-400'}`}
           >
             <Eraser className="h-5 w-5" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={clearCurrentPage}
-            title="Limpar Página"
-            className="h-10 w-10 md:h-12 md:w-12 rounded-xl text-red-400 hover:text-red-500"
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
-          <div className="w-px h-8 bg-white/10 mx-1 hidden sm:block" />
-          <div className="flex gap-2">
-            {["#FF0000", "#0088FF", "#00FF00", "#FFFFFF"].map(color => (
-              <button 
-                key={color} 
-                onClick={() => { setBrushColor(color); toggleTool(false); }}
-                className={`h-6 w-6 md:h-8 md:w-8 rounded-full border-2 transition-all ${brushColor === color ? 'border-white scale-110' : 'border-transparent opacity-50 hover:opacity-100'}`}
-                style={{ backgroundColor: color }}
-              />
-            ))}
+          <div className="w-px h-8 bg-white/10 mx-1" />
+          
+          <div className="flex gap-1.5 md:gap-2">
+            {activeTool === 'pencil' ? (
+              ["#FF0000", "#0088FF", "#00FF00", "#FFFFFF"].map(c => (
+                <button key={c} onClick={() => { setBrushColor(c); updateTool('pencil'); }} className={`h-6 w-6 md:h-8 md:w-8 rounded-full border-2 ${brushColor === c ? 'border-white scale-110' : 'border-transparent opacity-40'}`} style={{ backgroundColor: c }} />
+              ))
+            ) : activeTool === 'highlighter' ? (
+              ["rgba(255,255,0,0.3)", "rgba(0,255,0,0.2)", "rgba(255,0,255,0.2)", "rgba(0,255,255,0.2)"].map(c => (
+                <button key={c} onClick={() => { setHighlightColor(c); updateTool('highlighter'); }} className={`h-6 w-6 md:h-8 md:w-8 rounded-full border-2 ${highlightColor === c ? 'border-white scale-110' : 'border-transparent opacity-40'}`} style={{ backgroundColor: c }} />
+              ))
+            ) : null}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={syncWithSupabase} 
-            disabled={isSaving} 
-            title="Salvar na Nuvem"
-            className="text-slate-400 hover:text-accent transition-colors"
-          >
+        <div className="flex items-center gap-2 shrink-0 pr-4">
+          <Button variant="ghost" size="icon" onClick={() => setZoom(prev => Math.max(0.5, prev - 0.25))} className="text-white hover:bg-white/10"><ZoomOut className="h-5 w-5" /></Button>
+          <span className="text-[10px] font-black text-white/40 w-10 text-center">{Math.round(zoom * 100)}%</span>
+          <Button variant="ghost" size="icon" onClick={() => setZoom(prev => Math.min(3, prev + 0.25))} className="text-white hover:bg-white/10"><ZoomIn className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => setZoom(1.0)} className="text-white hover:bg-white/10" title="Reset Zoom"><Maximize2 className="h-4 w-4" /></Button>
+          <div className="w-px h-8 bg-white/10 mx-1" />
+          <Button variant="ghost" size="icon" onClick={syncWithSupabase} disabled={isSaving} className="text-slate-400 hover:text-accent">
             {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Cloud className="h-5 w-5" />}
           </Button>
         </div>
       </div>
 
-      {/* ÁREA DO DOCUMENTO */}
-      <div ref={containerRef} className="flex-1 overflow-auto p-4 md:p-8 flex justify-center items-start bg-slate-900 scrollbar-hide no-swipe">
-        <div className="relative shadow-[0_50px_100px_rgba(0,0,0,0.6)] rounded-sm bg-white overflow-hidden">
+      {/* ÁREA DO DOCUMENTO - SUPORTE A PAN */}
+      <div ref={containerRef} className="flex-1 overflow-auto p-4 md:p-10 flex justify-center items-start bg-slate-900 scrollbar-hide no-swipe touch-pan-x touch-pan-y">
+        <div className="relative shadow-[0_50px_100px_rgba(0,0,0,0.6)] rounded-sm bg-white overflow-hidden origin-top transition-transform duration-200">
           {loading && (
             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm gap-4">
               <Loader2 className="h-12 w-12 animate-spin text-accent" />
-              <p className="text-[10px] font-black text-white uppercase tracking-[0.4em]">Sincronizando Página...</p>
+              <p className="text-[10px] font-black text-white uppercase tracking-[0.4em]">Sintonizando...</p>
             </div>
           )}
           <canvas ref={canvasRef} className="block" />
@@ -388,34 +363,25 @@ export function InteractiveWorkbook({ materialId, pdfUrl: initialPdfUrl, userNam
       </div>
 
       {/* NAVEGAÇÃO INFERIOR */}
-      <div className="bg-slate-950/90 backdrop-blur-2xl border-t border-white/5 p-4 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 z-30 shadow-2xl">
-        <div className="flex items-center gap-1 md:gap-2">
-          <Button variant="ghost" size="icon" onClick={() => changePage(-currentPage)} disabled={currentPage === 1} className="text-white hover:bg-white/10 h-10 w-10">
-            <ChevronsLeft className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={currentPage === 1} className="text-white hover:bg-white/10 h-10 w-10">
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
+      <div className="bg-slate-950/95 backdrop-blur-2xl border-t border-white/5 p-4 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10 z-30 shadow-2xl">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="text-white hover:bg-white/10 h-10 w-10"><ChevronsLeft className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} className="text-white hover:bg-white/10 h-10 w-10"><ChevronLeft className="h-6 w-6" /></Button>
         </div>
 
-        <form onSubmit={jumpToPage} className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 group focus-within:border-accent/50 transition-all">
-          <Hash className="h-3 w-3 text-accent" />
+        <form onSubmit={(e) => { e.preventDefault(); let p = parseInt(inputPage); if(p > numPages) p = numPages; if(p < 1) p = 1; setCurrentPage(p); setInputPage(p.toString()); }} className="flex items-center gap-3 bg-white/5 px-5 py-2 rounded-2xl border border-white/10 group focus-within:border-accent/50 transition-all">
+          <Hash className="h-3.5 w-3.5 text-accent" />
           <Input 
             value={inputPage}
             onChange={(e) => setInputPage(e.target.value)}
-            onBlur={jumpToPage}
-            className="w-12 h-8 bg-transparent border-none text-center font-black text-white p-0 focus-visible:ring-0 text-lg italic"
+            className="w-14 h-8 bg-transparent border-none text-center font-black text-white p-0 focus-visible:ring-0 text-xl italic"
           />
-          <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">DE {numPages}</span>
+          <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">DE {numPages}</span>
         </form>
 
-        <div className="flex items-center gap-1 md:gap-2">
-          <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={currentPage === numPages} className="text-white hover:bg-white/10 h-10 w-10">
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => changePage(numPages - currentPage)} disabled={currentPage === numPages} className="text-white hover:bg-white/10 h-10 w-10">
-            <ChevronsRight className="h-5 w-5" />
-          </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.min(numPages, p+1))} disabled={currentPage === numPages} className="text-white hover:bg-white/10 h-10 w-10"><ChevronRight className="h-6 w-6" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => setCurrentPage(numPages)} disabled={currentPage === numPages} className="text-white hover:bg-white/10 h-10 w-10"><ChevronsRight className="h-5 w-5" /></Button>
         </div>
       </div>
     </div>
