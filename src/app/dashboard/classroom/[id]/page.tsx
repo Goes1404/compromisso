@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback, use } from "react";
@@ -31,6 +30,9 @@ import {
   ExternalLink,
   Maximize2,
   Minimize2,
+  GripHorizontal,
+  Plus,
+  Minus,
   X
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthProvider";
@@ -40,7 +42,6 @@ import Script from "next/script";
 import Link from "next/link";
 import { InteractiveWorkbook } from "@/components/InteractiveWorkbook";
 
-// Conteúdo de Exemplo caso a trilha esteja vazia
 const DEMO_CONTENTS = [
   { id: 'demo-1', title: 'Fundamentos da Aprovação', type: 'video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', description: 'Uma introdução essencial sobre como organizar seus estudos.' },
   { id: 'demo-2', title: 'Técnicas de Redação Nota 1000', type: 'video', url: 'https://www.youtube.com/watch?v=videoseries?list=PL3G1L-UIlpbj-X9ZPnCDX-vskRE_SkQuX', description: 'Aprenda a estruturar sua dissertação seguindo o padrão INEP.' }
@@ -62,6 +63,13 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [showSimultaneousWorkbook, setShowSimultaneousWorkbook] = useState(false);
   
+  // Estados do Mini-Player Flutuante
+  const [miniPlayerPos, setMiniPlayerPos] = useState({ x: 20, y: 20 }); // Distância do canto inferior direito
+  const [miniPlayerWidth, setMiniPlayerWidth] = useState(400);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const initialPos = useRef({ x: 0, y: 0 });
+
   const [videoProgress, setVideoProgress] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isApiReady, setIsApiReady] = useState(false);
@@ -243,6 +251,43 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
     };
   }, [initPlayer]);
 
+  // Lógica de Draggable para o Mini-Player
+  const handleDragStart = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    initialPos.current = { x: miniPlayerPos.x, y: miniPlayerPos.y };
+  };
+
+  const handleDragMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const deltaX = dragStartPos.current.x - e.clientX;
+    const deltaY = dragStartPos.current.y - e.clientY;
+    
+    setMiniPlayerPos({
+      x: initialPos.current.x + deltaX,
+      y: initialPos.current.y + deltaY
+    });
+  }, [isDragging]);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleDragMove);
+      window.addEventListener('mouseup', handleDragEnd);
+    } else {
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
+
   if (loading) return (
     <div className="flex flex-col min-h-[60vh] items-center justify-center gap-4">
       <Loader2 className="animate-spin h-14 w-14 text-accent" />
@@ -306,33 +351,74 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
         {/* ÁREA DE CONTEÚDO */}
         <main className={`flex-1 flex flex-col bg-white min-w-0 transition-all duration-500`}>
           
-          {/* PLAYER DE VÍDEO - COMPORTAMENTO DINÂMICO PI-P */}
-          <div className={`w-full transition-all duration-700 ease-in-out ${
-            showSimultaneousWorkbook 
-              ? 'fixed bottom-6 right-[370px] w-80 md:w-[450px] aspect-video z-[70] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] rounded-[2rem] border-4 border-white overflow-hidden bg-black'
-              : 'aspect-video bg-black relative shadow-2xl overflow-hidden shrink-0 ring-1 ring-white/10'
-          }`}>
-            {activeContent?.type === 'video' ? (
-              <div id="youtube-player" className="w-full h-full" />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 text-white p-10 text-center gap-6">
-                <div className="h-20 w-20 rounded-[2.5rem] bg-white/5 border border-white/10 flex items-center justify-center shadow-2xl">
-                  <Layout className="h-10 w-10 text-accent" />
+          {/* PLAYER DE VÍDEO - MODO DINÂMICO DRAGGABLE & RESIZABLE */}
+          <div 
+            className={`transition-all duration-300 ease-in-out ${
+              showSimultaneousWorkbook 
+                ? 'fixed z-[70] shadow-[0_30px_80px_rgba(0,0,0,0.6)] rounded-[2rem] border-4 border-white overflow-hidden bg-black'
+                : 'aspect-video bg-black relative shadow-2xl overflow-hidden shrink-0 ring-1 ring-white/10'
+            }`}
+            style={showSimultaneousWorkbook ? {
+              bottom: `${miniPlayerPos.y}px`,
+              right: `${miniPlayerPos.x}px`,
+              width: `${miniPlayerWidth}px`,
+              aspectRatio: '16/9'
+            } : {}}
+          >
+            {/* BARRA DE CONTROLE FLUTUANTE (DRAG HANDLE) */}
+            {showSimultaneousWorkbook && (
+              <div 
+                className="h-10 bg-slate-900 flex items-center justify-between px-4 cursor-move select-none z-20 absolute top-0 left-0 right-0 group"
+                onMouseDown={handleDragStart}
+              >
+                <div className="flex items-center gap-3">
+                  <GripHorizontal className="h-4 w-4 text-white/40 group-hover:text-accent transition-colors" />
+                  <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Console Flutuante</span>
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter">{activeContent?.title || "Selecione um Material"}</h3>
-                  <p className="text-xs md:text-sm text-white/40 italic font-medium max-w-md mx-auto">Use o roteiro pedagógico abaixo para interagir com este módulo.</p>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setMiniPlayerWidth(prev => Math.min(prev + 50, 800)); }}
+                    className="h-6 w-6 rounded-md hover:bg-white/10 flex items-center justify-center text-white/60 transition-colors"
+                    title="Aumentar"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setMiniPlayerWidth(prev => Math.max(prev - 50, 200)); }}
+                    className="h-6 w-6 rounded-md hover:bg-white/10 flex items-center justify-center text-white/60 transition-colors"
+                    title="Diminuir"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setShowSimultaneousWorkbook(false); }}
+                    className="h-6 w-6 rounded-md hover:bg-red-600 flex items-center justify-center text-white transition-colors"
+                    title="Focar na Apostila"
+                  >
+                    <Minimize2 className="h-3 w-3" />
+                  </button>
                 </div>
               </div>
             )}
-            {showSimultaneousWorkbook && (
-              <button 
-                onClick={() => setShowSimultaneousWorkbook(false)}
-                className="absolute top-4 right-4 h-10 w-10 bg-black/60 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-red-600 transition-all z-10"
-              >
-                <Minimize2 className="h-5 w-5" />
-              </button>
-            )}
+
+            {/* OVERLAY DE DRAG (Impede que o iframe intercepte o mouse durante o arraste) */}
+            {isDragging && <div className="absolute inset-0 z-30 bg-transparent" />}
+
+            <div className={`w-full h-full ${showSimultaneousWorkbook ? 'mt-10' : ''}`} style={showSimultaneousWorkbook ? { height: 'calc(100% - 40px)' } : {}}>
+              {activeContent?.type === 'video' ? (
+                <div id="youtube-player" className="w-full h-full" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 text-white p-10 text-center gap-6">
+                  <div className="h-20 w-20 rounded-[2.5rem] bg-white/5 border border-white/10 flex items-center justify-center shadow-2xl">
+                    <Layout className="h-10 w-10 text-accent" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter">{activeContent?.title || "Selecione um Material"}</h3>
+                    <p className="text-xs md:text-sm text-white/40 italic font-medium max-w-md mx-auto">Use o roteiro pedagógico abaixo para interagir com este módulo.</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* MODO APOSTILA INTERATIVA (ESTUDO SIMULTÂNEO) */}
@@ -340,7 +426,7 @@ export default function ClassroomPage({ params }: { params: Promise<{ id: string
             <div className="flex-1 flex flex-col min-h-[calc(100vh-64px)] animate-in slide-in-from-bottom-8 duration-700 relative z-10">
               <InteractiveWorkbook 
                 materialId={activeContent.workbook_id}
-                pdfUrl="" // O componente buscará a URL pelo materialId se refatorado, ou precisamos carregar aqui
+                pdfUrl=""
                 userName={profile?.name || "Estudante"}
                 userCpf={profile?.id?.substring(0, 8) || "ID"}
               />
