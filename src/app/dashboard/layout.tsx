@@ -13,7 +13,6 @@ import Image from "next/image";
 const studentItems = [
   { icon: Home, label: "Página Inicial", href: "/dashboard/home" },
   { icon: Compass, label: "Trilhas de Estudo", href: "/dashboard/trails" },
-  { icon: BookOpen, label: "Apostilas", href: "/dashboard/library" },
   { icon: FilePenLine, label: "Redação Master", href: "/dashboard/student/essays" },
   { icon: FileText, label: "Simulados", href: "/dashboard/student/simulados" },
   { icon: Video, label: "Aulas ao Vivo", href: "/dashboard/live" },
@@ -94,6 +93,7 @@ const NavMenu = memo(({ items, pathname, unreadCount }: { items: any[], pathname
     
     // Mapeamento especial para sub-páginas que não compartilham o prefixo exato
     if (itemHref === '/dashboard/trails' && pathname.startsWith('/dashboard/classroom/')) return true;
+    if (itemHref === '/dashboard/library' && pathname.startsWith('/dashboard/library/book/')) return true;
     
     return false;
   };
