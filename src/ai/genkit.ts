@@ -12,8 +12,8 @@ if (typeof window !== 'undefined') {
   throw new Error("⚠️ [SEGURANÇA] A Aurora IA só pode ser operada no Gabinete de Gestão (Servidor).");
 }
 
-// Chave de API de teste prioritária
-const apiKey = "AIzaSyA4H7VjPSXx6J8rS88Cx_65-EnBY-89tyc";
+// Prioriza a chave do ambiente, usa a de teste como fallback seguro
+const apiKey = process.env.GEMINI_API_KEY || "AIzaSyA4H7VjPSXx6J8rS88Cx_65-EnBY-89tyc";
 
 export const ai = genkit({
   plugins: [

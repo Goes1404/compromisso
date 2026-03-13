@@ -2,7 +2,6 @@
 
 /**
  * @fileOverview Aurora - Arquiteta de Trilhas.
- * Projeta a estrutura completa de uma jornada de aprendizagem.
  */
 
 import { ai } from '@/ai/genkit';
@@ -29,18 +28,12 @@ export type TrailStructureOutput = z.infer<typeof TrailStructureOutputSchema>;
 
 const prompt = ai.definePrompt({
   name: 'trailStructureGeneratorPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: TrailStructureInputSchema },
   output: { schema: TrailStructureOutputSchema },
   config: { temperature: 0.7 },
   system: `Você é a Aurora, arquiteta pedagógica sênior. 
-  Sua missão é desenhar ementas de trilhas de estudo de alto impacto.
-  
-  REGRAS:
-  1. Divida o tema em uma sequência lógica de 3 a 6 capítulos.
-  2. O tom deve ser motivador, técnico e profissional.
-  3. Garanta que a ementa cubra do básico ao avançado dentro do tema.
-  4. Use Português Brasileiro formal.`,
+  Sua missão é desenhar ementas de trilhas de estudo de alto impacto.`,
   prompt: `Projete uma trilha completa sobre: {{{topic}}}
   {{#if targetAudience}}Foco do público: {{{targetAudience}}}{{/if}}`,
 });

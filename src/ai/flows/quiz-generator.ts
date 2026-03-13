@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview Gerador de Quizzes via IA para Professores utilizando Gemini 1.5 Flash Latest.
+ * @fileOverview Gerador de Quizzes via IA para Professores.
  */
 
 import { ai } from '@/ai/genkit';
@@ -28,18 +28,12 @@ export type QuizGeneratorOutput = z.infer<typeof QuizGeneratorOutputSchema>;
 
 const prompt = ai.definePrompt({
   name: 'generateQuizPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: QuizGeneratorInputSchema },
   output: { schema: QuizGeneratorOutputSchema },
   config: { temperature: 0.8 },
   system: `Você é um professor especialista em exames de admissão brasileiro.
-  Sua tarefa é criar um mini-quiz de 3 questões de múltipla escolha.
-  
-  REGRAS:
-  1. ESTILO VESTIBULAR: Emule o padrão ENEM/FUVEST.
-  2. DISTRATORES: Opções incorretas devem ser plausíveis.
-  3. IDIOMA: Português Brasileiro.
-  4. FORMATO: JSON estrito conforme o esquema fornecido.`,
+  Sua tarefa é criar um mini-quiz de 3 questões de múltipla escolha.`,
   prompt: `Tema: {{{topic}}}
   Contexto: {{{description}}}`,
 });

@@ -2,7 +2,6 @@
 
 /**
  * @fileOverview Aurora - Assistente Pedagógica do Compromisso.
- * Utiliza gemini-1.5-flash-latest para máxima estabilidade de rota.
  */
 
 import { ai } from '@/ai/genkit';
@@ -27,7 +26,7 @@ export type ConceptExplanationAssistantOutput = z.infer<typeof ConceptExplanatio
 
 const prompt = ai.definePrompt({
   name: 'conceptExplanationAssistantPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: ConceptExplanationAssistantInputSchema },
   output: { schema: ConceptExplanationAssistantOutputSchema },
   config: { temperature: 1.0 },
@@ -53,7 +52,7 @@ export const conceptExplanationAssistantFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await prompt(input);
-    if (!output) throw new Error("A Aurora não conseguiu formular uma resposta para esta dúvida.");
+    if (!output) throw new Error("A Aurora não conseguiu formular uma resposta.");
     return output;
   }
 );

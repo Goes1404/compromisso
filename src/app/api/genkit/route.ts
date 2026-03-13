@@ -49,17 +49,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    let errorMsg = error?.message || 'Erro desconhecido no servidor de IA.';
-    
-    // Captura específica para 404 de modelo e tradução industrial
-    if (errorMsg.includes('404') || errorMsg.includes('not found')) {
-      errorMsg = `⚠️ ERRO DE MODELO (404): O Google não localizou a versão solicitada. Verifique se o modelo 'gemini-1.5-flash-latest' está disponível na sua região.`;
-    }
-
+    const errorMsg = error?.message || 'Erro desconhecido no servidor de IA.';
     console.error(`[AURORA CRITICAL ERROR]:`, errorMsg);
 
     return NextResponse.json(
-      { error: errorMsg },
+      { error: `⚠️ ERRO DE PROCESSAMENTO: ${errorMsg}` },
       { status: 500 }
     );
   }
