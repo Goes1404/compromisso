@@ -199,8 +199,8 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { title: "Salas Inteligentes", hint: "modern school classroom", id: "gallery-classroom" },
-                { title: "Laboratórios Digitais", hint: "science lab education", id: "gallery-lab" },
+                { title: "Salas Inteligentes", hint: "modern school classroom", id: "gallery-1" },
+                { title: "Laboratórios Digitais", hint: "science lab education", id: "gallery-2" },
                 { title: "Estúdios de Live", hint: "video broadcast studio", id: "gallery-3" },
                 { title: "Espaços de Mentoria", hint: "co-working study space", id: "gallery-4" },
               ].map((item, i) => {
