@@ -35,7 +35,7 @@ const prompt = ai.definePrompt({
   config: { temperature: 0.2 },
   system: `Você é um assistente de digitalização pedagógica do Compromisso 360. 
   Sua missão é ler textos brutos de provas e extrair TODAS as questões de múltipla escolha no formato solicitado.`,
-  prompt: `Analise the following conteúdo e extraia as questões:
+  prompt: `Analise o seguinte conteúdo e extraia as questões:
   
   {{{rawText}}}`,
 });

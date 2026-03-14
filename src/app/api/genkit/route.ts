@@ -10,7 +10,7 @@ import { createClient } from '@/utils/supabase/server';
 
 /**
  * @fileOverview Gateway de API Aurora IA.
- * CORREÇÃO CRÍTICA NEXT.JS 15: Autenticação Assíncrona.
+ * CORREÇÃO CRÍTICA NEXT.JS 15: Autenticação Assíncrona e Resiliência de Modelo.
  */
 
 export const maxDuration = 60; 
@@ -21,11 +21,11 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Lógica de Bypass para sessões de teste industriais do Firebase Studio
+    // Lógica de Bypass para sessões de teste e suporte a login real
     const isMockUser = user?.id?.startsWith('00000000-');
     
     if (!user && !isMockUser) {
-      return NextResponse.json({ error: 'Unauthorized - Faça login para usar a IA.' }, { status: 401 });
+      return NextResponse.json({ error: 'Acesso Negado - Faça login novamente.' }, { status: 401 });
     }
 
     const body = await req.json();
@@ -44,25 +44,25 @@ export async function POST(req: NextRequest) {
     const targetFlow = flows[flowId];
 
     if (!targetFlow) {
-      return NextResponse.json({ error: `Flow ${flowId} not found` }, { status: 404 });
+      return NextResponse.json({ error: `Engine ${flowId} não localizada.` }, { status: 404 });
     }
 
-    console.log(`[AURORA IA]: Executando ${flowId} para ${user?.email || 'MOCK_USER'}...`);
+    console.log(`[AURORA]: Executando ${flowId} para ${user?.email || 'TEST_USER'}...`);
     
     // Execução do fluxo Genkit
     const result = await targetFlow(input);
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    // Retorno de rastro técnico para diagnóstico rápido
     const errorMsg = error?.message || 'Erro desconhecido na Engine de IA';
-    console.error(`[AURORA CRITICAL]:`, errorMsg);
+    console.error(`[AURORA CRITICAL ERROR]:`, errorMsg);
 
+    // Retornar erro detalhado para facilitar o diagnóstico visual no console
     return NextResponse.json(
       { 
-        error: '⚠️ Falha no Processamento Aurora', 
+        error: '⚠️ Falha no Sinal Aurora', 
         details: errorMsg,
-        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+        type: error?.name || 'GENKIT_ERROR'
       }, 
       { status: 500 }
     );

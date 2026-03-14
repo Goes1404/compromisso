@@ -4,7 +4,7 @@ import { ai } from '@/ai/genkit';
 
 /**
  * @fileOverview API de Diagnóstico Maestro - Compromisso 360.
- * Verifica a saúde da infraestrutura e testa a Aurora IA com o modelo flash.
+ * Verifica a saúde da infraestrutura e testa a Aurora IA conforme documentação Gemini.
  */
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +29,7 @@ export async function GET() {
     }
   }
 
-  // 2. Testar Aurora IA (Ping de 1 token)
+  // 2. Testar Aurora IA (Ping de 1 token conforme documentação)
   try {
     const response = await ai.generate({
       model: 'googleai/gemini-1.5-flash',
@@ -38,14 +38,14 @@ export async function GET() {
     });
     
     if (response.text || response.output) {
-      diagnostics.genkit = { status: 'ok', details: 'Aurora IA sintonizada e respondendo.' };
+      diagnostics.genkit = { status: 'ok', details: 'Aurora IA sintonizada e respondendo (Gemini 1.5 Flash).' };
     } else {
       throw new Error("Resposta vazia da IA.");
     }
   } catch (e: any) {
     diagnostics.genkit = { 
         status: 'error', 
-        details: `Falha de Sinal: ${e.message}` 
+        details: `Falha de Sinal: ${e.message}. Verifique se a Generative Language API está habilitada.` 
     };
   }
 
