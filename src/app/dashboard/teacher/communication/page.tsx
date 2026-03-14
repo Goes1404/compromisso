@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -71,10 +70,9 @@ export default function CommunicationPage() {
     target_group: 'all'
   });
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
       // Buscar Avisos
       const { data: annData } = await supabase
         .from('announcements')
@@ -83,22 +81,30 @@ export default function CommunicationPage() {
       
       if (annData) setAnnouncements(annData);
 
-      // Buscar Turmas (Para o Filtro de Público Alvo)
+      // Buscar Turmas
       const { data: classData } = await supabase
         .from('classes')
         .select('id, name')
         .order('name');
       
       if (classData) setCohorts(classData);
-
+    } catch (e) {
+      console.error("Erro comunicação:", e);
+    } finally {
       setLoading(false);
     }
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleCreateAnnouncement = async (overrideData?: any) => {
     const dataToSubmit = overrideData || formData;
-    if (!dataToSubmit.title.trim() || !dataToSubmit.message.trim() || !user) return;
+    if (!dataToSubmit.title?.trim() || !dataToSubmit.message?.trim() || !user) {
+      toast({ title: "Dados Incompletos", description: "Preencha o título e a mensagem.", variant: "destructive" });
+      return;
+    }
 
     setIsCreating(true);
     try {
@@ -124,7 +130,7 @@ export default function CommunicationPage() {
         entity_id: data.id
       });
 
-      setAnnouncements([data, ...announcements]);
+      setAnnouncements(prev => [data, ...prev]);
       setFormData({ title: '', message: '', priority: 'low', target_group: 'all' });
       toast({ title: "Comunicado Fixado!", description: "A rede foi notificada com sucesso." });
     } catch (e: any) {
@@ -134,11 +140,11 @@ export default function CommunicationPage() {
     }
   };
 
-  const applyTemplate = (template: typeof QUICK_TEMPLATES[0]) => {
+  const applyTemplate = (template: any) => {
     setFormData({
       title: template.title,
       message: template.message,
-      priority: template.priority as any,
+      priority: template.priority,
       target_group: 'all'
     });
     toast({ title: "Template Aplicado", description: "Revise e publique quando estiver pronto." });
@@ -147,17 +153,18 @@ export default function CommunicationPage() {
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('announcements').delete().eq('id', id);
     if (!error) {
-      setAnnouncements(announcements.filter(a => a.id !== id));
+      setAnnouncements(prev => prev.filter(a => a.id !== id));
       toast({ title: "Aviso arquivado." });
     }
   };
 
   const filtered = announcements.filter(a => {
-    const matchesSearch = a.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         a.message.toLowerCase().includes(searchTerm.toLowerCase());
+    const search = searchTerm.toLowerCase();
+    const matchesSearch = (a.title || '').toLowerCase().includes(search) || 
+                         (a.message || '').toLowerCase().includes(search);
     
     const targetName = cohorts.find(c => c.id === a.target_group)?.name || '';
-    const matchesTarget = targetName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTarget = targetName.toLowerCase().includes(search);
 
     return matchesSearch || matchesTarget;
   });
@@ -186,7 +193,6 @@ export default function CommunicationPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* COLUNA ESQUERDA: CRIAÇÃO */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
             <CardHeader className="bg-primary/5 p-8 border-b border-dashed">
@@ -288,7 +294,6 @@ export default function CommunicationPage() {
           </div>
         </div>
 
-        {/* COLUNA DIREITA: HISTÓRICO */}
         <div className="lg:col-span-8 space-y-6">
           <div className="relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />

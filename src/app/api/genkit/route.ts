@@ -9,25 +9,27 @@ import { trailStructureGeneratorFlow } from '@/ai/flows/trail-structure-generato
 import { createClient } from '@/utils/supabase/server';
 
 /**
- * @fileOverview Gateway de API Aurora IA.
- * CORREÇÃO CRÍTICA NEXT.JS 15: Autenticação Assíncrona e Resiliência de Modelo.
+ * 🚀 GATEWAY DE INTELIGÊNCIA AURORA - COMPROMISSO 360
+ * Versão 2.5: Resiliência Total para Next.js 15 e Autenticação Atômica.
  */
 
 export const maxDuration = 60; 
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Inicializar Supabase com suporte a cookies assíncronos (Obrigatório no Next 15)
+    // 1. Validação de Segurança (Next.js 15 cookies() é assíncrono)
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    // Lógica de Bypass para sessões de teste e suporte a login real
-    const isMockUser = user?.id?.startsWith('00000000-');
-    
-    if (!user && !isMockUser) {
-      return NextResponse.json({ error: 'Acesso Negado - Faça login novamente.' }, { status: 401 });
+    if (authError || !user) {
+      // Permitir acesso para usuários mock em ambiente de desenvolvimento/estúdio
+      const isMockUser = user?.id?.startsWith('00000000-');
+      if (!isMockUser) {
+        return NextResponse.json({ error: 'Sessão expirada. Faça login novamente.' }, { status: 401 });
+      }
     }
 
+    // 2. Extração de Payload
     const body = await req.json();
     const { flowId, input } = body;
 
@@ -44,25 +46,24 @@ export async function POST(req: NextRequest) {
     const targetFlow = flows[flowId];
 
     if (!targetFlow) {
-      return NextResponse.json({ error: `Engine ${flowId} não localizada.` }, { status: 404 });
+      return NextResponse.json({ error: `Motor '${flowId}' não localizado.` }, { status: 404 });
     }
 
-    console.log(`[AURORA]: Executando ${flowId} para ${user?.email || 'TEST_USER'}...`);
+    console.log(`[AURORA]: Processando ${flowId} para ${user?.email || 'TEST_USER'}...`);
     
-    // Execução do fluxo Genkit
+    // 3. Execução do Fluxo Genkit
     const result = await targetFlow(input);
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    const errorMsg = error?.message || 'Erro desconhecido na Engine de IA';
-    console.error(`[AURORA CRITICAL ERROR]:`, errorMsg);
+    const errorMessage = error?.message || 'Erro interno no motor de IA';
+    console.error(`[AURORA CRITICAL]:`, errorMessage);
 
-    // Retornar erro detalhado para facilitar o diagnóstico visual no console
     return NextResponse.json(
       { 
-        error: '⚠️ Falha no Sinal Aurora', 
-        details: errorMsg,
-        type: error?.name || 'GENKIT_ERROR'
+        error: '⚠️ Falha no sinal da Aurora IA', 
+        details: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
       }, 
       { status: 500 }
     );
