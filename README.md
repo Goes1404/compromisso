@@ -1,31 +1,33 @@
 
 <div align="center">
 
-# Compromisso | Smart Education
+# Compromisso | Smart Education 360
 
-**_Tecnologia industrial a serviço da aprovação acadêmica._**
+**_Plataforma Maestro de Gestão e Aprendizado de Alta Performance._**
 
 </div>
 
 ---
 
-## ✨ Status do Projeto: Produção
+## ✨ Status do Projeto: Migração Concluída
 
-A plataforma **Compromisso** é um ecossistema robusto para gestão educacional e aprendizado de alta performance. Este projeto é independente e focado na rede pública de ensino.
+Este repositório é a instância oficial da plataforma **Compromisso**, agora sob gestão da conta **Goes1404**. O sistema integra Inteligência Artificial (Aurora), BI e gestão de dados para a rede pública de ensino.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Stack Tecnológica
 
-- **Framework:** Next.js 15
-- **Backend:** Supabase
-- **IA:** Aurora (Google Gemini 1.5 Flash via Genkit)
-- **UI:** Shadcn/Tailwind
+- **Framework:** Next.js 15 (App Router)
+- **Backend:** Supabase (Auth, Real-time, Storage)
+- **IA Engine:** Aurora IA (Google Gemini 1.5 Flash via Genkit v1.x)
+- **UI:** Shadcn / Tailwind CSS
 
-## ⚙️ Configuração
+## ⚙️ Configuração Industrial
 
-1.  **Ambiente:** Configure as chaves do Supabase e a `GEMINI_API_KEY` (AI Studio) no seu novo ambiente.
-2.  **Instalação:**
+1.  **Variáveis de Ambiente**:
+    - Configure a `GEMINI_API_KEY` (AI Studio) para o funcionamento da Aurora.
+    - Configure `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+2.  **Instalação**:
     ```bash
     npm install
     npm run dev
@@ -35,7 +37,6 @@ A plataforma **Compromisso** é um ecossistema robusto para gestão educacional 
 
 <div align="center">
 
-**Rede Educacional Compromisso**
+**Tecnologia Santana de Parnaíba • Inovação Educacional**
 
 </div>
-# compromisso

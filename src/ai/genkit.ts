@@ -13,8 +13,9 @@ if (typeof window !== 'undefined') {
   throw new Error("⚠️ [SEGURANÇA] A Aurora IA só pode ser operada no Gabinete de Gestão (Servidor).");
 }
 
-// Sintonização de Chave: Prioriza .env para máxima conformidade industrial
-const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || "AIzaSyBSKWVh8V9HsDXUhLBuIAoSSBRPetzV-gM";
+// Chave de API: Prioriza variável de ambiente para produção.
+// Caso não encontrada, utiliza a chave de teste configurada no projeto Goes1404.
+const apiKey = process.env.GEMINI_API_KEY || "AIzaSyBSKWVh8V9HsDXUhLBuIAoSSBRPetzV-gM";
 
 export const ai = genkit({
   plugins: [

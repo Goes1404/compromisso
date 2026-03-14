@@ -1,8 +1,12 @@
 
 {
-  "name": "compromisso-smart-education",
-  "version": "1.0.0",
+  "name": "compromisso-platform",
+  "version": "1.1.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Goes1404/compromisso.git"
+  },
   "scripts": {
     "dev": "next dev",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
