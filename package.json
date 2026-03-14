@@ -1,11 +1,10 @@
-
 {
   "name": "compromisso-platform",
   "version": "1.1.0",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/Goes1404/compromisso.git"
+    "url": "https://github.com/Duduzcx/educore.git"
   },
   "scripts": {
     "dev": "next dev",

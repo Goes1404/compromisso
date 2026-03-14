@@ -2,7 +2,7 @@
 
 O ecossistema oficial de aprendizado e gestão educacional de Santana de Parnaíba.
 
-## Status: Migração Concluída para @Goes1404
+## Status: Migração Concluída para @Duduzcx
 
 Este repositório contém o código-fonte da plataforma Compromisso, focada em alta performance acadêmica através de Inteligência Artificial (Aurora), BI e Trilhas de Estudo.
 
@@ -21,7 +21,7 @@ Se você estiver tendo problemas de autenticação ao subir o código para a nov
 1. **Remova o antigo e adicione o novo com seu Token:**
 ```bash
 # Substitua SEU_TOKEN pelo Personal Access Token gerado no GitHub
-git remote set-url origin https://SEU_TOKEN@github.com/Goes1404/compromisso.git
+git remote set-url origin https://SEU_TOKEN@github.com/Duduzcx/educore.git
 ```
 
 2. **Envie as alterações:**
