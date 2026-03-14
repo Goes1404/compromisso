@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronRight, Loader2, Sparkles, AlertCircle, BookOpen, GraduationCap, User, ShieldCheck } from "lucide-react";
+import { ChevronRight, Loader2, Sparkles, AlertCircle, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/app/lib/supabase";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -25,52 +25,6 @@ export function LoginForm() {
   const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG";
   const bgUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Igreja_Matriz_de_Santana_de_Parna%C3%ADba.jpg/1280px-Igreja_Matriz_de_Santana_de_Parna%C3%ADba.jpg";
 
-  const handleQuickLogin = (role: 'student' | 'teacher' | 'admin') => {
-    setIsRedirecting(true);
-    
-    const emailMap = {
-      student: 'aluno@compromisso.com.br',
-      teacher: 'professor@compromisso.com.br',
-      admin: 'admin@compromisso.com.br'
-    };
-    
-    const targetEmail = emailMap[role];
-    setEmail(targetEmail);
-    password === "" && setPassword('123456');
-
-    const mockIds = {
-      admin: '00000000-0000-0000-0000-00000000000a',
-      teacher: '00000000-0000-0000-0000-00000000000b',
-      student: '00000000-0000-0000-0000-00000000000c'
-    };
-
-    const mockUser = {
-      id: mockIds[role],
-      email: targetEmail,
-      user_metadata: { full_name: `Usuário ${role.toUpperCase()}` }
-    };
-    
-    const mockProfile = {
-      id: mockUser.id,
-      name: role === 'admin' ? 'Coordenador Geral' : role === 'teacher' ? 'Mentor Pedagógico' : 'Estudante de Alta Performance',
-      profile_type: role === 'teacher' ? 'teacher' : role,
-      institution: "Polo Central Compromisso"
-    };
-
-    localStorage.setItem('compromisso_mock_session', JSON.stringify({ user: mockUser, profile: mockProfile, role }));
-    
-    toast({ 
-      title: "Acesso Sincronizado", 
-      description: `Entrando como ${role.toUpperCase()}.` 
-    });
-
-    setTimeout(() => {
-      if (role === 'admin') window.location.href = "/dashboard/admin/home";
-      else if (role === 'teacher') window.location.href = "/dashboard/teacher/home";
-      else window.location.href = "/dashboard/home";
-    }, 500);
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
@@ -85,17 +39,7 @@ export function LoginForm() {
 
       if (error) {
         setLoading(false);
-        if (error.message.includes("secret API key") || error.status === 403) {
-          if (email.includes('@compromisso.com.br')) {
-            const role = email.split('@')[0] === 'aluno' ? 'student' : 
-                         email.split('@')[0] === 'professor' ? 'teacher' : 'admin';
-            handleQuickLogin(role as any);
-            return;
-          }
-          setAuthError("Erro de segurança. Use o acesso rápido para testes.");
-        } else {
-          setAuthError("E-mail ou senha incorretos.");
-        }
+        setAuthError("E-mail ou senha incorretos.");
         return;
       }
 
@@ -117,7 +61,6 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 z-10 relative">
-      {/* Background Histórico (Ponto 2: Igreja Matriz) */}
       <div 
         className="bg-santana-fixed" 
         style={{ backgroundImage: `url('${bgUrl}')` }} 
@@ -164,33 +107,6 @@ export function LoginForm() {
         </CardHeader>
         <CardContent className="px-8 pt-8 space-y-6">
           
-          <div className="grid grid-cols-3 gap-3">
-            <button type="button" onClick={() => handleQuickLogin('student')} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-transparent hover:border-primary/20 hover:bg-white transition-all group shadow-sm">
-              <div className="h-10 w-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <GraduationCap className="h-6 w-6" />
-              </div>
-              <span className="text-[8px] font-black uppercase text-primary/60 tracking-widest">Aluno</span>
-            </button>
-            <button type="button" onClick={() => handleQuickLogin('teacher')} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-transparent hover:border-accent/20 hover:bg-white transition-all group shadow-sm">
-              <div className="h-10 w-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <User className="h-6 w-6" />
-              </div>
-              <span className="text-[8px] font-black uppercase text-primary/60 tracking-widest">Mentor</span>
-            </button>
-            <button type="button" onClick={() => handleQuickLogin('admin')} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-transparent hover:border-primary/20 hover:bg-white transition-all group shadow-sm">
-              <div className="h-10 w-10 rounded-lg bg-slate-900 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
-              <span className="text-[8px] font-black uppercase text-primary/60 tracking-widest">Admin</span>
-            </button>
-          </div>
-
-          <div className="relative flex items-center py-2">
-            <div className="flex-grow border-t border-muted/20"></div>
-            <span className="flex-shrink mx-4 text-[8px] font-black uppercase text-muted-foreground tracking-[0.3em]">Autenticação de Rede</span>
-            <div className="flex-grow border-t border-muted/20"></div>
-          </div>
-
           {authError && (
             <Alert variant="destructive" className="bg-red-50 border-red-200">
               <AlertCircle className="h-4 w-4" />
