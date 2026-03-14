@@ -1,8 +1,6 @@
-
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
 import { ai } from '@/ai/genkit';
-import { gemini15Flash } from '@genkit-ai/google-genai';
 
 /**
  * @fileOverview API de Diagnóstico Maestro - Compromisso 360.
@@ -31,10 +29,10 @@ export async function GET() {
     }
   }
 
-  // 2. Testar Aurora IA (Gemini 1.5 Flash via Objeto)
+  // 2. Testar Aurora IA (Gemini 1.5 Flash via String ID para máxima compatibilidade)
   try {
     const response = await ai.generate({
-      model: gemini15Flash,
+      model: 'googleai/gemini-1.5-flash',
       prompt: 'Responda apenas com a palavra: OK',
       config: { maxOutputTokens: 5 }
     });

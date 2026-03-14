@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -7,7 +6,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { gemini15Flash } from '@genkit-ai/google-genai';
 
 const QuestionSchema = z.object({
   question_text: z.string().describe('O enunciado completo da questão.'),
@@ -31,13 +29,13 @@ export type BulkQuestionParserOutput = z.infer<typeof BulkQuestionParserOutputSc
 
 const prompt = ai.definePrompt({
   name: 'bulkQuestionParserPrompt',
-  model: gemini15Flash,
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: BulkQuestionParserInputSchema },
   output: { schema: BulkQuestionParserOutputSchema },
   config: { temperature: 0.2 },
   system: `Você é um assistente de digitalização pedagógica do Compromisso 360. 
   Sua missão é ler textos brutos de provas e extrair TODAS as questões de múltipla escolha no formato solicitado.`,
-  prompt: `Analise o seguinte conteúdo e extraia as questões:
+  prompt: `Analise the following conteúdo e extraia as questões:
   
   {{{rawText}}}`,
 });

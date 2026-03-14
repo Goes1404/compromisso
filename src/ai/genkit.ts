@@ -1,4 +1,3 @@
-
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
@@ -19,6 +18,7 @@ const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY ||
 // Sincroniza a chave com o ambiente esperado pelo SDK interno
 if (typeof process !== 'undefined') {
   process.env.GOOGLE_GENAI_API_KEY = apiKey;
+  process.env.GEMINI_API_KEY = apiKey;
 }
 
 export const ai = genkit({
