@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -26,8 +27,8 @@ export default function LandingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      {/* HEADER */}
-      <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-2xl border-b border-muted/20 shadow-sm">
+      {/* HEADER - AZUL ROYAL INDUSTRIAL */}
+      <header className="fixed top-0 w-full z-50 bg-primary backdrop-blur-2xl border-b border-white/10 shadow-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 overflow-hidden rounded-xl shadow-xl bg-white p-1.5 rotate-3">
@@ -39,17 +40,17 @@ export default function LandingPage() {
                 className="object-contain"
               />
             </div>
-            <span className="text-2xl font-black italic tracking-tighter text-primary">
+            <span className="text-2xl font-black italic tracking-tighter text-white">
               Compro<span className="text-accent">misso</span>
             </span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-xs font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors">Pilares</Link>
-            <Link href="#impact" className="text-xs font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors">Impacto</Link>
-            <Button asChild variant="ghost" className="text-xs font-black uppercase tracking-widest text-primary">
+            <Link href="#features" className="text-xs font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors">Pilares</Link>
+            <Link href="#impact" className="text-xs font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors">Impacto</Link>
+            <Button asChild variant="ghost" className="text-xs font-black uppercase tracking-widest text-white hover:bg-white/10">
               <Link href="/login">Entrar</Link>
             </Button>
-            <Button asChild className="bg-primary text-white font-black px-8 h-12 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">
+            <Button asChild className="bg-white text-primary font-black px-8 h-12 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all border-none">
               <Link href="/register">Começar Agora</Link>
             </Button>
           </nav>
@@ -206,8 +207,8 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { title: "Salas Inteligentes", hint: "modern school classroom", id: "gallery-1" },
-                { title: "Laboratórios Digitais", hint: "science lab education", id: "gallery-2" },
+                { title: "Salas Inteligentes", hint: "modern school classroom", id: "gallery-classroom" },
+                { title: "Laboratórios Digitais", hint: "science lab education", id: "gallery-lab" },
                 { title: "Estúdios de Live", hint: "video broadcast studio", id: "gallery-3" },
                 { title: "Espaços de Mentoria", hint: "co-working study space", id: "gallery-4" },
               ].map((item, i) => {
