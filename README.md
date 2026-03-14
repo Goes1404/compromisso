@@ -11,7 +11,7 @@
 
 ## ✨ Status do Projeto: Migração Concluída
 
-Este repositório é a instância oficial da plataforma **Compromisso**, agora sob gestão da conta **Goes1404**. O sistema integra Inteligência Artificial (Aurora), BI e gestão de dados para a rede pública de ensino.
+Este repositório é a instância oficial da plataforma **Compromisso**, agora sob gestão da conta **Goes1404**. O sistema integra Inteligência Artificial (Aurora), BI e gestão de dados para a rede pública de ensino de Santana de Parnaíba.
 
 ---
 
