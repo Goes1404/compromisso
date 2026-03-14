@@ -29,23 +29,23 @@ export async function GET() {
     }
   }
 
-  // 2. Testar Aurora IA
+  // 2. Testar Aurora IA (Ping de 1 token)
   try {
     const response = await ai.generate({
       model: 'googleai/gemini-1.5-flash',
-      prompt: 'ok',
-      config: { maxOutputTokens: 2 }
+      prompt: 'ping',
+      config: { maxOutputTokens: 1 }
     });
     
-    if (response.text) {
-      diagnostics.genkit = { status: 'ok', details: 'Aurora IA sintonizada.' };
+    if (response.text || response.output) {
+      diagnostics.genkit = { status: 'ok', details: 'Aurora IA sintonizada e respondendo.' };
     } else {
       throw new Error("Resposta vazia da IA.");
     }
   } catch (e: any) {
     diagnostics.genkit = { 
         status: 'error', 
-        details: `Erro de Conexão: ${e.message}` 
+        details: `Falha de Sinal: ${e.message}` 
     };
   }
 

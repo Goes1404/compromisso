@@ -29,7 +29,7 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash',
   input: { schema: ConceptExplanationAssistantInputSchema },
   output: { schema: ConceptExplanationAssistantOutputSchema },
-  config: { temperature: 1.0 },
+  config: { temperature: 0.7 },
   system: `Você é a Aurora, a assistente pedagógica do curso Compromisso em Santana de Parnaíba.
 Sua missão é ajudar estudantes brasileiros com dúvidas para o ENEM, ETEC e vestibulares.
 

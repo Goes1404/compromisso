@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { conceptExplanationAssistantFlow } from '@/ai/flows/concept-explanation-assistant';
 import { financialAidDeterminationFlow } from '@/ai/flows/financial-aid-determination';
@@ -11,14 +10,14 @@ import { createClient } from '@/utils/supabase/server';
 
 /**
  * @fileOverview Gateway de API Aurora IA.
- * Corrigido para Next.js 15 (Aguardando inicialização assíncrona do Supabase).
+ * CORREÇÃO CRÍTICA NEXT.JS 15: Autenticação Assíncrona.
  */
 
 export const maxDuration = 60; 
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Inicializar Supabase com suporte a cookies assíncronos (Next 15)
+    // 1. Inicializar Supabase com suporte a cookies assíncronos (Obrigatório no Next 15)
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -49,17 +48,21 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`[AURORA IA]: Executando ${flowId} para ${user?.email || 'MOCK_USER'}...`);
+    
+    // Execução do fluxo Genkit
     const result = await targetFlow(input);
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
+    // Retorno de rastro técnico para diagnóstico rápido
     const errorMsg = error?.message || 'Erro desconhecido na Engine de IA';
     console.error(`[AURORA CRITICAL]:`, errorMsg);
 
     return NextResponse.json(
       { 
-        error: '⚠️ Erro de Processamento', 
-        details: errorMsg
+        error: '⚠️ Falha no Processamento Aurora', 
+        details: errorMsg,
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
       }, 
       { status: 500 }
     );
