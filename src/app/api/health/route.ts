@@ -29,42 +29,26 @@ export async function GET() {
     }
   }
 
-  // 2. Testar Aurora IA (Gemini 1.5 Flash via String ID para máxima compatibilidade)
+  // 2. Testar Aurora IA (Gemini 1.5 Flash via Identificador Canônico)
   try {
-    // Tentamos o identificador mais resiliente
     const response = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+      model: 'googleai/gemini-1.5-flash',
       prompt: 'Responda apenas com a palavra: OK',
       config: { maxOutputTokens: 5 }
     });
     
     if (response.text) {
-      diagnostics.genkit = { status: 'ok', details: 'Aurora IA sintonizada e respondendo (Gemini 1.5 Flash Latest).' };
+      diagnostics.genkit = { status: 'ok', details: 'Aurora IA sintonizada e respondendo (Gemini 1.5 Flash).' };
     } else {
       throw new Error("Resposta vazia da IA.");
     }
   } catch (e: any) {
     const msg = e.message || '';
     console.error("[HEALTH CHECK FAIL]:", msg);
-    
-    // Tentativa de fallback automático no diagnóstico
-    try {
-        const fallbackRes = await ai.generate({
-            model: 'googleai/gemini-1.5-pro-latest',
-            prompt: 'OK',
-            config: { maxOutputTokens: 2 }
-        });
-        if (fallbackRes.text) {
-            diagnostics.genkit = { status: 'ok', details: 'Aurora IA sintonizada via Fallback (Gemini 1.5 Pro).' };
-        } else {
-            throw new Error("Falha no fallback.");
-        }
-    } catch (fErr) {
-        diagnostics.genkit = { 
-            status: 'error', 
-            details: `Falha técnica: O modelo gemini-1.5-flash-latest não foi localizado no endpoint v1beta desta conta. Verifique se o Generative Language API está ativado no Google Cloud.` 
-        };
-    }
+    diagnostics.genkit = { 
+        status: 'error', 
+        details: `Falha técnica: ${msg}. Verifique se o modelo googleai/gemini-1.5-flash está ativo no seu Google AI Studio.` 
+    };
   }
 
   const allOk = diagnostics.supabase.status === 'ok' && diagnostics.genkit.status === 'ok';
