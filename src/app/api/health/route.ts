@@ -1,10 +1,12 @@
+
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
 import { ai } from '@/ai/genkit';
+import { gemini15Flash } from '@genkit-ai/google-genai';
 
 /**
- * @fileOverview API de Diagnóstico Maestro.
- * Verifica a saúde da infraestrutura sem expor chaves.
+ * @fileOverview API de Diagnóstico Maestro - Compromisso 360.
+ * Verifica a saúde da infraestrutura e testa a Aurora IA.
  */
 
 export const dynamic = 'force-dynamic';
@@ -29,26 +31,26 @@ export async function GET() {
     }
   }
 
-  // 2. Testar Genkit (Gemini 1.5 Flash)
+  // 2. Testar Aurora IA (Gemini 1.5 Flash via Objeto)
   try {
     const response = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
-      prompt: 'ok',
-      config: { maxOutputTokens: 2 }
+      model: gemini15Flash,
+      prompt: 'Responda apenas com a palavra: OK',
+      config: { maxOutputTokens: 5 }
     });
     
     if (response.text) {
-      diagnostics.genkit = { status: 'ok', details: 'Aurora IA operacional.' };
+      diagnostics.genkit = { status: 'ok', details: 'Aurora IA sintonizada e respondendo.' };
     } else {
       throw new Error("Resposta vazia da IA.");
     }
   } catch (e: any) {
     const msg = e.message || '';
-    if (msg.includes('404')) {
-      diagnostics.genkit = { status: 'error', details: 'Erro 404: Modelo não localizado na API do Google.' };
-    } else {
-      diagnostics.genkit = { status: 'error', details: `Falha técnica: ${msg.substring(0, 100)}` };
-    }
+    console.error("[HEALTH CHECK FAIL]:", msg);
+    diagnostics.genkit = { 
+      status: 'error', 
+      details: `Falha técnica: ${msg.substring(0, 150)}` 
+    };
   }
 
   const allOk = diagnostics.supabase.status === 'ok' && diagnostics.genkit.status === 'ok';

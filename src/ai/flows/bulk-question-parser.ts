@@ -7,6 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { gemini15Flash } from '@genkit-ai/google-genai';
 
 const QuestionSchema = z.object({
   question_text: z.string().describe('O enunciado completo da questão.'),
@@ -30,13 +31,13 @@ export type BulkQuestionParserOutput = z.infer<typeof BulkQuestionParserOutputSc
 
 const prompt = ai.definePrompt({
   name: 'bulkQuestionParserPrompt',
-  model: 'googleai/gemini-1.5-flash',
+  model: gemini15Flash,
   input: { schema: BulkQuestionParserInputSchema },
   output: { schema: BulkQuestionParserOutputSchema },
   config: { temperature: 0.2 },
-  system: `Você é um assistente de digitalização pedagógica. 
-  Sua missão é ler textos brutos de provas e extrair TODAS as questões de múltipla escolha.`,
-  prompt: `Analise the following content and extract the questions:
+  system: `Você é um assistente de digitalização pedagógica do Compromisso 360. 
+  Sua missão é ler textos brutos de provas e extrair TODAS as questões de múltipla escolha no formato solicitado.`,
+  prompt: `Analise o seguinte conteúdo e extraia as questões:
   
   {{{rawText}}}`,
 });

@@ -7,6 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { gemini15Flash } from '@genkit-ai/google-genai';
 
 const EssayTopicInputSchema = z.object({
   category: z.string().optional().describe('Eixo temático opcional.'),
@@ -24,11 +25,11 @@ const EssayTopicOutputSchema = z.object({
 
 const prompt = ai.definePrompt({
   name: 'essayTopicGeneratorPrompt',
-  model: 'googleai/gemini-1.5-flash',
+  model: gemini15Flash,
   input: { schema: EssayTopicInputSchema },
   output: { schema: EssayTopicOutputSchema },
-  system: `Você é la Aurora, mentora de redação nota 1000. 
-  Sua missão é criar propostas de redação IDÊNTICAS às do ENEM.`,
+  system: `Você é a Aurora, mentora de redação nota 1000. 
+  Sua missão é criar propostas de redação IDÊNTICAS às do ENEM para o curso Compromisso.`,
   prompt: `Gere uma proposta de redação desafiadora{{#if category}} focada em {{{category}}}{{/if}}.`,
 });
 

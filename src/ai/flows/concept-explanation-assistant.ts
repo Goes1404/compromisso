@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -6,6 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { gemini15Flash } from '@genkit-ai/google-genai';
 
 const MessageSchema = z.object({
   role: z.enum(['user', 'model']).describe('Papel.'),
@@ -26,12 +28,12 @@ export type ConceptExplanationAssistantOutput = z.infer<typeof ConceptExplanatio
 
 const prompt = ai.definePrompt({
   name: 'conceptExplanationAssistantPrompt',
-  model: 'googleai/gemini-1.5-flash',
+  model: gemini15Flash,
   input: { schema: ConceptExplanationAssistantInputSchema },
   output: { schema: ConceptExplanationAssistantOutputSchema },
   config: { temperature: 1.0 },
-  system: `Você é a Aurora, a assistente pedagógica do curso Compromisso.
-Sua missão é ajudar estudantes brasileiros com dúvidas para o ENEM e vestibulares.
+  system: `Você é a Aurora, a assistente pedagógica do curso Compromisso em Santana de Parnaíba.
+Sua missão é ajudar estudantes brasileiros com dúvidas para o ENEM, ETEC e vestibulares.
 
 REGRAS:
 - Use Português Brasileiro profissional e empático.

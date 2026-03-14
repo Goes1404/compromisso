@@ -7,6 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { gemini15Flash } from '@genkit-ai/google-genai';
 
 const ModuleStructureSchema = z.object({
   title: z.string().describe('Título curto e impactante do capítulo.'),
@@ -29,12 +30,12 @@ export type TrailStructureOutput = z.infer<typeof TrailStructureOutputSchema>;
 
 const prompt = ai.definePrompt({
   name: 'trailStructureGeneratorPrompt',
-  model: 'googleai/gemini-1.5-flash',
+  model: gemini15Flash,
   input: { schema: TrailStructureInputSchema },
   output: { schema: TrailStructureOutputSchema },
   config: { temperature: 0.7 },
-  system: `Você é a Aurora, arquiteta pedagógica sênior. 
-  Sua missão é desenhar ementas de trilhas de estudo de alto impacto.`,
+  system: `Você é a Aurora, arquiteta pedagógica sênior do projeto Compromisso. 
+  Sua missão é desenhar ementas de trilhas de estudo de alto impacto para alunos de Santana de Parnaíba.`,
   prompt: `Projete uma trilha completa sobre: {{{topic}}}
   {{#if targetAudience}}Foco do público: {{{targetAudience}}}{{/if}}`,
 });

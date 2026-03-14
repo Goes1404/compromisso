@@ -7,6 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { gemini15Flash } from '@genkit-ai/google-genai';
 
 const QuestionSchema = z.object({
   question: z.string().describe('O enunciado da pergunta.'),
@@ -29,12 +30,12 @@ export type QuizGeneratorOutput = z.infer<typeof QuizGeneratorOutputSchema>;
 
 const prompt = ai.definePrompt({
   name: 'generateQuizPrompt',
-  model: 'googleai/gemini-1.5-flash',
+  model: gemini15Flash,
   input: { schema: QuizGeneratorInputSchema },
   output: { schema: QuizGeneratorOutputSchema },
   config: { temperature: 0.8 },
   system: `Você é um professor especialista em exames de admissão brasileiro.
-  Sua tarefa é criar um mini-quiz de 3 questões de múltipla escolha.`,
+  Sua tarefa é criar um mini-quiz de 3 questões de múltipla escolha para o sistema Compromisso.`,
   prompt: `Tema: {{{topic}}}
   Contexto: {{{description}}}`,
 });

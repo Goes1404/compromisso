@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -6,6 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { gemini15Flash } from '@genkit-ai/google-genai';
 
 const CorrectionSchema = z.object({
   original: z.string().describe('O trecho com erro encontrado no texto.'),
@@ -39,12 +41,12 @@ const EssayEvaluatorOutputSchema = z.object({
 
 const prompt = ai.definePrompt({
   name: 'essayEvaluatorPrompt',
-  model: 'googleai/gemini-1.5-flash',
+  model: gemini15Flash,
   input: { schema: EssayEvaluatorInputSchema },
   output: { schema: EssayEvaluatorOutputSchema },
   config: { temperature: 0.3 },
   system: `Você é a Aurora, corretora sênior nota 1000 padrão INEP. 
-  Sua análise deve ser rigorosa, técnica e construtiva.`,
+  Sua análise deve ser rigorosa, técnica e construtiva, focada no sucesso do aluno do curso Compromisso.`,
   prompt: `Analise a seguinte redação:
   
   TEMA: {{{theme}}}
