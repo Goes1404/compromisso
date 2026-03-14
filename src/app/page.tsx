@@ -130,7 +130,7 @@ export default function LandingPage() {
               {/* JORNADA DO ALUNO */}
               <Card className="border-none shadow-2xl rounded-[3rem] bg-slate-800/50 backdrop-blur-xl p-12 space-y-10 hover:bg-slate-800 transition-all duration-500 hover:-translate-y-4 group ring-1 ring-white/5">
                 <div className="h-20 w-20 rounded-3xl bg-blue-600 text-white flex items-center justify-center shadow-[0_20px_40px_-10px_rgba(37,99,235,0.5)] group-hover:rotate-6 transition-all duration-500">
-                  <GraduationCap className="h-10 w-10" />
+                  <graduationcap className="h-10 w-10" />
                 </div>
                 <div className="space-y-4">
                   <h3 className="text-3xl font-black italic text-white leading-none">Jornada do Aluno</h3>
@@ -139,7 +139,7 @@ export default function LandingPage() {
                 <ul className="space-y-4 pt-6 border-t border-white/5">
                   {["Aurora IA 24/7", "Central de Redação", "Checklist SiSU/ProUni"].map((item, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-black uppercase text-slate-300 tracking-widest">
-                      <CheckCircle2 className="h-4 w-4 text-accent" /> {item}
+                      <checkcircle2 className="h-4 w-4 text-accent" /> {item}
                     </li>
                   ))}
                 </ul>
@@ -148,7 +148,7 @@ export default function LandingPage() {
               {/* STUDIO MASTER */}
               <Card className="border-none shadow-2xl rounded-[3rem] bg-slate-800/50 backdrop-blur-xl p-12 space-y-10 hover:bg-slate-800 transition-all duration-500 hover:-translate-y-4 group ring-1 ring-white/5">
                 <div className="h-20 w-20 rounded-3xl bg-orange-600 text-white flex items-center justify-center shadow-[0_20px_40px_-10px_rgba(234,88,12,0.5)] group-hover:rotate-6 transition-all duration-500">
-                  <School className="h-10 w-10" />
+                  <school className="h-10 w-10" />
                 </div>
                 <div className="space-y-4">
                   <h3 className="text-3xl font-black italic text-white leading-none">Studio do Mentor</h3>
@@ -157,7 +157,7 @@ export default function LandingPage() {
                 <ul className="space-y-4 pt-6 border-t border-white/5">
                   {["Autoria de Trilhas", "Banco de Questões", "Console de Transmissão"].map((item, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-black uppercase text-slate-300 tracking-widest">
-                      <CheckCircle2 className="h-4 w-4 text-accent" /> {item}
+                      <checkcircle2 className="h-4 w-4 text-accent" /> {item}
                     </li>
                   ))}
                 </ul>
@@ -166,7 +166,7 @@ export default function LandingPage() {
               {/* GABINETE DE GESTÃO */}
               <Card className="border-none shadow-2xl rounded-[3rem] bg-slate-800/50 backdrop-blur-xl p-12 space-y-10 hover:bg-slate-800 transition-all duration-500 hover:-translate-y-4 group ring-1 ring-white/5">
                 <div className="h-20 w-20 rounded-3xl bg-white text-primary flex items-center justify-center shadow-[0_20px_40px_-10px_rgba(255,255,255,0.2)] group-hover:rotate-6 transition-all duration-500">
-                  <BarChart3 className="h-10 w-10" />
+                  <barchart3 className="h-10 w-10" />
                 </div>
                 <div className="space-y-4">
                   <h3 className="text-3xl font-black italic text-white leading-none">Gestão de Dados</h3>
@@ -175,7 +175,7 @@ export default function LandingPage() {
                 <ul className="space-y-4 pt-6 border-t border-white/5">
                   {["Analytics em Tempo Real", "Auditoria de Mensagens", "Gestão de Matrículas"].map((item, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-black uppercase text-slate-300 tracking-widest">
-                      <CheckCircle2 className="h-4 w-4 text-accent" /> {item}
+                      <checkcircle2 className="h-4 w-4 text-accent" /> {item}
                     </li>
                   ))}
                 </ul>
@@ -199,26 +199,29 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { title: "Salas Inteligentes", hint: "modern school classroom", color: "bg-blue-500" },
-                { title: "Laboratórios Digitais", hint: "science lab education", color: "bg-orange-500" },
-                { title: "Estúdios de Live", hint: "video broadcast studio", color: "bg-purple-500" },
-                { title: "Espaços de Mentoria", hint: "co-working study space", color: "bg-green-500" },
-              ].map((item, i) => (
-                <div key={i} className="group relative aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-700">
-                  <Image 
-                    src={`https://picsum.photos/seed/school-${i}/600/800`} 
-                    alt={item.title} 
-                    fill 
-                    className="object-cover group-hover:scale-110 transition-transform duration-1000"
-                    data-ai-hint={item.hint}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-8 left-8 right-8">
-                    <p className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-2">INFRAESTRUTURA</p>
-                    <h4 className="text-xl font-black text-white italic">{item.title}</h4>
+                { title: "Salas Inteligentes", hint: "modern school classroom", id: "gallery-1" },
+                { title: "Laboratórios Digitais", hint: "science lab education", id: "gallery-2" },
+                { title: "Estúdios de Live", hint: "video broadcast studio", id: "gallery-3" },
+                { title: "Espaços de Mentoria", hint: "co-working study space", id: "gallery-4" },
+              ].map((item, i) => {
+                const galleryImg = placeholderData.placeholderImages.find(img => img.id === item.id);
+                return (
+                  <div key={i} className="group relative aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-700">
+                    <Image 
+                      src={galleryImg?.imageUrl || `https://picsum.photos/seed/school-${i}/600/800`} 
+                      alt={item.title} 
+                      fill 
+                      className="object-cover group-hover:scale-110 transition-transform duration-1000"
+                      data-ai-hint={item.hint}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-8 left-8 right-8">
+                      <p className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-2">INFRAESTRUTURA</p>
+                      <h4 className="text-xl font-black text-white italic">{item.title}</h4>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
