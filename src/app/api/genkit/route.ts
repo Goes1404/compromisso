@@ -9,28 +9,18 @@ import { trailStructureGeneratorFlow } from '@/ai/flows/trail-structure-generato
 
 /**
  * @fileOverview Gateway de API Blindado para a Aurora IA.
+ * Inclui log de erro detalhado para diagnóstico industrial.
  */
 
 export const maxDuration = 60; 
 
 export async function POST(req: NextRequest) {
   try {
-    const text = await req.text();
-    if (!text || text.trim() === '') {
-      return NextResponse.json({ error: 'Corpo da requisição vazio.' }, { status: 400 });
-    }
-
-    let body;
-    try {
-      body = JSON.parse(text);
-    } catch (e) {
-      return NextResponse.json({ error: 'JSON malformado no corpo da requisição.' }, { status: 400 });
-    }
-
+    const body = await req.json();
     const { flowId, input } = body;
 
     if (!flowId) {
-      return NextResponse.json({ error: 'Identificador do motor (flowId) é obrigatório.' }, { status: 400 });
+      return NextResponse.json({ error: 'flowId is required' }, { status: 400 });
     }
 
     const flows: Record<string, any> = {
@@ -46,22 +36,27 @@ export async function POST(req: NextRequest) {
     const targetFlow = flows[flowId];
 
     if (!targetFlow) {
-      return NextResponse.json(
-        { error: `O motor '${flowId}' não está mapeado no servidor.` },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: `Flow ${flowId} not found` }, { status: 404 });
     }
 
-    console.log(`[AURORA EXEC]: Executando fluxo ${flowId}...`);
+    console.log(`[AURORA IA]: Executando ${flowId}...`);
     const result = await targetFlow(input);
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    const errorMsg = error?.message || 'Erro desconhecido no servidor de IA.';
-    console.error(`[AURORA CRITICAL ERROR]:`, error);
+    // Log detalhado para o desenvolvedor identificar a causa exata no terminal
+    const errorDetail = error?.message || 'Erro desconhecido';
+    const errorStack = error?.stack || '';
+    
+    console.error(`[AURORA CRITICAL]: ${errorDetail}`);
+    console.error(errorStack);
 
     return NextResponse.json(
-      { error: `⚠️ ERRO DE PROCESSAMENTO: ${errorMsg}` },
+      { 
+        error: '⚠️ Falha no processamento da IA.', 
+        details: errorDetail,
+        code: error?.code || 'INTERNAL_ERROR'
+      }, 
       { status: 500 }
     );
   }

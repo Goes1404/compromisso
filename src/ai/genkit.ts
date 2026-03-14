@@ -2,29 +2,24 @@ import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 /**
- * 🔒 BLINDAGEM INDUSTRIAL AURORA IA - COMPROMISSO
+ * 🔒 MOTOR DE INTELIGÊNCIA AURORA IA - COMPROMISSO 360
  * 
- * Este arquivo configura o motor de inteligência da rede.
- * A chave de API é carregada do ambiente com fallback para a chave oficial.
+ * Configuração centralizada para alta disponibilidade.
+ * A chave de API é injetada globalmente para garantir visibilidade pelo SDK.
  */
 
-if (typeof window !== 'undefined') {
-  throw new Error("⚠️ [SEGURANÇA] A configuração da Aurora IA não pode ser carregada no navegador.");
-}
+const OFFICIAL_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || "AIzaSyBSKWVh8V9HsDXUhLBuIAoSSBRPetzV-gM";
 
-// Chave oficial do AI Studio (Goes1404)
-const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || "AIzaSyBSKWVh8V9HsDXUhLBuIAoSSBRPetzV-gM";
-
-// Injeção redundante no ambiente global para garantir visibilidade pelo SDK
+// Injeção redundante para máxima compatibilidade em ambientes Cloud
 if (typeof process !== 'undefined') {
-  process.env.GOOGLE_GENAI_API_KEY = apiKey;
-  process.env.GEMINI_API_KEY = apiKey;
+  process.env.GOOGLE_GENAI_API_KEY = OFFICIAL_KEY;
+  process.env.GEMINI_API_KEY = OFFICIAL_KEY;
 }
 
 export const ai = genkit({
   plugins: [
     googleAI({
-      apiKey: apiKey,
+      apiKey: OFFICIAL_KEY,
     }),
   ],
 });
