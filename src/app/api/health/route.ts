@@ -31,14 +31,14 @@ export async function GET() {
   }
 
   // 2. Testar Genkit (GEMINI_API_KEY)
-  const apiKey = process.env.GEMINI_API_KEY || "AIzaSyBSKWVh8V9HsDXUhLBuIAoSSBRPetzV-gM";
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || "AIzaSyBSKWVh8V9HsDXUhLBuIAoSSBRPetzV-gM";
   if (!apiKey) {
     diagnostics.genkit = { status: 'error', details: 'Chave de API não configurada no ambiente.' };
   } else {
     try {
       // Teste minimalista para validar a chave com o modelo padronizado
       const response = await ai.generate({
-        model: 'googleai/gemini-1.5-flash-latest',
+        model: 'googleai/gemini-1.5-flash',
         prompt: 'ok',
         config: { maxOutputTokens: 2 }
       });
@@ -53,7 +53,7 @@ export async function GET() {
       if (msg.includes('API key expired') || msg.includes('API_KEY_INVALID')) {
         diagnostics.genkit = { status: 'error', details: 'Chave INVÁLIDA ou EXPIROU. Gere uma nova no Google AI Studio.' };
       } else if (msg.includes('404')) {
-        diagnostics.genkit = { status: 'error', details: 'Erro de Modelo (404). Verifique se o Gemini 1.5 Flash está habilitado para sua conta e região.' };
+        diagnostics.genkit = { status: 'error', details: 'Erro de Modelo (404). Verifique se o Gemini 1.5 Flash está habilitado para sua conta.' };
       } else {
         diagnostics.genkit = { status: 'error', details: `Falha técnica: ${msg.substring(0, 150)}` };
       }

@@ -1,6 +1,7 @@
+
 {
-  "name": "compromisso-platform",
-  "version": "0.1.0",
+  "name": "compromisso-smart-education",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -55,7 +56,6 @@
     "lucide-react": "^0.475.0",
     "next": "^15.1.7",
     "patch-package": "^8.0.0",
-    "pdfjs-dist": "^4.0.379",
     "react": "19.0.0",
     "react-day-picker": "8.10.1",
     "react-dom": "19.0.0",

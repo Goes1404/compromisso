@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
 }
 
 // Sintonização de Chave: Prioriza .env para máxima conformidade industrial
-const apiKey = process.env.GEMINI_API_KEY || "AIzaSyBSKWVh8V9HsDXUhLBuIAoSSBRPetzV-gM";
+const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || "AIzaSyBSKWVh8V9HsDXUhLBuIAoSSBRPetzV-gM";
 
 export const ai = genkit({
   plugins: [
