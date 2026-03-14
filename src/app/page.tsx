@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -241,7 +240,15 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 relative z-10">
           <div className="space-y-6 col-span-1 lg:col-span-2">
             <div className="flex items-center gap-3">
-              <Shield className="h-10 w-10 text-accent" />
+              <div className="relative h-12 w-12 overflow-hidden rounded-xl shadow-xl bg-white p-1.5">
+                <Image 
+                  src="https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG" 
+                  alt="Logo Santana de Parnaíba" 
+                  fill 
+                  unoptimized
+                  className="object-contain"
+                />
+              </div>
               <span className="text-3xl font-black italic tracking-tighter">Compromisso</span>
             </div>
             <p className="text-white/40 font-medium italic text-lg max-w-sm">
