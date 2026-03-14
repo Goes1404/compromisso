@@ -1,3 +1,4 @@
+
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
@@ -10,7 +11,7 @@ import { googleAI } from '@genkit-ai/google-genai';
 
 const OFFICIAL_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || "AIzaSyBSKWVh8V9HsDXUhLBuIAoSSBRPetzV-gM";
 
-// Injeção redundante para máxima compatibilidade em ambientes Cloud
+// Injeção redundante para máxima compatibilidade em ambientes Cloud/Next.js
 if (typeof process !== 'undefined') {
   process.env.GOOGLE_GENAI_API_KEY = OFFICIAL_KEY;
   process.env.GEMINI_API_KEY = OFFICIAL_KEY;

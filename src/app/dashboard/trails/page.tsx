@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -19,13 +20,16 @@ import {
   ChevronRight,
   Zap,
   TrendingUp,
-  BookOpen
+  BookOpen,
+  Pin,
+  CheckCircle2
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/AuthProvider";
 import { supabase } from "@/app/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 const TRAIL_CATEGORIES = ["Todos", "Matemática", "Tecnologia", "Linguagens", "Física", "Biologia", "História", "Geografia"];
 const AUDIENCE_FILTERS = [
@@ -36,6 +40,7 @@ const AUDIENCE_FILTERS = [
 
 export default function LearningTrailsPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [activeAudience, setActiveAudience] = useState("all");
@@ -43,35 +48,67 @@ export default function LearningTrailsPage() {
   const [dbTrails, setDbTrails] = useState<any[]>([]);
   const [allProgress, setAllProgress] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pinningId, setPinningId] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data: trails, error: trailsError } = await supabase
+        .from('trails')
+        .select('*')
+        .or('status.eq.active,status.eq.published')
+        .order('created_at', { ascending: false });
+
+      if (trailsError) throw trailsError;
+
+      const { data: progress } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id);
+
+      setDbTrails(trails || []);
+      setAllProgress(progress || []);
+    } catch (e) {
+      console.error("Erro ao sincronizar trilhas:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      if (!user) return;
-      setLoading(true);
-      try {
-        const { data: trails, error: trailsError } = await supabase
-          .from('trails')
-          .select('*')
-          .or('status.eq.active,status.eq.published')
-          .order('created_at', { ascending: false });
-
-        if (trailsError) throw trailsError;
-
-        const { data: progress } = await supabase
-          .from('user_progress')
-          .select('*')
-          .eq('user_id', user.id);
-
-        setDbTrails(trails || []);
-        setAllProgress(progress || []);
-      } catch (e) {
-        console.error("Erro ao sincronizar trilhas:", e);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchData();
   }, [user]);
+
+  const handlePinTrail = async (trailId: string) => {
+    if (!user || pinningId) return;
+    setPinningId(trailId);
+    
+    try {
+      // Upsert progress with 0% if it doesn't exist, which "pins" it to the home page
+      const { error } = await supabase.from('user_progress').upsert({
+        user_id: user.id,
+        trail_id: trailId,
+        last_accessed: new Date().toISOString()
+      }, { onConflict: 'user_id,trail_id' });
+
+      if (error) throw error;
+
+      toast({
+        title: "Trilha Fixada! 📌",
+        description: "Agora você pode acessá-la rapidamente pela Página Inicial."
+      });
+      fetchData();
+    } catch (e: any) {
+      toast({
+        title: "Falha ao fixar",
+        description: e.message,
+        variant: "destructive"
+      });
+    } finally {
+      setPinningId(null);
+    }
+  };
 
   const filteredTrails = useMemo(() => {
     if (!Array.isArray(dbTrails)) return [];
@@ -165,6 +202,7 @@ export default function LearningTrailsPage() {
         {filteredTrails.map((trail) => {
           const userProgress = allProgress?.find(p => p.trail_id === trail.id);
           const percentage = userProgress?.percentage || 0;
+          const isPinned = !!userProgress;
 
           return (
             <Card key={trail.id} className="group overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-500 bg-white rounded-[2.5rem] flex flex-col h-full animate-in fade-in slide-in-from-bottom-4">
@@ -182,6 +220,26 @@ export default function LearningTrailsPage() {
                     {trail.category}
                   </Badge>
                 </div>
+                
+                {/* Botão Fixar (Pin) - Overlay */}
+                <button 
+                  onClick={() => handlePinTrail(trail.id)}
+                  disabled={pinningId === trail.id}
+                  className={`absolute top-5 right-5 h-10 w-10 rounded-full flex items-center justify-center transition-all shadow-xl active:scale-90 ${
+                    isPinned 
+                      ? 'bg-accent text-accent-foreground' 
+                      : 'bg-white/20 backdrop-blur-md text-white hover:bg-white hover:text-primary'
+                  }`}
+                  title={isPinned ? "Fixada na Home" : "Fixar na Home"}
+                >
+                  {pinningId === trail.id ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : isPinned ? (
+                    <CheckCircle2 className="h-5 w-5" />
+                  ) : (
+                    <Pin className="h-5 w-5" />
+                  )}
+                </button>
               </div>
               
               <CardContent className="p-8 flex-1 flex flex-col">

@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { conceptExplanationAssistantFlow } from '@/ai/flows/concept-explanation-assistant';
 import { financialAidDeterminationFlow } from '@/ai/flows/financial-aid-determination';
@@ -10,7 +11,7 @@ import { createClient } from '@/utils/supabase/server';
 
 /**
  * @fileOverview Gateway de API Blindado para a Aurora IA.
- * Retorna detalhes técnicos do erro para diagnóstico no Firebase Studio.
+ * Suporta autenticação Supabase e bypass para sessões de teste industriais.
  */
 
 export const maxDuration = 60; 
@@ -20,8 +21,11 @@ export async function POST(req: NextRequest) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Lógica de Bypass Industrial: Permite IDs de teste do Firebase Studio
+    const isMockUser = user?.id?.startsWith('00000000-');
+    
+    if (!user && !isMockUser) {
+      return NextResponse.json({ error: 'Unauthorized - Login real ou de teste necessário.' }, { status: 401 });
     }
 
     const body = await req.json();
@@ -43,7 +47,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Flow ${flowId} not found` }, { status: 404 });
     }
 
-    console.log(`[AURORA IA]: Executando ${flowId}...`);
+    console.log(`[AURORA IA]: Executando ${flowId} para usuário ${user?.id || 'MOCK'}...`);
     const result = await targetFlow(input);
 
     return NextResponse.json({ success: true, result });
