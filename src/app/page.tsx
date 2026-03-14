@@ -12,11 +12,11 @@ import {
   ArrowRight, 
   Users, 
   BarChart3, 
-  Zap,
-  Globe,
-  Sparkles,
-  GraduationCap,
-  School
+  Zap, 
+  Globe, 
+  Sparkles, 
+  GraduationCap, 
+  School 
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -31,8 +31,14 @@ export default function LandingPage() {
       <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-2xl border-b border-muted/20 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center text-accent shadow-xl shadow-primary/20 rotate-3">
-              <Shield className="h-7 w-7" />
+            <div className="relative h-12 w-12 overflow-hidden rounded-xl shadow-xl bg-white p-1.5 rotate-3">
+              <Image 
+                src="https://upload.wikimedia.org/wikipedia/commons/7/77/Santana_Parna%C3%ADba.PNG" 
+                alt="Logo Santana de Parnaíba" 
+                fill 
+                unoptimized
+                className="object-contain"
+              />
             </div>
             <span className="text-2xl font-black italic tracking-tighter text-primary">
               Compro<span className="text-accent">misso</span>
