@@ -20,7 +20,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Corpo da requisição vazio.' }, { status: 400 });
     }
 
-    const body = JSON.parse(text);
+    let body;
+    try {
+      body = JSON.parse(text);
+    } catch (e) {
+      return NextResponse.json({ error: 'JSON malformado no corpo da requisição.' }, { status: 400 });
+    }
+
     const { flowId, input } = body;
 
     if (!flowId) {
@@ -52,7 +58,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
     const errorMsg = error?.message || 'Erro desconhecido no servidor de IA.';
-    console.error(`[AURORA CRITICAL ERROR]:`, error); // Log completo para depuração no servidor
+    console.error(`[AURORA CRITICAL ERROR]:`, error);
 
     return NextResponse.json(
       { error: `⚠️ ERRO DE PROCESSAMENTO: ${errorMsg}` },

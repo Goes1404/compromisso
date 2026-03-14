@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/app/lib/supabase';
-import { ai, gemini15Flash } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 
 /**
  * @fileOverview API de Diagnóstico Maestro - Compromisso 360.
- * Verifica a saúde da infraestrutura e testa a Aurora IA usando referências nativas.
+ * Verifica a saúde da infraestrutura e testa a Aurora IA usando identificadores canônicos.
  */
 
 export const dynamic = 'force-dynamic';
@@ -29,16 +29,16 @@ export async function GET() {
     }
   }
 
-  // 2. Testar Aurora IA (Gemini 1.5 Flash via Referência Direta de Objeto)
+  // 2. Testar Aurora IA (Gemini 1.5 Flash)
   try {
     const response = await ai.generate({
-      model: gemini15Flash,
+      model: 'googleai/gemini-1.5-flash',
       prompt: 'Responda apenas: SINAL OK',
       config: { maxOutputTokens: 10 }
     });
     
     if (response.text) {
-      diagnostics.genkit = { status: 'ok', details: 'Aurora IA sintonizada e respondendo via referência nativa.' };
+      diagnostics.genkit = { status: 'ok', details: 'Aurora IA sintonizada e respondendo via canal estável.' };
     } else {
       throw new Error("Resposta vazia da IA.");
     }
@@ -47,7 +47,7 @@ export async function GET() {
     console.error("[HEALTH CHECK FAIL]:", msg);
     diagnostics.genkit = { 
         status: 'error', 
-        details: `Erro de Conexão: ${msg}. Certifique-se de que a Generative Language API está ativa no seu projeto do Google Cloud.` 
+        details: `Erro de Conexão: ${msg}. Verifique se a Generative Language API está ativa no Google AI Studio.` 
     };
   }
 
